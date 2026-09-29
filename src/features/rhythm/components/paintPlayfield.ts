@@ -5,7 +5,10 @@ import { getSkin } from "./skins";
 import { orb, paintEffect, ribbon, target } from "./orbs";
 import { barSprite } from "./sprites";
 
-export function paintPlayfield(ctx: CanvasRenderingContext2D, width: number, height: number, state: Runtime) {
+export type PlayfieldState = Pick<Runtime, "phase" | "timeMs" | "settings" | "feedback"> & {
+  session: Pick<Runtime["session"], "chart" | "assists" | "visibleStates">;
+};
+export function paintPlayfield(ctx: CanvasRenderingContext2D, width: number, height: number, state: PlayfieldState) {
   ctx.clearRect(0, 0, width, height);
   const scale = Math.min(width / WORLD_WIDTH, height / WORLD_HEIGHT);
   ctx.save();
@@ -13,7 +16,7 @@ export function paintPlayfield(ctx: CanvasRenderingContext2D, width: number, hei
   ctx.scale(scale, scale);
   const skin = getSkin(state.settings.skinId);
   const preview = state.phase === "setup" || state.phase === "starting";
-  const time = preview ? Math.max(0, state.session.chart.notes[0].timeMs - APPROACH_MS * .8) : state.timeMs;
+  const time = preview ? Math.max(0, (state.session.chart.notes[0]?.timeMs ?? 0) - APPROACH_MS * .8) : state.timeMs;
   const visible = state.session.visibleStates(time);
   const lanes = state.session.chart.lanes.map(lane => {
     const pose = lanePoseAt(lane, state.session.assists.freezeMotion ? 0 : Math.max(0, time));

@@ -1,6 +1,7 @@
 @import "../features/rhythm/rhythm.css";
 @import "../features/rhythm/menu.css";
 @import "../features/home/home.css";
+@import "../features/editor/editor.css";
 
 :root {
   --background: #080c0d;
@@ -21,7 +22,7 @@ button, input, select { font: inherit; }
 select { display: block; width: 100%; margin: 12px 0 24px; padding: 14px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); color: var(--text); }
 button { cursor: pointer; }
 button:disabled { cursor: not-allowed; opacity: .45; }
-a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid var(--focus); outline-offset: 5px; }
+a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, summary:focus-visible { outline: 2px solid var(--focus); outline-offset: 5px; }
 button { border: 1px solid var(--border); background: var(--surface); color: inherit; padding: 14px 22px; border-radius: 8px; min-height: 48px; }
 button:hover:not(:disabled) { border-color: var(--muted); }
 button.primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); font-weight: 600; display: inline-flex; align-items: center; gap: 24px; }

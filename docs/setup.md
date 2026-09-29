@@ -53,9 +53,10 @@ smoke build; signing and installer distribution have not been configured.
 
 ## Frontend and native boundaries
 
-React Router's `HashRouter` keeps routes inside the packaged document, avoiding
+React Router's `createHashRouter` keeps routes inside the packaged document, avoiding
 server fallback requirements. `/#/` opens the notsu home screen; `/#/rhythm` opens
-the existing prototype. Unknown routes return to Home. The home feature owns a
+the existing prototype; `/#/editor` opens the local creator workflow. The data
+router enables unsaved-draft navigation guards. Unknown routes return to Home. The home feature owns a
 small, non-persisted Zustand store for its music dropdown. Playback controls and
 the remaining future-feature buttons are presentational only.
 
@@ -66,7 +67,8 @@ per-note or per-frame data crosses the native bridge.
 
 Audio is selected through the browser's file chooser and decoded locally. There
 is no frontend filesystem permission, telemetry, or uploaded audio. Preferences
-use local storage; imported skin archives use IndexedDB. Replays are
+use local storage; imported skin archives and editor drafts/original recordings
+use separate IndexedDB databases. Replays are
 currently held in memory for the results screen. Publishing/storage/backend
 services in the public-beta plan have not been deployed.
 The Rhythm preference key retains its legacy `osu-base` prefix for compatibility

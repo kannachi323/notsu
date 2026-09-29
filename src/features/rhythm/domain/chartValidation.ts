@@ -24,7 +24,7 @@ function validateMotion(value: unknown, duration: number, legacy: boolean) {
 }
 
 /** Validate unknown imports before using any of their nested values. */
-export function validateChart(value: unknown): asserts value is ChartSource {
+export function validateChart(value: unknown, options: { allowEmptyNotes?: boolean } = {}): asserts value is ChartSource {
   const chart = object(value);
   const legacy = chart.version === 1;
   if ((!legacy && chart.version !== 2) || !name(chart.id) || !name(chart.title) || !name(chart.artist) ||
@@ -54,7 +54,8 @@ export function validateChart(value: unknown): asserts value is ChartSource {
   }
   const ids = new Set<string>();
   let previous = -Infinity;
-  for (const item of list(chart.notes, 100000)) {
+  const notes = options.allowEmptyNotes && Array.isArray(chart.notes) && chart.notes.length === 0 ? [] : list(chart.notes, 100000);
+  for (const item of notes) {
     const note = object(item);
     if (!name(note.id) || ids.has(note.id) || (note.kind !== "tap" && note.kind !== "hold") ||
         !numeric(note.timeMs, 0, duration - HIT_WINDOW_MS) || note.timeMs <= previous) {
@@ -75,8 +76,8 @@ export function validateChart(value: unknown): asserts value is ChartSource {
 }
 
 /** Clone at the import boundary so editor mutations cannot alter an active run. */
-export function loadChart(value: unknown): Chart {
-  validateChart(value);
+export function loadChart(value: unknown, options: { allowEmptyNotes?: boolean } = {}): Chart {
+  validateChart(value, options);
   if (value.version === 2) return {
     ...value,
     timing: value.timing.map(point => ({ ...point })),

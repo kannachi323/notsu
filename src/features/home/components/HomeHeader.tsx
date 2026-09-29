@@ -8,7 +8,7 @@ export function HomeHeader() {
     <nav className="notsu-navigation" aria-label="Main navigation">
       <Link className="notsu-icon-button" to="/rhythm" aria-label="Play" title="Play"><Icon name="play" /></Link>
       <button className="notsu-icon-button" type="button" aria-label="Browse" title="Browse — coming soon" aria-disabled="true"><Icon name="browse" /></button>
-      <button className="notsu-icon-button" type="button" aria-label="Editor" title="Editor — coming soon" aria-disabled="true"><Icon name="editor" /></button>
+      <Link className="notsu-icon-button" to="/editor" aria-label="Editor" title="Editor"><Icon name="editor" /></Link>
       <MusicDropdown />
     </nav>
     <div className="notsu-social" role="group" aria-label="Player and social">

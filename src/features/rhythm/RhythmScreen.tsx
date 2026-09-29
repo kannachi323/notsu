@@ -1,6 +1,7 @@
 import { useLayoutEffect } from "react";
 import { Link } from "react-router";
 import { useRhythmGame } from "./useRhythmGame";
+import type { LocalLevel } from "./useRhythmGame";
 import { Playfield } from "./components/Playfield";
 import { Results } from "./components/Results";
 import { Setup } from "./components/Setup";
@@ -10,8 +11,8 @@ import { useSkinCatalog } from "../skins/useSkinCatalog";
 
 const seconds = (ms: number) => `${Math.floor(Math.max(0, ms) / 60_000)}:${String(Math.floor(Math.max(0, ms) / 1000) % 60).padStart(2, "0")}`;
 
-export function RhythmScreen() {
-  const game = useRhythmGame();
+export function RhythmScreen({ preview }: { preview?: LocalLevel & { close: () => void } }) {
+  const game = useRhythmGame(preview);
   const skinRevision = useSkinCatalog(state => state.revision);
   const { view, chart } = game;
   useLayoutEffect(() => {
@@ -29,7 +30,13 @@ export function RhythmScreen() {
 
   return <main className={`app phase-${view.phase}`}>
     {view.phase !== "setup" && <header className="app-header"><div className="brand">notsu</div></header>}
-    {view.phase === "setup" && <Setup settings={game.settings} updateSettings={game.updateSettings} fileName={game.fileName} loading={game.loading} error={game.error} chooseFile={game.chooseFile} start={game.start} />}
+    {view.phase === "setup" && (preview ? <section className="editor-playtest-start">
+      <p className="muted">Editor playtest · unranked</p><h1>{chart.title}</h1>
+      <p>Try your map with any gameplay key. No Fail is on so you can check the entire arrangement.</p>
+      <div className="actions"><button className="primary" onClick={() => void game.start("song", { noFail: true, autoplay: false })}>Start playtest</button>
+        <button onClick={() => void game.start("song", { noFail: true, autoplay: true })}>Watch Autoplay</button><button onClick={preview.close}>Back to editor</button></div>
+      {game.error && <p role="alert">{game.error}</p>}
+    </section> : <Setup settings={game.settings} updateSettings={game.updateSettings} fileName={game.fileName} loading={game.loading} error={game.error} chooseFile={game.chooseFile} start={game.start} />)}
     {view.phase === "starting" && <div className="starting" role="status">Preparing audio…</div>}
     {playing && <section className="game-stage" aria-label="Rhythm gameplay">
       <div className="game-hud"><div><h1>{chart.title}</h1><p>{chart.artist}</p><p className="run-label">{runLabel}</p></div><div className="hud-right"><div><strong>{view.summary.score.toLocaleString()}</strong><span>score</span></div><div><strong>{view.summary.accuracy.toFixed(1)}%</strong><span>accuracy</span></div><div><strong>{view.summary.combo}</strong><span>combo</span></div><button className="pause-button" onClick={game.pause} aria-label="Pause gameplay">Esc</button></div></div>
@@ -48,7 +55,7 @@ export function RhythmScreen() {
     {view.phase === "results" && <Results summary={view.summary} title={chart.title} retry={retry} exit={game.exit} runLabel={runLabel}
       watchReplay={game.hasReplay ? () => void game.watchReplay() : undefined} />}
     <footer className="app-footer">
-      <Link className="rhythm-home-link" to="/">← notsu home</Link>
+      {preview ? <button className="quiet" onClick={preview.close}>← Back to editor</button> : <Link className="rhythm-home-link" to="/">← notsu home</Link>}
       <span>Unofficial community project · Not affiliated with ppy</span>
     </footer>
   </main>;

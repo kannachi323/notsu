@@ -16,8 +16,8 @@ determine this application's dependencies.
 
 Trivia remains a planned casual feature. Preserve its fixture-based, deterministic
 daily design and its separate boundary. Rhythm is implemented independently; do
-not create a general game framework. The home-screen destinations currently remain UI placeholders; their editor,
-library and community implementations are now approved by the public-beta plan.
+not create a general game framework. Home links to Play and the first local Editor;
+library and community destinations remain placeholders within the approved plan.
 
 ## Current home-screen direction
 
@@ -34,8 +34,8 @@ extra height. Smaller windows reflow and scroll instead of clipping controls.
 
 React Router and Zustand are the approved routing/UI-state baseline. Home is a
 separate feature and the existing Rhythm prototype remains available through Play.
-Only the dropdown and existing Play route are wired; other destinations are
-placeholders. Keep keyboard access, visible focus, Escape dismissal, reduced-motion
+The dropdown, Play and local Editor routes are wired; Browse and social destinations
+remain placeholders. Keep keyboard access, visible focus, Escape dismissal, reduced-motion
 support, and an unobtrusive unofficial-community-project attribution. Do not show
 fabricated live performance or playback metrics.
 
@@ -85,6 +85,11 @@ The source is `Moku/Shared/Theme/NavigationStyle.swift`,
 These previous notes are not the current Rhythm specification. Retain the lessons
 about hierarchy and restraint, but do not reintroduce the superseded palette.
 Confirm current references before unrelated substantial UI work.
+
+The local editor follows the current dark cyan/violet direction, with line tools,
+the shared gameplay stage, a waveform/beat timeline and note controls. It is an
+initial functional authoring slice; see [editor status](editor.md). Keep the
+historical references below intact.
 
 ## Initial osu! data research
 

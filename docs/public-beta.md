@@ -80,7 +80,7 @@ do not change gameplay. Pause/resume must stop time and use a count-in.
 | --- | --- | --- |
 | Shared core | Multi-lane play, holds/shared hits, score/health/mods, deterministic replays and tests | In progress |
 | Presentation | Production assets/skins/sounds, tutorial, settings and results, visual/audio review | In progress |
-| Creator workflow | Import song -> author -> save/reopen -> export -> play without code | Pending |
+| Creator workflow | Import song -> author -> save/reopen -> export -> play without code | In progress |
 | Community | Deployed accounts/maps/friends/messages/moderation, authorization checks | Pending |
 | Public beta | Verified rankings, reviewed starter maps, platform releases and operational gates | Pending |
 
@@ -247,3 +247,39 @@ staging files. Browser exports use persistent download links with Blob URL clean
 
 This closes the earlier local save gap. Cross-platform native validation, signing,
 human sound/readability testing and the remaining presentation work are still open.
+
+### September 29 first local editor workflow
+
+Connected Home's Editor links to a real local authoring screen. Implemented
+MP3/WAV import with hashed recording identity, waveform and tempo grid, taps and
+holds shared across selected lines, per-line/group movement keyframes, four
+geometry presets, metadata, bounded undo/redo, transactional song/draft storage,
+serialized autosave with stale-writer rejection, reload recovery, chart-only JSON
+backup/restore, and actual-engine No Fail/Autoplay playtests. See [editor](editor.md).
+
+- `npm test`: 238 passing tests across 29 files; native export has four passing
+  Rust tests. Editor tests cover musical/domain invariants, saved song identity,
+  metadata bounds/timeouts, restored excerpt bounds against decoded media,
+  stereo waveform peaks, storage failures, revision
+  conflicts, recovery and coalesced autosaves.
+- `npm run build`: type checking and the production frontend passed.
+- `npm run tauri -- build --debug --bundles app`: packaged macOS debug build passed.
+- Browser: imported an original 16-second WAV, authored a rotating three-line
+  group with five shared taps and a shared hold, verified Undo/Redo, and completed
+  Playtest with 1,000,000 points, 100% accuracy and seven Perfect judgments. Added
+  a 180 BPM change without moving existing notes. Reload/reopen produced the exact
+  same complete draft JSON. Restoring that backup with the original recording
+  created a second playable draft. MP3 import and waveform/listen startup also passed.
+- Packaged macOS app: created a WAV draft, restored the browser-authored chart from
+  its exact backup text and original song, edited line selection/geometry, and
+  completed native Autoplay with the same 1,000,000 points and seven Perfect
+  judgments. This is functional evidence, not a human audio-latency measurement.
+- No new browser warning/error logs appeared during the verification flows; an
+  earlier Vite reload error from intermediate missing files predates those checks.
+  Evidence: ignored `.tools/screenshots/editor-native.png`,
+  `editor-playtest-results.png` and `editor-native-results.png`.
+
+The editor milestone is not complete. Full distributable song/map packages,
+native package Save, metronome, stronger selection/retiming and recovery tools,
+library/map sets, publishing and mapper/performance/cross-platform tests remain.
+All community, competitive backend and public-release gates remain active.

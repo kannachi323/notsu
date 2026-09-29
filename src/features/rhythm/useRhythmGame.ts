@@ -33,12 +33,14 @@ export type Runtime = {
 };
 type View = { phase: Phase; timeMs: number; summary: Summary; feedback: Feedback | null; countdown: number };
 
-export function useRhythmGame() {
+export type LocalLevel = { chart: Chart; buffer: AudioBuffer };
+export function useRhythmGame(level?: LocalLevel) {
+  const initialChart = level?.chart ?? songChart;
   const [settings, setSettings] = useState(loadSettings);
   const [runtime] = useState<{ current: Runtime }>(() => ({ current: {
-    phase: "setup", session: new RhythmSession(songChart), timeMs: 0, audio: null, settings, feedback: new HitFeedback(),
+    phase: "setup", session: new RhythmSession(initialChart), timeMs: 0, audio: null, settings, feedback: new HitFeedback(),
   } }));
-  const [chart, setChart] = useState<Chart>(songChart);
+  const [chart, setChart] = useState<Chart>(initialChart);
   const [mode, setMode] = useState<ChartMode>("song");
   const [view, setView] = useState<View>({ phase: "setup", timeMs: 0, summary: runtime.current.session.summary(), feedback: null, countdown: 0 });
   const [fileName, setFileName] = useState("");
@@ -231,7 +233,7 @@ export function useRhythmGame() {
 
   async function start(selectedMode: ChartMode = "song", mods: Mods = { ...DEFAULT_MODS }, replay?: Replay) {
     if (["starting", "playing", "countdown", "resuming"].includes(runtime.current.phase)) return;
-    const selected = chartModes[selectedMode];
+    const selected = level?.chart ?? chartModes[selectedMode];
     setMode(selectedMode);
     const token = ++generation.current;
     setError("");
@@ -242,14 +244,14 @@ export function useRhythmGame() {
     runtime.current.phase = "starting"; publish();
     try {
       const clock = audio();
-      const buffer = selectedMode === "song" ? loaded.current : clock.makeStudy(selected);
+      const buffer = level?.buffer ?? (selectedMode === "song" ? loaded.current : clock.makeStudy(selected));
       if (!buffer) throw new Error("Choose your audio file first, or try the timing study.");
       const [hash, assets] = await Promise.all([chartFingerprint(selected), prepareSkin(settings.skinId)]);
       if (!mounted.current || token !== generation.current) return;
       clock.hits.setSamples(assets?.sounds ?? {});
       fingerprint.current = hash;
       runtime.current.playback = replay ? new ReplayPlayer(selected, replay, hash) : undefined;
-      runtime.current.session = runtime.current.playback?.session ?? new RhythmSession(selected, mods, { freezeMotion: settings.freezeMotion });
+      runtime.current.session = runtime.current.playback?.session ?? new RhythmSession(selected, mods, { freezeMotion: level ? false : settings.freezeMotion });
       runtime.current.timeMs = -2000;
       activeBuffer.current = buffer; setChart(selected);
       const started = await clock.start(buffer, selected, settings.volume);
@@ -269,12 +271,12 @@ export function useRhythmGame() {
     generation.current++; runtime.current.audio?.stop();
     runtime.current.feedback.clear();
     runtime.current.phase = "setup"; runtime.current.timeMs = 0;
-    runtime.current.session = new RhythmSession(songChart);
+    runtime.current.session = new RhythmSession(initialChart);
     runtime.current.playback = undefined;
     runtime.current.checkpoint = undefined; runtime.current.resumeRemainingMs = undefined; runtime.current.resumePending = false;
     activeBuffer.current = null;
     lastReplay.current = null; setHasReplay(false);
-    setChart(songChart); publish();
+    setChart(initialChart); publish();
   }
 
   const retry = () => start(mode, { ...runtime.current.session.mods });

@@ -1,13 +1,12 @@
-import { HashRouter, Navigate, Route, Routes } from "react-router";
+import { createHashRouter, Navigate, RouterProvider } from "react-router";
 import { HomeScreen } from "../features/home/components/HomeScreen";
 import { RhythmScreen } from "../features/rhythm/RhythmScreen";
+import { EditorScreen } from "../features/editor/components/EditorScreen";
 
-export function App() {
-  return <HashRouter>
-    <Routes>
-      <Route path="/" element={<HomeScreen />} />
-      <Route path="/rhythm" element={<RhythmScreen />} />
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
-  </HashRouter>;
-}
+const router = createHashRouter([
+  { path: "/", element: <HomeScreen /> },
+  { path: "/rhythm", element: <RhythmScreen /> },
+  { path: "/editor", element: <EditorScreen /> },
+  { path: "*", element: <Navigate to="/" replace /> },
+]);
+export function App() { return <RouterProvider router={router} />; }

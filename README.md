@@ -6,14 +6,17 @@ unofficial community project is not affiliated with or endorsed by ppy.
 The home screen brings together Play, Browse, Editor, a music dropdown, and
 player/social controls in a dark, cyan-accented shell. **Play** opens the existing
 **Rhythm** prototype: independent moving lines with timed taps, holds, shared hits,
-health, scoring, and replay playback. Browse, Editor, profile, chat, friends, and update
+health, scoring, and replay playback. **Editor** imports local songs for manual
+circle placement and line choreography, with autosave and engine playtests.
+Browse, profile, chat, friends, and update
 actions are UI placeholders. The music card opens and closes; playback is not
 connected. Practice audio is synthesized locally; no third-party song audio or
 artwork is bundled.
 
 The [public-beta plan](docs/public-beta.md) targets desktop browsers, Windows,
 macOS and Linux. This is development work in progress, not a public-ready release.
-Native builds, online services and public deployment still require verification.
+The macOS debug app has passed local smoke checks. Production platform releases,
+online services and public deployment still require implementation and verification.
 
 Trivia remains a separate planned feature; its placeholders are preserved.
 
@@ -73,7 +76,7 @@ Use `npm.cmd` when forwarding flags in PowerShell to avoid wrapper argument loss
   sounds, retain packs locally, and undo removal. Adjust music and hit sound
   volumes separately, timing offset, or reduced motion. Reduced motion keeps hit
   highlights static while preserving authored line motion. Preferences and skin
-  packs are saved locally; song audio and results are not persisted.
+  packs are saved locally; prototype play results are not persisted.
 - **Freeze line movement** is a separate practice assist in Settings. It preserves
   each line's opening pose without changing note timing, and excludes the run
   from rankings. Replays retain both movement assistance and resumed status.
@@ -81,6 +84,15 @@ Use `npm.cmd` when forwarding flags in PowerShell to avoid wrapper argument loss
 The song chart is an original beat-grid study, not an imported gameplay pattern
 or a finished transcription. Its rhythm and choreography need musical playtesting.
 See [Rhythm design and testing](docs/rhythm.md).
+
+## Create a local map
+
+Open **Editor**, choose an MP3/WAV song, select lines, and place taps or holds on
+the beat grid. Add geometric patterns and timed movement, then use **Playtest**
+to play the actual chart. Drafts and original recordings are saved on this device;
+Undo/Redo and a draft backup help recover edits. The first editor slice is usable,
+while full media-package export, publishing and advanced authoring tools remain
+in progress. See [editor usage and limits](docs/editor.md).
 
 ## Structure
 
@@ -99,6 +111,10 @@ src/
       domain/                Manifest validation and built-in palettes
       data/                  Bounded ZIP/PNG/WAV handling and IndexedDB storage
       components/            Skin picker, preview, and pack controls
+    editor/                  Local song authoring and engine playtests
+      domain/                Draft validation, edit commands, geometry and history
+      data/                  Song decoding, waveforms and transactional autosave
+      components/            Timeline, line/note tools, metadata and recovery
     trivia/                  Preserved future feature boundary
   shared/                    Only genuinely shared responsibilities
 src-tauri/
@@ -107,7 +123,7 @@ docs/                        Setup, direction, and feature notes
 ```
 
 React Router provides hash-based routes for the desktop WebView: `/` is Home and
-`/rhythm` preserves the prototype. Zustand owns the home music dropdown and skin catalog state.
+`/rhythm` preserves the prototype, and `/editor` opens local authoring. Zustand owns the home music dropdown and skin catalog state.
 React and React DOM render the UI; Vite, TypeScript, Vitest, and the Tauri CLI are
 development tools. The playfield uses Canvas 2D and Web Audio directly.
 

@@ -46,7 +46,7 @@ it.each(skins)("draws live tap orbs after hold ribbons in $name", skin => {
   const chart={...songChart,notes:[{id:"h",kind:"hold" as const,timeMs:1000,endMs:2000,laneIds:["main"]},{id:"t",kind:"tap" as const,timeMs:1300,laneIds:["main"]}]};
   const session=new RhythmSession(chart); session.press("KeyA",1000);
   const {context,calls}=canvas();
-  paintPlayfield(context,800,520,{phase:"playing",session,timeMs:1100,audio:null,feedback:new HitFeedback(),
+  paintPlayfield(context,800,520,{phase:"playing",session,timeMs:1100,feedback:new HitFeedback(),
     settings:{skinId:skin.id,reducedMotion:false,freezeMotion:false,offsetMs:0,volume:.6,hitVolume:.15}});
   const ribbonIndex=calls.findIndex(call=>call.method==="lineTo" && call.color===skin.note.hold);
   const tapIndex=calls.findIndex(call=>call.method==="stroke" && call.color===skin.note.tap);
@@ -55,7 +55,7 @@ it.each(skins)("draws live tap orbs after hold ribbons in $name", skin => {
 it("renders every authored orientation at narrow and wide sizes with finite coordinates", () => {
   for(const skin of skins) for(const frame of songChart.lanes[0].motion) for(const [width,height] of [[640,480],[1280,720],[1920,1080]]) {
     const {context,calls}=canvas();
-    paintPlayfield(context,width,height,{phase:"playing",session:new RhythmSession(songChart),timeMs:frame.timeMs,audio:null,feedback:new HitFeedback(),
+    paintPlayfield(context,width,height,{phase:"playing",session:new RhythmSession(songChart),timeMs:frame.timeMs,feedback:new HitFeedback(),
       settings:{skinId:skin.id,reducedMotion:false,freezeMotion:false,offsetMs:0,volume:.6,hitVolume:.15}});
     expect(calls.flatMap(call=>call.args).filter(arg=>typeof arg==="number").every(Number.isFinite)).toBe(true);
   }
@@ -63,7 +63,7 @@ it("renders every authored orientation at narrow and wide sizes with finite coor
 it("freezes each lane's opening pose only for the explicit practice assist", () => {
   const positions = (timeMs: number, freezeMotion: boolean, reducedMotion: boolean) => {
     const {context, calls} = canvas();
-    paintPlayfield(context, 800, 520, { phase: "playing", session: new RhythmSession(geometryChart, {}, { freezeMotion }), timeMs, audio: null,
+    paintPlayfield(context, 800, 520, { phase: "playing", session: new RhythmSession(geometryChart, {}, { freezeMotion }), timeMs,
       feedback: new HitFeedback(), settings: { skinId: "midnight", volume: .6, hitVolume: .15, offsetMs: 0, reducedMotion, freezeMotion } });
     return calls.filter(call => call.method === "translate" || call.method === "rotate").map(call => call.args);
   };

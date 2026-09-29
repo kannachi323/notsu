@@ -23,9 +23,9 @@ export function HomeScreen() {
         <Link className="notsu-destination notsu-destination-play" to="/rhythm">
           <CardArtwork kind="play" /><span>Play</span>
         </Link>
-        <button className="notsu-destination notsu-destination-editor" type="button" aria-disabled="true" title="Editor — coming soon">
+        <Link className="notsu-destination notsu-destination-editor" to="/editor">
           <CardArtwork kind="editor" /><span>Editor</span>
-        </button>
+        </Link>
       </nav>
       <HomeUpdates />
     </main>
