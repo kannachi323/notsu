@@ -283,3 +283,45 @@ The editor milestone is not complete. Full distributable song/map packages,
 native package Save, metronome, stronger selection/retiming and recovery tools,
 library/map sets, publishing and mapper/performance/cross-platform tests remain.
 All community, competitive backend and public-release gates remain active.
+### September 29 portable maps and local browser
+
+Implemented complete `.notsumap` packages with the original MP3/WAV recording,
+up to sixteen difficulties, canonical revision hashes and bounded worker import.
+Map and skin archives share checked ZIP handling. The editor creates related
+difficulties, exports one or all saved difficulties, adds packages directly to
+Browse, and imports complete packages into transactional drafts. Native map Save
+shares the atomic dialog-owned exporter with skins, using a separate capability
+and 128 MB bound.
+
+Home's Browse links now open a functional local collection with search, favorites,
+sorting, difficulty selection, preserved revisions, export and removal/Undo.
+Imported songs play through the existing engine with Standard, No Fail, Autoplay
+and in-session replay. These attempts are explicitly local and unranked.
+
+- `npm test`: 252 passing tests in 33 files. New checks cover multi-difficulty
+  recording/chart round trips, editor identity preservation, canonical hashes,
+  altered/missing audio, path/reference/size rejection, worker timeout, storage
+  rollback, duplicate revisions, favorites, removal/Undo, damaged archive repair
+  and atomic multi-difficulty draft imports.
+- Five Rust export tests pass; frontend type checking/production build and the
+  packaged macOS debug app build pass.
+- Browser: authored a second difficulty, packaged both with the recording, added
+  them to Browse, tested search, favorite/reload recovery, revision selection,
+  removal/Undo, and rejection of a corrupted package without losing selection.
+- macOS debug app: saved a 1,414,457-byte complete package. Its original WAV
+  matched the manifest hash. Imported that actual saved file into both the browser
+  library and browser editor; all six logical notes, three lanes and the waveform
+  returned. Two revised metadata versions remained independently selectable.
+- Browser and native library Autoplay both completed with 1,000,000 points,
+  100% accuracy and seven Perfect judgments. Browser replay reproduced the result.
+- Zen's real browser Download control produced a byte-identical package in
+  Downloads. The temporary test tab was closed afterward.
+- A development hot-reload router-blocker warning occurred at 11:02 UTC. A clean
+  reload and editor/home/browser navigation produced no additional warnings or
+  errors. Screenshot evidence is in ignored
+  `.tools/screenshots/map-browser-native.png` and `map-browser.png`.
+
+See [map package and library details](maps.md). The creator milestone still needs
+advanced editing, metronome, richer recovery/draft management and mapper testing.
+Personal records, online maps/community/rankings, deployment, performance and
+cross-platform release gates remain unfinished. The full goal stays active.

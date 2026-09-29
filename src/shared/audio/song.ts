@@ -1,4 +1,4 @@
-import type { SongReference } from "../domain/document";
+import type { SongReference } from "../domain/song";
 
 export const MAX_SONG_BYTES = 100 * 1024 * 1024;
 export type ImportedSong = { reference: SongReference; bytes: ArrayBuffer; buffer: AudioBuffer; peaks: Float32Array };
@@ -27,7 +27,7 @@ export async function waveform(buffer: AudioBuffer): Promise<Float32Array> {
   }
   return peaks;
 }
-export async function decodeSong(bytes: ArrayBuffer, fileName: string, context: BaseAudioContext, expectedHash?: string): Promise<ImportedSong> {
+export async function decodeSong(bytes: ArrayBuffer, fileName: string, context: BaseAudioContext, expectedHash?: string, withWaveform = true): Promise<ImportedSong> {
   const mime = songMime(fileName);
   if (!bytes.byteLength || bytes.byteLength > MAX_SONG_BYTES) throw new Error("Choose a recording up to 100 MB.");
   const sha256 = await songHash(bytes);
@@ -41,7 +41,7 @@ export async function decodeSong(bytes: ArrayBuffer, fileName: string, context: 
     throw new Error("Use a mono or stereo recording between 1 second and 30 minutes, with decoded audio under 512 MB.");
   }
   const reference: SongReference = { sha256, fileName, mime, size: bytes.byteLength, durationMs: buffer.duration * 1000 };
-  return { reference, bytes, buffer, peaks: await waveform(buffer) };
+  return { reference, bytes, buffer, peaks: withWaveform ? await waveform(buffer) : new Float32Array() };
 }
 export function probeDuration(bytes: ArrayBuffer, mime: SongReference["mime"]): Promise<number> {
   return new Promise((resolve, reject) => {

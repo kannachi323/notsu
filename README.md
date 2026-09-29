@@ -8,7 +8,8 @@ player/social controls in a dark, cyan-accented shell. **Play** opens the existi
 **Rhythm** prototype: independent moving lines with timed taps, holds, shared hits,
 health, scoring, and replay playback. **Editor** imports local songs for manual
 circle placement and line choreography, with autosave and engine playtests.
-Browse, profile, chat, friends, and update
+**Browse** imports complete map packages for offline play, with search, favorites,
+difficulties and revision selection. Profile, chat, friends, and update
 actions are UI placeholders. The music card opens and closes; playback is not
 connected. Practice audio is synthesized locally; no third-party song audio or
 artwork is bundled.
@@ -90,9 +91,11 @@ See [Rhythm design and testing](docs/rhythm.md).
 Open **Editor**, choose an MP3/WAV song, select lines, and place taps or holds on
 the beat grid. Add geometric patterns and timed movement, then use **Playtest**
 to play the actual chart. Drafts and original recordings are saved on this device;
-Undo/Redo and a draft backup help recover edits. The first editor slice is usable,
-while full media-package export, publishing and advanced authoring tools remain
-in progress. See [editor usage and limits](docs/editor.md).
+Undo/Redo and backups help recover edits. Create additional difficulties, then
+prepare a `.notsumap` package containing the song and charts. Save it, add it to
+**Browse**, or import it into the editor on another device. Publishing and
+advanced authoring tools remain in progress. See [editor usage and limits](docs/editor.md)
+and [map packages and local browsing](docs/maps.md).
 
 ## Structure
 
@@ -113,8 +116,12 @@ src/
       components/            Skin picker, preview, and pack controls
     editor/                  Local song authoring and engine playtests
       domain/                Draft validation, edit commands, geometry and history
-      data/                  Song decoding, waveforms and transactional autosave
+      data/                  Transactional autosave and map-package conversion
       components/            Timeline, line/note tools, metadata and recovery
+    maps/                    Local map collection and portable packages
+      domain/                Map-set and difficulty contracts
+      data/                  Archive validation, revisions and local storage
+      components/            Search, selection, export and play entry
     trivia/                  Preserved future feature boundary
   shared/                    Only genuinely shared responsibilities
 src-tauri/
@@ -123,7 +130,8 @@ docs/                        Setup, direction, and feature notes
 ```
 
 React Router provides hash-based routes for the desktop WebView: `/` is Home and
-`/rhythm` preserves the prototype, and `/editor` opens local authoring. Zustand owns the home music dropdown and skin catalog state.
+`/rhythm` preserves the prototype, `/editor` opens local authoring, and `/browse`
+opens the local collection. Zustand owns the home music dropdown and skin catalog state.
 React and React DOM render the UI; Vite, TypeScript, Vitest, and the Tauri CLI are
 development tools. The playfield uses Canvas 2D and Web Audio directly.
 
@@ -133,5 +141,5 @@ keyboard navigation, visible focus, and reduced-motion support. Commit both
 `package-lock.json` and `src-tauri/Cargo.lock`.
 
 The approved account plan uses verified email/password sign-in with backend access
-policies. Accounts, maps, friends, messaging and competitive rankings are still
+policies. Accounts, online maps, friends, messaging and competitive rankings are still
 pending. Never embed privileged service keys in frontend assets or Rust binaries.

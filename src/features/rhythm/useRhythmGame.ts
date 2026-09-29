@@ -33,7 +33,7 @@ export type Runtime = {
 };
 type View = { phase: Phase; timeMs: number; summary: Summary; feedback: Feedback | null; countdown: number };
 
-export type LocalLevel = { chart: Chart; buffer: AudioBuffer };
+export type LocalLevel = { chart: Chart; buffer: AudioBuffer; editor?: boolean };
 export function useRhythmGame(level?: LocalLevel) {
   const initialChart = level?.chart ?? songChart;
   const [settings, setSettings] = useState(loadSettings);
@@ -251,7 +251,7 @@ export function useRhythmGame(level?: LocalLevel) {
       clock.hits.setSamples(assets?.sounds ?? {});
       fingerprint.current = hash;
       runtime.current.playback = replay ? new ReplayPlayer(selected, replay, hash) : undefined;
-      runtime.current.session = runtime.current.playback?.session ?? new RhythmSession(selected, mods, { freezeMotion: level ? false : settings.freezeMotion });
+      runtime.current.session = runtime.current.playback?.session ?? new RhythmSession(selected, mods, { freezeMotion: level?.editor ? false : settings.freezeMotion });
       runtime.current.timeMs = -2000;
       activeBuffer.current = buffer; setChart(selected);
       const started = await clock.start(buffer, selected, settings.volume);

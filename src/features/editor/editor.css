@@ -33,3 +33,10 @@
 @media(min-width:1650px) { .editor-app { padding-inline: max(32px, calc((100vw - 1800px)/2)); } }
 @media(max-width:1100px) { .editor-app { padding: 22px; }.editor-workspace { grid-template-columns: 220px minmax(300px,1fr); }.editor-workspace > .editor-panel:last-child { grid-column: 1 / -1; }.editor-note-list { display: grid; grid-template-columns: repeat(3,1fr); gap: 6px; }.editor-start { gap: 36px; }.editor-intro h2 { font-size: 27px; } }
 @media(max-width:700px) { .editor-start, .editor-workspace { display: flex; flex-direction: column; }.editor-start { margin: 30px auto; }.editor-workspace > * { width: 100%; }.editor-center { order: -1; }.editor-document-title { align-items: start; }.editor-note-list { grid-template-columns: 1fr 1fr; }.editor-save { font-size: 12px; }.editor-header { gap: 14px; }.editor-header h1 { padding-left: 14px; }.editor-timeline-heading span { display: none; }.editor-field-grid { gap: 8px; } }
+.editor-package { margin: 24px 0; padding: 24px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); }
+.editor-package h2 { margin-bottom: 10px; font-size: 22px; }
+.editor-package p { font-size: 16px; color: var(--muted); }
+.editor-package label { display: flex; align-items: center; gap: 10px; font-size: 16px; }
+.editor-package a { color: var(--accent); text-underline-offset: 4px; padding: 12px 0; }
+.map-export { font-size: 16px; }
+.map-export p { margin: 8px 0 0; }

@@ -2,6 +2,7 @@
 @import "../features/rhythm/menu.css";
 @import "../features/home/home.css";
 @import "../features/editor/editor.css";
+@import "../features/maps/maps.css";
 
 :root {
   --background: #080c0d;

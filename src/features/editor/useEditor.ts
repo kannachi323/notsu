@@ -4,11 +4,15 @@ import { createDocument, readDocument, restoreDocument } from "./domain/document
 import type { EditorDocument } from "./domain/document";
 import { EditorHistory } from "./domain/history";
 import type { EditorCommand } from "./domain/commands";
-import { decodeSong, importSong } from "./data/song";
-import type { ImportedSong } from "./data/song";
-import { createDraft, listDrafts, readDraft } from "./data/storage";
+import { decodeSong, importSong } from "../../shared/audio/song";
+import type { ImportedSong } from "../../shared/audio/song";
+import { createDraft, createDrafts, listDrafts, readDraft } from "./data/storage";
 import type { DraftSummary } from "./data/storage";
 import { DraftWriter } from "./data/DraftWriter";
+import { mapSetDrafts } from "./data/mapSet";
+import { mapJob } from "../maps/data/packageClient";
+import { MAX_MAP_BYTES } from "../maps/data/package";
+import type { LoadedMap } from "../maps/data/package";
 
 type Workspace = { document: EditorDocument; song: ImportedSong; history: EditorHistory; writer: DraftWriter | null };
 export function useEditor() {
@@ -59,6 +63,7 @@ export function useEditor() {
       let song: ImportedSong, doc: EditorDocument, writer: DraftWriter | null;
       if (typeof fileOrId === "string") {
         const { row, blob } = await readDraft(fileOrId); doc = row.document;
+        if (!mounted.current || token !== generation.current) return;
         song = await decodeSong(await blob.arrayBuffer(), doc.song.fileName, clock().context, doc.song.sha256);
         if (Math.abs(song.reference.durationMs - doc.song.durationMs) > 25) throw new Error("The recording duration no longer matches this draft.");
         writer = new DraftWriter(row.revision);
@@ -76,7 +81,7 @@ export function useEditor() {
     finally { if (mounted.current) setBusy(false); }
   }
   function change(command: EditorCommand | "undo" | "redo") {
-    const current = active.current; if (!current) return;
+    const current = active.current; if (!current || busy) return;
     stop(); setError("");
     try {
       const doc = command === "undo" ? current.history.undo() : command === "redo" ? current.history.redo() : current.history.apply(command);
@@ -96,6 +101,7 @@ export function useEditor() {
     } catch (cause) { setError(message(cause)); }
   }
   async function close(discard = false) {
+    if (busy) return;
     stop();
     if (!discard) {
       try { await flush(); } catch { return; }
@@ -103,7 +109,42 @@ export function useEditor() {
     }
     active.current = null; setWorkspace(null); setError(""); await refresh();
   }
+  async function duplicate() {
+    const current = active.current; if (!current || busy) return;
+    stop(); setBusy(true); setError("");
+    try {
+      if (!current.writer) throw new Error("Save or export this draft before creating another difficulty.");
+      await flush();
+      if (!mounted.current) return;
+      const id = crypto.randomUUID(), doc = readDocument({ ...current.document, id,
+        difficulty: `${current.document.difficulty.slice(0, 230)} copy`, chart: { ...current.document.chart, id } });
+      const row = await createDraft(doc, current.song.bytes);
+      if (!mounted.current) return;
+      const next = { document: doc, song: current.song, history: new EditorHistory(doc), writer: new DraftWriter(row.revision) };
+      active.current = next; setWorkspace(next); setTimeMs(0); setSaveStatus("Saved on this device");
+    } catch (cause) { if (mounted.current) setError(message(cause)); }
+    finally { if (mounted.current) setBusy(false); }
+  }
+  async function importPackage(file: File) {
+    if (busy || active.current) return;
+    setBusy(true); setError("");
+    try {
+      if (!/\.notsumap$/i.test(file.name) || file.size < 22 || file.size > MAX_MAP_BYTES) throw new Error("Choose a .notsumap package up to 128 MB.");
+      const loaded = await mapJob<LoadedMap>({ action: "unpack", bytes: new Uint8Array(await file.arrayBuffer()) });
+      if (!mounted.current) return;
+      const song = await decodeSong(new Uint8Array(loaded.audio).buffer, loaded.set.song.mime === "audio/mpeg" ? "audio.mp3" : "audio.wav", clock().context, loaded.set.song.sha256);
+      if (!mounted.current) return;
+      if (Math.abs(song.reference.durationMs - loaded.set.song.durationMs) > 25) throw new Error("The recording duration does not match the package.");
+      const documents = mapSetDrafts(loaded.set); // Keep published identities, timings and immutable source content intact.
+      const rows = await createDrafts(documents, song.bytes);
+      if (!mounted.current) return;
+      const doc = documents[0], next = { document: doc, song, history: new EditorHistory(doc), writer: new DraftWriter(rows[0].revision) };
+      active.current = next; setWorkspace(next); setTimeMs(0); setSaveStatus(`Imported ${documents.length} ${documents.length === 1 ? "difficulty" : "difficulties"} · saved on this device`);
+    } catch (cause) { if (mounted.current) setError(message(cause)); }
+    finally { if (mounted.current) setBusy(false); }
+  }
   return { workspace, drafts, busy, error, saveStatus, timeMs, playing, open, change, seek, listen, stop, close, flush, setError,
+    duplicate, importPackage,
     currentDocument: () => active.current && readDocument(active.current.document) };
 }
 function message(cause: unknown) { return cause instanceof Error ? cause.message : "Something went wrong. Please try again."; }

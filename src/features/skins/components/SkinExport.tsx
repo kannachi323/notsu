@@ -2,15 +2,7 @@ import { useEffect, useState } from "react";
 import { starterSkin } from "../data/exportPack";
 import { desktopSkinSave, saveSkinPack, skinFileName } from "../data/savePack";
 import type { SkinRecord } from "../data/registry";
-
-function DownloadLink({ bytes, name, children }: { bytes: Uint8Array; name: string; children: string }) {
-  const [url, setUrl] = useState("");
-  useEffect(() => {
-    const next = URL.createObjectURL(new Blob([new Uint8Array(bytes)], { type: "application/zip" })); setUrl(next);
-    return () => URL.revokeObjectURL(next);
-  }, [bytes]);
-  return url ? <a href={url} download={skinFileName(name)}>{children}</a> : <span role="status">Preparing download…</span>;
-}
+import { DownloadLink } from "../../../shared/components/DownloadLink";
 
 /** Browser downloads remain real links activated directly by the player. */
 export function SkinExport({ record, busy, action, notify }: {
@@ -30,9 +22,9 @@ export function SkinExport({ record, busy, action, notify }: {
   return <>
     <div className="skin-actions">
       {starter ? native ? <button type="button" disabled={busy} onClick={() => save(starter, "my-first-skin")}>Save starter</button>
-        : <DownloadLink bytes={starter} name="my-first-skin">Download starter</DownloadLink> : !error && <span role="status">Preparing starter…</span>}
+        : <DownloadLink bytes={starter} fileName={skinFileName("my-first-skin")}>Download starter</DownloadLink> : !error && <span role="status">Preparing starter…</span>}
       {record && (native ? <button type="button" disabled={busy} onClick={() => save(record.archive, record.manifest.name)}>Export skin</button>
-        : <DownloadLink bytes={record.archive} name={record.manifest.name}>Export skin</DownloadLink>)}
+        : <DownloadLink bytes={record.archive} fileName={skinFileName(record.manifest.name)}>Export skin</DownloadLink>)}
     </div>
     {error && <p role="alert" className="skin-error">{error}</p>}
   </>;

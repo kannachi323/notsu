@@ -2,7 +2,7 @@ import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { IDBFactory, IDBObjectStore } from "fake-indexeddb";
 import { createDocument } from "../domain/document";
 import { editDocument } from "../domain/commands";
-import { createDraft, listDrafts, readDraft, saveDraft } from "./storage";
+import { createDraft, createDrafts, listDrafts, readDraft, readSetDrafts, saveDraft } from "./storage";
 import { DraftWriter } from "./DraftWriter";
 const bytes = new Uint8Array([1, 2, 3]).buffer;
 const document = (id = "first") => createDocument(id, { sha256: "a".repeat(64), mime: "audio/wav", fileName: "Song.wav", durationMs: 30000, size: 3 }, "Song");
@@ -60,4 +60,12 @@ it("keeps a failed autosave dirty instead of displaying false success", async ()
   const writer = new DraftWriter(1, async () => { throw new Error("Full"); }); writer.enqueue(document());
   await expect(writer.flush()).rejects.toThrow("Full"); expect(writer.dirty).toBe(true);
   await expect(writer.flush()).rejects.toThrow("Full");
+});
+it("imports all difficulties atomically and recovers one consistent set snapshot", async () => {
+  const first = document(), second = { ...document("second"), setId: first.setId, difficulty: "Hard" };
+  await createDrafts([first, second], bytes);
+  expect(await readSetDrafts(first.setId)).toEqual([first, second]);
+  const third = { ...document("third"), setId: first.setId };
+  await expect(createDrafts([third, second], bytes)).rejects.toThrow("already");
+  expect(await listDrafts()).toHaveLength(2); await expect(readDraft("third")).rejects.toThrow("no longer");
 });

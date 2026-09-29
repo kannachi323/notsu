@@ -16,8 +16,8 @@ determine this application's dependencies.
 
 Trivia remains a planned casual feature. Preserve its fixture-based, deterministic
 daily design and its separate boundary. Rhythm is implemented independently; do
-not create a general game framework. Home links to Play and the first local Editor;
-library and community destinations remain placeholders within the approved plan.
+not create a general game framework. Home links to Play, the local Editor and the local map browser;
+community destinations remain placeholders within the approved plan.
 
 ## Current home-screen direction
 
@@ -34,8 +34,8 @@ extra height. Smaller windows reflow and scroll instead of clipping controls.
 
 React Router and Zustand are the approved routing/UI-state baseline. Home is a
 separate feature and the existing Rhythm prototype remains available through Play.
-The dropdown, Play and local Editor routes are wired; Browse and social destinations
-remain placeholders. Keep keyboard access, visible focus, Escape dismissal, reduced-motion
+The dropdown, Play, local Editor and local Browse routes are wired; social
+destinations remain placeholders. Keep keyboard access, visible focus, Escape dismissal, reduced-motion
 support, and an unobtrusive unofficial-community-project attribution. Do not show
 fabricated live performance or playback metrics.
 

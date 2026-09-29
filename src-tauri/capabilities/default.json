@@ -1,11 +1,12 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
-  "description": "Main window can export a bounded skin pack to a location chosen in a native Save dialog. No frontend filesystem or shell access.",
+  "description": "Main window can export a bounded skin or map pack to a location chosen in a native Save dialog. No frontend filesystem or shell access.",
   "windows": [
     "main"
   ],
   "permissions": [
-    "allow-save-skin-pack"
+    "allow-save-skin-pack",
+    "allow-save-map-pack"
   ]
 }

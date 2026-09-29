@@ -22,5 +22,5 @@ it("rejects oversized data or browser calls before invoking native code", async 
 it("grants only the bounded export command to the local main window", () => {
   const capability = JSON.parse(readFileSync(new URL("../../../../src-tauri/capabilities/default.json", import.meta.url), "utf8"));
   expect(capability.windows).toEqual(["main"]); expect(capability.remote).toBeUndefined();
-  expect(capability.permissions).toEqual(["allow-save-skin-pack"]);
+  expect(capability.permissions).toEqual(["allow-save-skin-pack", "allow-save-map-pack"]);
 });

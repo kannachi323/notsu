@@ -2,7 +2,7 @@ import { readDocument } from "../domain/document";
 import type { EditorDocument } from "../domain/document";
 
 export type SavedDraft = { id: string; document: EditorDocument; revision: number; updatedAt: number };
-export type DraftSummary = { id: string; title: string; artist: string; difficulty: string; notes: number; updatedAt: number };
+export type DraftSummary = { id: string; setId: string; title: string; artist: string; difficulty: string; notes: number; updatedAt: number };
 const MAX_DOCUMENT = 4 * 1024 * 1024, MAX_LIBRARY = 512 * 1024 * 1024;
 export class DraftConflict extends Error { constructor() { super("This draft changed in another window. Your edits are kept here; reopen the saved draft before editing further."); } }
 function open(): Promise<IDBDatabase> {
@@ -42,18 +42,27 @@ const guarded = (fail: (error: Error) => void, operation: () => void) => () => {
   try { operation(); } catch (cause) { fail(cause instanceof Error ? cause : new Error("Draft storage failed.")); }
 };
 export async function createDraft(document: EditorDocument, bytes: ArrayBuffer): Promise<SavedDraft> {
-  const doc = checked(document);
-  if (bytes.byteLength !== doc.song.size) throw new Error("Recording size does not match this draft.");
+  return (await createDrafts([document], bytes))[0];
+}
+/** Import a set atomically: a collision or capacity failure leaves every draft unchanged. */
+export async function createDrafts(documents: EditorDocument[], bytes: ArrayBuffer): Promise<SavedDraft[]> {
+  if (!documents.length || documents.length > 16) throw new Error("Import between 1 and 16 difficulties.");
+  const docs = documents.map(checked), doc = docs[0];
+  if (new Set(docs.map(d => d.id)).size !== docs.length || docs.some(d => d.setId !== doc.setId || d.song.sha256 !== doc.song.sha256 || d.song.size !== bytes.byteLength)) throw new Error("Recording size or difficulty identity does not match this map set.");
   return transaction("readwrite", (tx, result, fail) => {
     const drafts = tx.objectStore("drafts"), songs = tx.objectStore("songs");
-    const count = drafts.count(); count.onsuccess = () => { if (count.result >= 50) fail(new Error("This device can keep up to 50 drafts.")); };
+    const count = drafts.count(); count.onsuccess = () => { if (count.result + docs.length > 50) fail(new Error("This device can keep up to 50 drafts.")); };
+    for (const document of docs) {
+      const existing = drafts.get(document.id); existing.onsuccess = () => { if (existing.result) fail(new Error("A difficulty from this set is already in your drafts. Open the saved draft to continue editing it.")); };
+    }
     let total = 0, exists = false;
     const cursor = songs.openCursor(); cursor.onsuccess = guarded(fail, () => {
       const item = cursor.result;
       if (item) { total += item.value.blob.size; exists ||= item.key === doc.song.sha256; item.continue(); return; }
       if (!exists && total + bytes.byteLength > MAX_LIBRARY) { fail(new Error("The local song library has reached its 512 MB limit.")); return; }
       if (!exists) songs.add({ hash: doc.song.sha256, blob: new Blob([bytes], { type: doc.song.mime }) });
-      const row = { id: doc.id, document: doc, revision: 1, updatedAt: Date.now() }; drafts.add(row); result(row);
+      const rows = docs.map(document => ({ id: document.id, document, revision: 1, updatedAt: Date.now() }));
+      rows.forEach(row => drafts.add(row)); result(rows);
     });
   });
 }
@@ -64,10 +73,21 @@ export const listDrafts = (): Promise<DraftSummary[]> => transaction("readonly",
     if (!item) { result(summaries.sort((a, b) => b.updatedAt - a.updatedAt)); return; }
     try {
       const row = item.value as SavedDraft, doc = readDocument(row.document);
-      summaries.push({ id: doc.id, title: doc.chart.title, artist: doc.chart.artist, difficulty: doc.difficulty, notes: doc.chart.notes.length, updatedAt: row.updatedAt });
-    } catch { summaries.push({ id: String(item.key), title: "Unreadable draft", artist: "Recovery required", difficulty: "", notes: 0, updatedAt: 0 }); }
+      summaries.push({ id: doc.id, setId: doc.setId, title: doc.chart.title, artist: doc.chart.artist, difficulty: doc.difficulty, notes: doc.chart.notes.length, updatedAt: row.updatedAt });
+    } catch { summaries.push({ id: String(item.key), setId: "", title: "Unreadable draft", artist: "Recovery required", difficulty: "", notes: 0, updatedAt: 0 }); }
     item.continue();
   };
+});
+/** One transaction gives package export a consistent snapshot of saved difficulties. */
+export const readSetDrafts = (setId: string): Promise<EditorDocument[]> => transaction("readonly", (tx, result, fail) => {
+  const documents: EditorDocument[] = [], request = tx.objectStore("drafts").openCursor();
+  request.onsuccess = guarded(fail, () => {
+    const item = request.result;
+    if (!item) { result(documents); return; }
+    const raw = item.value.document;
+    if ((raw?.setId ?? raw?.id) === setId) documents.push(checked(raw));
+    item.continue();
+  });
 });
 export const readDraft = (id: string): Promise<{ row: SavedDraft; blob: Blob }> => transaction("readonly", (tx, result, fail) => {
   const request = tx.objectStore("drafts").get(id);

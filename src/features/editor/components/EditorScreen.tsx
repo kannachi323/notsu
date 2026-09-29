@@ -14,6 +14,7 @@ import { MapDetails } from "./MapDetails";
 import { LaneTools } from "./LaneTools";
 import { NoteTools } from "./NoteTools";
 import { DraftBackup } from "./DraftBackup";
+import { PackageExport } from "./PackageExport";
 
 export function EditorScreen() {
   const editor = useEditor(), { workspace } = editor;
@@ -44,6 +45,8 @@ export function EditorScreen() {
       {restored && <p role="status">Restoring <strong>{restored.chart.title}</strong>. Choose its original <strong>{restored.song.fileName}</strong>.</p>}
       <label className="editor-song-label">{restored ? "Choose original recording" : "Create a map from a song"}<input type="file" accept=".mp3,.wav,audio/mpeg,audio/wav" disabled={editor.busy} onChange={event => { const file = event.target.files?.[0]; event.target.value = ""; if (file) void editor.open(file, restored); }} /></label>
       <p className="editor-hint">MP3 or WAV · up to 100 MB · stays on this device</p>{editor.busy && <p role="status">Preparing recording and waveform…</p>}
+      <label className="editor-song-label">Import a complete map package<input type="file" accept=".notsumap" disabled={editor.busy} onChange={event => { const file = event.target.files?.[0]; event.target.value = ""; if (file) void editor.importPackage(file); }} /></label>
+      <p className="editor-hint">Includes its song and all difficulties · up to 128 MB</p>
       <details className="editor-details"><summary>Restore a draft backup</summary><p>Paste the JSON from a draft backup, then choose its original song above.</p>
         <textarea aria-label="Draft JSON to restore" value={restoreText} onChange={event => setRestoreText(event.target.value)} rows={4} maxLength={4 * 1024 * 1024} spellCheck={false} autoCorrect="off" autoCapitalize="off" />
         <button onClick={() => { try { setRestored(readDocument(JSON.parse(restoreText))); editor.setError(""); } catch (cause) { editor.setError(cause instanceof Error ? cause.message : "Invalid draft backup."); } }}>Use backup</button>
@@ -68,6 +71,7 @@ export function EditorScreen() {
     {discard && <section className="editor-error"><p>Wait for autosave, or back up your draft before leaving. Unsaved changes will be lost if you discard them.</p>
       <button onClick={() => setDiscard(false)}>Keep editing</button><button onClick={() => { setDiscard(false); void editor.close(true); }}>Discard unsaved changes</button></section>}
     <MapDetails document={doc} change={editor.change} />
+    <div className="editor-small-actions"><button disabled={editor.busy} onClick={() => void editor.duplicate()}>Create another difficulty</button></div>
     <div className="editor-toolbar" aria-label="Editing controls"><button onClick={() => void editor.listen()}>{editor.playing ? "Pause song" : "Listen"}</button>
       <label>Position · ms<input aria-label="Playhead milliseconds" type="number" min={0} max={chart.durationMs} step="any" value={position} onChange={event => editor.seek(Number(event.target.value))} /></label>
       <label>Beat snap<select value={divisor} onChange={event => setDivisor(Number(event.target.value))}>{[1, 2, 3, 4, 6, 8, 12, 16].map(value => <option key={value} value={value}>1/{value} beat</option>)}</select></label>
@@ -78,6 +82,6 @@ export function EditorScreen() {
       <div className="editor-center"><div className="editor-stage-shell"><EditorStage key={String(artReady)} chart={chart} timeMs={editor.timeMs} settings={settings} /><span className="editor-stage-label">Arrangement · {(editor.timeMs / 1000).toFixed(2)} s</span></div>
         <Timeline chart={chart} peaks={workspace.song.peaks} timeMs={editor.timeMs} divisor={divisor} seek={editor.seek} place={place} />
       </div><NoteTools chart={chart} selected={selectedIds} timeMs={position} divisor={divisor} change={editor.change} seek={editor.seek} /></div>
-    <DraftBackup document={doc} /><footer>Local draft · {workspace.song.reference.fileName} · {(chart.durationMs / 1000).toFixed(1)} s · Unofficial community project</footer>
+    <PackageExport key={doc.id} document={doc} audio={workspace.song.bytes} /><DraftBackup document={doc} /><footer>Local draft · {workspace.song.reference.fileName} · {(chart.durationMs / 1000).toFixed(1)} s · Unofficial community project</footer>
   </main>;
 }

@@ -50,9 +50,18 @@ download link; the native app currently provides selectable backup text. Keep th
 original song separately. **Restore a draft backup** validates the pasted JSON and
 requires a recording with the same hash, then creates a new draft identity.
 
-JSON recovery is an interim recovery path. Full media packages, native package
-Save, draft deletion/library management and friendlier file-based recovery are
-still required. Do not present this as the complete distributable map format.
+**Prepare map package** produces a complete `.notsumap` archive with the original
+recording. Save it through a native dialog or browser download link, or add it
+directly to the local library. **Create another difficulty** copies the current
+saved chart under a new difficulty ID in the same set. Give each difficulty a
+unique name; package export can include all other saved difficulties in that set.
+The current in-memory difficulty is included even when autosave is unavailable.
+
+**Import a complete map package** restores every difficulty and its song in one
+transaction, preserving map-set/chart identities and timing. Existing draft IDs
+cause a clear conflict instead of overwriting local work. Old JSON drafts without
+a set ID use their document ID as the initial set. See [package format](maps.md).
+Draft deletion and conflict-resolution UX remain pending.
 
 ## Verification and remaining work
 
@@ -63,10 +72,9 @@ stereo waveform peaks, save/reopen, stale-window conflicts, failed writes, timeo
 cleanup and serialized/coalesced autosaves. See the current counts and actual
 browser/native evidence in [public-beta delivery](public-beta.md).
 
-Still required for the creator milestone: complete media-package import/export,
-native package saving, metronome/count-in, robust note retiming/selection tools,
-keyframe easing controls, multi-difficulty map sets, library management, recovery
-UX, performance with large real maps, platform/browser verification and mapper
+Still required for the creator milestone: metronome/count-in, robust note
+retiming/selection tools, keyframe easing controls, richer difficulty/draft
+management, recovery UX, performance with large real maps, platform/browser verification and mapper
 playtests. Publishing, online browsing and moderation remain separate pending work.
 
 Implementation references: [Web Audio decoding](https://developer.mozilla.org/en-US/docs/Web/API/BaseAudioContext/decodeAudioData),

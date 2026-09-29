@@ -5,7 +5,7 @@
 The app was initialized from the official `create-tauri-app` React/TypeScript
 template and adapted to this repository's feature-first structure. The unused
 greeting command, opener plugin, example assets, and native permissions were
-omitted. The native host uses Tauri 2 with a single bounded skin-save IPC command.
+omitted. The native host uses Tauri 2 with a bounded skin-save and map-save IPC commands.
 
 Frontend package versions and Rust dependencies are locked in `package-lock.json`
 and `src-tauri/Cargo.lock`. React, React DOM, React Router, and Zustand are the
@@ -55,7 +55,8 @@ smoke build; signing and installer distribution have not been configured.
 
 React Router's `createHashRouter` keeps routes inside the packaged document, avoiding
 server fallback requirements. `/#/` opens the notsu home screen; `/#/rhythm` opens
-the existing prototype; `/#/editor` opens the local creator workflow. The data
+the existing prototype; `/#/editor` opens the local creator workflow, and
+`/#/browse` opens the local map library. The data
 router enables unsaved-draft navigation guards. Unknown routes return to Home. The home feature owns a
 small, non-persisted Zustand store for its music dropdown. Playback controls and
 the remaining future-feature buttons are presentational only.
@@ -68,7 +69,7 @@ per-note or per-frame data crosses the native bridge.
 Audio is selected through the browser's file chooser and decoded locally. There
 is no frontend filesystem permission, telemetry, or uploaded audio. Preferences
 use local storage; imported skin archives and editor drafts/original recordings
-use separate IndexedDB databases. Replays are
+and map packages use separate IndexedDB databases. Replays are
 currently held in memory for the results screen. Publishing/storage/backend
 services in the public-beta plan have not been deployed.
 The Rhythm preference key retains its legacy `osu-base` prefix for compatibility
@@ -78,8 +79,9 @@ The Rust process is a local desktop host, not a secret-holding remote backend.
 Add narrow commands or official plugins only when a concrete native feature needs
 them; validate inputs and grant the smallest necessary capability scope.
 
-Skin exports use a Rust-owned Save dialog and atomic file replacement. The main
-window can invoke only `save_skin_pack`, supplying a bounded binary archive and
+Skin and map exports use a Rust-owned Save dialog and atomic file replacement. The main
+window can invoke only `save_skin_pack` (16 MB) and `save_map_pack` (128 MB),
+supplying a bounded binary archive and
 sanitized suggested name; it cannot supply a destination path. Dialog/filesystem
 plugin commands are not granted to the frontend. Tauri API 2.11.1 and dialog plugin
 2.7.0 are locked with the existing Tauri 2.11.6/Rust 1.88-compatible dependency set.

@@ -7,7 +7,7 @@ export function HomeHeader() {
     <Link className="notsu-brand" to="/" aria-label="notsu home"><NotsuMark /><span>notsu</span></Link>
     <nav className="notsu-navigation" aria-label="Main navigation">
       <Link className="notsu-icon-button" to="/rhythm" aria-label="Play" title="Play"><Icon name="play" /></Link>
-      <button className="notsu-icon-button" type="button" aria-label="Browse" title="Browse — coming soon" aria-disabled="true"><Icon name="browse" /></button>
+      <Link className="notsu-icon-button" to="/browse" aria-label="Browse" title="Browse"><Icon name="browse" /></Link>
       <Link className="notsu-icon-button" to="/editor" aria-label="Editor" title="Editor"><Icon name="editor" /></Link>
       <MusicDropdown />
     </nav>
