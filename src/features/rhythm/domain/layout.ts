@@ -6,9 +6,9 @@ export const LANE_LENGTH = 420;
 export const REST_POSE: Pose = { x: .28, y: .52, angle: 0 };
 
 /** Keep both ends readable even while interpolating between differently angled poses. */
-export function laneAnchor(pose: Pose): { x: number; y: number; radians: number } {
+export function laneAnchor(pose: Pose, length = LANE_LENGTH): { x: number; y: number; radians: number } {
   const radians = pose.angle * Math.PI / 180;
-  const dx = Math.cos(radians) * LANE_LENGTH, dy = Math.sin(radians) * LANE_LENGTH;
+  const dx = Math.cos(radians) * length, dy = Math.sin(radians) * length;
   const clamp = (value: number, min: number, max: number) => Math.max(min, Math.min(max, value));
   const margin = 42;
   return {

@@ -1,5 +1,6 @@
 import type { Chart, MotionKeyframe, Note, Pose } from "../domain/chart";
-import { validateChart } from "../domain/chart";
+import { loadChart, validateChart } from "../domain/chart";
+import { geometryChart } from "./geometryChart";
 import { basicPhrases, drillPhrases, songPhrases } from "./patterns";
 import type { Phrase } from "./patterns";
 
@@ -37,26 +38,26 @@ function makeMotion(count: number, beatDuration = beatMs): MotionKeyframe[] {
   return frames;
 }
 
-export const songChart: Chart = {
+export const songChart: Chart = loadChart({
   version: 1, id: "mou-ii-kai-study-v2", title: "Mou Ii Kai?", artist: "THE ORAL CIGARETTES",
   bpm: 192, durationMs: 40_000, audioOffsetMs: 35_401,
   audioSha256: "f9b17daaff3571bb758ecfe1402a2108f64121aca0e0dc053af49fb6a5b0b33f",
   notes: makeNotes(songPhrases), motion: makeMotion(8),
-};
+});
 
-export const demoChart: Chart = {
+export const demoChart: Chart = loadChart({
   version: 1, id: "timing-study-v1", title: "Timing study", artist: "Original synthesized practice",
   bpm: 192, durationMs: 10_000, audioOffsetMs: 0,
   notes: makeNotes(basicPhrases), motion: makeMotion(2),
-};
+});
 
-export const rhythmDrillChart: Chart = {
+export const rhythmDrillChart: Chart = loadChart({
   version: 1, id: "rhythm-drill-v1", title: "Two-hand rhythm drill", artist: "Dotted rhythms · triplets · sixteenths",
   bpm: 144, durationMs: 64 * (60_000 / 144), audioOffsetMs: 0,
   notes: makeNotes(drillPhrases, 60_000 / 144), motion: makeMotion(4, 60_000 / 144),
-};
+});
 
-export const chartModes = { song: songChart, basic: demoChart, rhythms: rhythmDrillChart };
+export const chartModes = { song: songChart, basic: demoChart, rhythms: rhythmDrillChart, geometry: geometryChart };
 export type ChartMode = keyof typeof chartModes;
 
 validateChart(songChart);

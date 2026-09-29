@@ -1,24 +1,34 @@
 # notsu
 
-An unofficial desktop companion for osu!. This community project is not affiliated
-with or endorsed by ppy. Windows is the initial target.
+An independent rhythm game built around moving lines and timed circles. This
+unofficial community project is not affiliated with or endorsed by ppy.
 
 The home screen brings together Play, Browse, Editor, a music dropdown, and
 player/social controls in a dark, cyan-accented shell. **Play** opens the existing
-**Rhythm** prototype: a single moving lane with timed taps, hold releases, and
-music-synchronized movement. Browse, Editor, profile, chat, friends, and update
+**Rhythm** prototype: independent moving lines with timed taps, holds, shared hits,
+health, scoring, and replay playback. **Editor** imports local songs for manual
+circle placement and line choreography, with autosave and engine playtests.
+**Browse** imports complete map packages for offline play, with search, favorites,
+difficulties and revision selection. Profile, chat, friends, and update
 actions are UI placeholders. The music card opens and closes; playback is not
-connected. No song audio or artwork is bundled.
+connected. Practice audio is synthesized locally; no third-party song audio or
+artwork is bundled.
+
+The [public-beta plan](docs/public-beta.md) targets desktop browsers, Windows,
+macOS and Linux. This is development work in progress, not a public-ready release.
+The macOS debug app has passed local smoke checks. Production platform releases,
+online services and public deployment still require implementation and verification.
 
 Trivia remains a separate planned feature; its placeholders are preserved.
 
 ## Run
 
-Requires Node.js 22.12+ (or a newer supported LTS), npm, Rust, the Windows C++
-build tools, and WebView2. See [setup](docs/setup.md) for the native prerequisites.
+Browser development requires Node.js 22.12+ (or a newer supported LTS) and npm.
+Desktop development additionally requires Rust and the target platform's native
+tools. See [setup](docs/setup.md) for prerequisites.
 
 ```sh
-npm install
+npm ci
 npm run tauri dev
 ```
 
@@ -41,6 +51,9 @@ Use `npm.cmd` when forwarding flags in PowerShell to avoid wrapper argument loss
 - Select **Two-hand rhythm drill** for a slower, 144 BPM practice of dotted
   rhythms, triplets, sixteenth rolls, and holds with independent taps. Try
   alternating F/J; all normal gameplay keys remain interchangeable.
+- Select **Moving together** for a four-line, rotating-square study. Simultaneous
+  circles at multiple targets share one judgment and take one press. Its original
+  synthesized practice audio is included.
 - For **Mou Ii Kai?**, select your own `audio.mp3` from the 88-second cut in
   beatmap set 807850. The app verifies the exact recording locally. The chart
   covers 0:35.401–1:15.401; no music or artwork is included in this repository.
@@ -50,17 +63,39 @@ Use `npm.cmd` when forwarding flags in PowerShell to avoid wrapper argument loss
   the target ring.
 - For a hold ribbon, press its solid head and release its hollow endpoint with the same key. Use
   other keys for taps during the hold. Key repeats and shortcut combinations
-  are ignored. Missing notes or pressing extra keys breaks combo and lowers accuracy.
-- Escape or focus loss stops the attempt. Retry starts from a fresh countdown;
-  mid-run resume is deliberately not supported in this prototype.
-- Open **Settings** from the Rhythm menu to choose Midnight or High Contrast, adjust music
-  and hit-sound volumes separately, and set timing offset or reduced motion. Reduced motion
-  keeps the lane stationary and hit highlights static. Only preferences are saved
-  locally; audio and results are not persisted.
+  are ignored. Independent holds can overlap on different keys. Missing notes or
+  pressing extra keys breaks combo, lowers accuracy, and costs health. Zero health
+  ends the run. Score gives 70% weight to combo continuity and 30% to accuracy.
+- Use **No Fail** for practice or **Autoplay** to watch a chart. These modes never
+  qualify for rankings. Results offer replay playback; current replays stay in
+  memory until leaving the result flow.
+- Escape or focus loss pauses the attempt. **Resume** preserves the position and
+  score and gives a three-second count-in; re-grab active hold keys before
+  continuing. Resumed runs are practice. **Retry** starts a fresh attempt.
+- Open **Settings** from the Rhythm menu to choose a built-in skin or import a
+  [skin pack](docs/skins.md) with PNG artwork, WAV sounds, and theme colors. Preview
+  sounds, retain packs locally, and undo removal. Adjust music and hit sound
+  volumes separately, timing offset, or reduced motion. Reduced motion keeps hit
+  highlights static while preserving authored line motion. Preferences and skin
+  packs are saved locally; prototype play results are not persisted.
+- **Freeze line movement** is a separate practice assist in Settings. It preserves
+  each line's opening pose without changing note timing, and excludes the run
+  from rankings. Replays retain both movement assistance and resumed status.
 
 The song chart is an original beat-grid study, not an imported gameplay pattern
 or a finished transcription. Its rhythm and choreography need musical playtesting.
 See [Rhythm design and testing](docs/rhythm.md).
+
+## Create a local map
+
+Open **Editor**, choose an MP3/WAV song, select lines, and place taps or holds on
+the beat grid. Add geometric patterns and timed movement, then use **Playtest**
+to play the actual chart. Drafts and original recordings are saved on this device;
+Undo/Redo and backups help recover edits. Create additional difficulties, then
+prepare a `.notsumap` package containing the song and charts. Save it, add it to
+**Browse**, or import it into the editor on another device. Publishing and
+advanced authoring tools remain in progress. See [editor usage and limits](docs/editor.md)
+and [map packages and local browsing](docs/maps.md).
 
 ## Structure
 
@@ -73,8 +108,20 @@ src/
       components/            Header, activity cards, and original SVG artwork
     rhythm/                  Feature screen, hook, and presentation state
       components/            Menus, results, and Canvas renderer
-      domain/                Pure TypeScript scoring, input rules, chart geometry
+      domain/                Pure scoring, Chart v2, timing, geometry, and replay rules
       data/                  Authored charts, audio, and local preference adapters
+    skins/                   Appearance contracts, pack import/storage, and previews
+      domain/                Manifest validation and built-in palettes
+      data/                  Bounded ZIP/PNG/WAV handling and IndexedDB storage
+      components/            Skin picker, preview, and pack controls
+    editor/                  Local song authoring and engine playtests
+      domain/                Draft validation, edit commands, geometry and history
+      data/                  Transactional autosave and map-package conversion
+      components/            Timeline, line/note tools, metadata and recovery
+    maps/                    Local map collection and portable packages
+      domain/                Map-set and difficulty contracts
+      data/                  Archive validation, revisions and local storage
+      components/            Search, selection, export and play entry
     trivia/                  Preserved future feature boundary
   shared/                    Only genuinely shared responsibilities
 src-tauri/
@@ -83,7 +130,8 @@ docs/                        Setup, direction, and feature notes
 ```
 
 React Router provides hash-based routes for the desktop WebView: `/` is Home and
-`/rhythm` preserves the prototype. Zustand owns the home music dropdown state.
+`/rhythm` preserves the prototype, `/editor` opens local authoring, and `/browse`
+opens the local collection. Zustand owns the home music dropdown and skin catalog state.
 React and React DOM render the UI; Vite, TypeScript, Vitest, and the Tauri CLI are
 development tools. The playfield uses Canvas 2D and Web Audio directly.
 
@@ -92,6 +140,6 @@ colocate tests, and avoid duplicate rules in Rust. Keep semantic controls,
 keyboard navigation, visible focus, and reduced-motion support. Commit both
 `package-lock.json` and `src-tauri/Cargo.lock`.
 
-Account connection and other companion capabilities are future work. Resolve
-supported desktop OAuth and secret handling before implementing authentication.
-Never embed production client secrets in frontend assets or Rust binaries.
+The approved account plan uses verified email/password sign-in with backend access
+policies. Accounts, online maps, friends, messaging and competitive rankings are still
+pending. Never embed privileged service keys in frontend assets or Rust binaries.

@@ -7,7 +7,7 @@ import { LANE_LENGTH } from "../domain/layout";
 import { noteRadius, skins } from "../components/skins";
 
 const gapsInBeats = (chart: Chart) => chart.notes.slice(1).map((note,index) =>
-  (note.timeMs-chart.notes[index].timeMs)/(60_000/chart.bpm));
+  (note.timeMs-chart.notes[index].timeMs)/(60_000/chart.timing[0].bpm));
 const contains = (gaps: number[], spacing: number) => gaps.some(gap=>Math.abs(gap-spacing)<1e-9);
 
 describe("authored rhythm vocabulary", () => {
@@ -17,7 +17,7 @@ describe("authored rhythm vocabulary", () => {
     for(const spacing of [1/3,1.5,.75,.25]) expect(contains(gaps,spacing)).toBe(true);
     // Quarter, eighth, sixteenth and triplet positions share a twelfth-beat grid.
     for(const note of chart.notes) {
-      const grid=note.timeMs/(60_000/chart.bpm)*12;
+      const grid=note.timeMs/(60_000/chart.timing[0].bpm)*12;
       expect(grid).toBeCloseTo(Math.round(grid),8);
     }
   });
@@ -40,11 +40,11 @@ describe("authored rhythm vocabulary", () => {
   });
   it("preserves the song cut and gives the new arrangement a distinct identity", () => {
     expect(songChart.id).toBe("mou-ii-kai-study-v2");
-    expect(songChart).toMatchObject({bpm:192,audioOffsetMs:35401,durationMs:40000});
-    expect(songChart.motion.map(frame=>frame.timeMs)).toEqual([0,3750,5000,8750,10000,13750,15000,18750,20000,23750,25000,28750,30000,33750,35000]);
+    expect(songChart).toMatchObject({timing:[{timeMs:0,bpm:192}],audioOffsetMs:35401,durationMs:40000});
+    expect(songChart.lanes[0].motion.map(frame=>frame.timeMs)).toEqual([0,3750,5000,8750,10000,13750,15000,18750,20000,23750,25000,28750,30000,33750,35000]);
   });
   it.each([songChart,rhythmDrillChart])("keeps adjacent orb centres separated in both skins for $id", chart => {
-    const gapMs=Math.min(...gapsInBeats(chart))*(60_000/chart.bpm);
+    const gapMs=Math.min(...gapsInBeats(chart))*(60_000/chart.timing[0].bpm);
     const separation=gapMs/APPROACH_MS*LANE_LENGTH;
     for(const skin of skins) expect(separation).toBeGreaterThan(2*noteRadius(skin)+1);
   });

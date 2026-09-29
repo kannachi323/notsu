@@ -42,3 +42,19 @@ it("stops hit voices with music on pause/exit and disposal", () => {
     expect(audio.hits.activeVoices).toBe(0); expect(context.close).toHaveBeenCalledOnce();
   } finally { vi.unstubAllGlobals(); }
 });
+it("prepares custom samples once, uses synthesis for missing sounds, and shares the voice cap", () => {
+  const context = { ...mockContext(),
+    createBuffer: vi.fn((_channels: number, frames: number, rate: number) => ({ duration: frames / rate, copyToChannel: vi.fn() })),
+    createBufferSource: vi.fn(() => ({ buffer: null, connect: vi.fn(), disconnect: vi.fn(), start: vi.fn(), stop: vi.fn(), onended: null as (()=>void)|null })),
+  };
+  const sounds = new HitSounds(context as unknown as AudioContext);
+  sounds.setSamples({ tap: { sampleRate: 48000, channels: [new Float32Array(4800).fill(.2)] } });
+  sounds.play(tone, 0); expect(context.createBufferSource).not.toHaveBeenCalled();
+  for (let i = 0; i < 20; i++) sounds.play(tone, .15, i % 2 ? "tap" : "release");
+  expect(context.createBuffer).toHaveBeenCalledOnce();
+  expect(context.createBufferSource).toHaveBeenCalledTimes(10); expect(context.createOscillator).toHaveBeenCalledTimes(10);
+  expect(sounds.activeVoices).toBe(MAX_SOUND_VOICES);
+  sounds.stop(); expect(sounds.activeVoices).toBe(0);
+  for (const node of context.createBufferSource.mock.results) expect(node.value.disconnect).toHaveBeenCalledOnce();
+  sounds.setSamples({}); sounds.play(tone, .15); expect(context.createOscillator).toHaveBeenCalledTimes(11);
+});

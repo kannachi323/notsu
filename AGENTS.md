@@ -5,8 +5,8 @@
 - Use Tauri 2 with React, TypeScript, HTML/CSS, and Vite. Use Rust for the desktop
   host and native functionality as needed. Do not add a C#/.NET or osu!framework
   dependency.
-- Windows is the initial release target. Other desktop platforms are deferred;
-  isolate platform-specific behavior without promising untested support.
+- The approved public beta targets Windows, macOS, Linux, and desktop browsers.
+  Isolate platform-specific behavior and verify each target before claiming support.
 - Start from the official Tauri React/TypeScript template. Preserve its standard
   startup/configuration structure and apply feature-first organization inside it.
   See `docs/setup.md`.
@@ -31,16 +31,17 @@
 - Colocate TypeScript tests with the code they exercise when tests are introduced.
   Add Rust tests alongside native behavior when needed.
 - Commit one JavaScript package manager lockfile and the application's Cargo.lock.
-- The implemented slices are the notsu home UI and Rhythm prototype. Preserve the separate Trivia
-  placeholders; do not expand into other features without a new request.
+- The approved public-beta scope includes Rhythm, skins, the manual editor, map
+  library/publishing, settings, accounts, friends, private messaging, and rankings.
+  Follow docs/public-beta.md and preserve the separate Trivia placeholders.
 - Do not install toolchains or dependencies, compile, or run builds/tests in this
   environment unless the user explicitly requests it.
 - Preserve the Moku-iOS design reference notes in `docs/direction.md`. Confirm
   current references before substantial UI work; do not copy official osu! UI.
 - Trivia remains a planned casual feature of the broader companion. Preserve its
   feature boundary; do not create a general game framework.
-- Account connection and other companion capabilities are future work. Resolve
-  supported desktop OAuth and secret handling before implementing authentication.
+- Accounts use Supabase email/password authentication, with no social OAuth in
+  this release. Resolve desktop and browser session storage before implementation.
   Never embed production client secrets in frontend assets or Rust binaries.
 - Keep the app clearly identified as an unofficial community project, with no
   implied affiliation with ppy.

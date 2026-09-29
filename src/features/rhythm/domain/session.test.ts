@@ -1,11 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { gradeFor, RhythmSession } from "./session";
-import type { Chart, Note } from "./chart";
+import type { LegacyChart, Note } from "./chart";
 import { demoChart, rhythmDrillChart, songChart } from "../data/charts";
 
 const tap = (timeMs = 1000, id = "tap"): Note => ({ id, kind: "tap", timeMs });
 const hold: Note = { id: "hold", kind: "hold", timeMs: 1000, endMs: 2000 };
-const chart = (notes: Note[]): Chart => ({ version: 1, id: "test", title: "Test", artist: "Test", bpm: 120, durationMs: 4000, audioOffsetMs: 0, notes, motion: [{ timeMs: 0, x: .2, y: .5, angle: 0 }] });
+const chart = (notes: Note[]): LegacyChart => ({ version: 1, id: "test", title: "Test", artist: "Test", bpm: 120, durationMs: 4000, audioOffsetMs: 0, notes, motion: [{ timeMs: 0, x: .2, y: .5, angle: 0 }] });
 
 describe("ordered judgement events", () => {
   it("retains every rapid judgement and drains once while preserving HUD feedback", () => {

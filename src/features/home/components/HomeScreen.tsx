@@ -17,15 +17,15 @@ export function HomeScreen() {
     <main className="notsu-main" id="home-content" tabIndex={-1} ref={main}>
       <h1 className="visually-hidden">notsu home</h1>
       <nav className="notsu-destinations" aria-label="Choose an activity">
-        <button className="notsu-destination notsu-destination-browse" type="button" aria-disabled="true" title="Browse — coming soon">
+        <Link className="notsu-destination notsu-destination-browse" to="/browse">
           <CardArtwork kind="browse" /><span>Browse</span>
-        </button>
+        </Link>
         <Link className="notsu-destination notsu-destination-play" to="/rhythm">
           <CardArtwork kind="play" /><span>Play</span>
         </Link>
-        <button className="notsu-destination notsu-destination-editor" type="button" aria-disabled="true" title="Editor — coming soon">
+        <Link className="notsu-destination notsu-destination-editor" to="/editor">
           <CardArtwork kind="editor" /><span>Editor</span>
-        </button>
+        </Link>
       </nav>
       <HomeUpdates />
     </main>
