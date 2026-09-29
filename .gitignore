@@ -1,16 +1,23 @@
-# .NET / MAUI
-**/bin/
-**/obj/
-.vs/
-*.user
-*.suo
-TestResults/
+# Frontend dependencies and output
+node_modules/
+dist/
+coverage/
+*.tsbuildinfo
+*.log
+
+# Rust / Tauri build output
+target/
+src-tauri/gen/schemas/
 
 # Local tools, credentials, and OS files
 .tools/
 .env
 .env.*
 !.env.example
-*.p12
-*.mobileprovision
 .DS_Store
+Thumbs.db
+
+# Editor-local state
+.idea/
+*.suo
+*.user
