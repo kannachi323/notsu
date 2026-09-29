@@ -213,6 +213,12 @@ adopts a patched version. The lockfile includes both client and server tooling.
 
 ## Gates before exposure to the public
 
+The local community now includes friends, private messaging, private realtime
+invalidations and opt-in [friends-only presence](presence.md). Presence adds a
+private settings/lease/quota migration and narrow authenticated RPCs. No raw
+presence rows are published, and no new native capability or hosted origin is
+needed for local verification.
+
 Finish the remaining account controls and cross-platform flows; wire exact hosted
 CSP/CORS origins, recovery templates and HTTPS service URLs. Establish staging/production,
 SMTP delivery, migrations/backups/restore/rollback, monitored failure handling,

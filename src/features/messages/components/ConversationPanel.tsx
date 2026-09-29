@@ -3,9 +3,12 @@ import { Link } from "react-router";
 import { useConversation } from "../useConversation";
 import { markRead } from "../data/messages";
 import { MessageComposer } from "./MessageComposer";
+import { useFriendPresence } from "../../presence/useFriendPresence";
+import { PresenceBadge } from "../../presence/components/PresenceBadge";
 
 export function ConversationPanel({username,identity,revision,onChange}:{username:string;identity:string;revision:number;onChange:()=>void}) {
   const thread=useConversation(username,revision),scroll=useRef<HTMLDivElement>(null);
+  const presence=useFriendPresence(thread.peer?[thread.peer.id]:[],revision);
   const [atBottom,setAtBottom]=useState(true),[readError,setReadError]=useState("");
   const lastRead=useRef(""),olderPosition=useRef<{height:number;top:number}|null>(null),latest=thread.items[0]?.sequence;
   const previousItems=useRef(thread.items);
@@ -36,7 +39,7 @@ export function ConversationPanel({username,identity,revision,onChange}:{usernam
     return()=>document.removeEventListener("visibilitychange",read);
   },[thread.peer?.id,latest,atBottom,thread.available,revision]);
   return <section className="conversation-panel" aria-label={`Conversation with ${thread.peer?.displayName??username}`}>
-    <header className="conversation-heading"><div><h2>{thread.peer?.displayName??username}</h2><Link to={`/players/${username}`}>@{username} · View profile</Link></div><button disabled={thread.busy} onClick={thread.refresh}>Refresh</button></header>
+    <header className="conversation-heading"><div><h2>{thread.peer?.displayName??username}</h2><Link to={`/players/${username}`}>@{username} · View profile</Link><div><PresenceBadge online={thread.peer?presence.get(thread.peer.id):null}/></div></div><button disabled={thread.busy} onClick={()=>{thread.refresh();presence.refresh();}}>Refresh</button></header>
     {thread.error&&<p className="account-error" role="alert">{thread.error}</p>}
     <div className="message-history" ref={scroll} role="region" aria-label="Message history" tabIndex={0} onScroll={()=>{const el=scroll.current;if(el)setAtBottom(el.scrollHeight-el.scrollTop-el.clientHeight<48);}}>
       {thread.next&&<button disabled={thread.busy} onClick={()=>{if(scroll.current)olderPosition.current={height:scroll.current.scrollHeight,top:scroll.current.scrollTop};setAtBottom(false);thread.older();}}>Load earlier messages</button>}

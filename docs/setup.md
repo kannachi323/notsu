@@ -64,7 +64,9 @@ screen separately and connects to configured online services. `/#/players` and
 `/#/players/:username` provide public player lookup; `/#/account/delete` is the
 password-confirmed deletion flow. `/#/friends` opens private friendship/request
 and block management. `/#/messages` and `/#/messages/:username` open the private
-inbox and conversations with accepted friends. Unknown routes return to Home. The home feature owns a
+inbox and conversations with accepted friends. Account also owns the visibility
+control for [friends-only presence](presence.md); the signed-in app maintains a
+bounded heartbeat across routes. Unknown routes return to Home. The home feature owns a
 small, non-persisted Zustand store for its music dropdown. Playback controls and
 the remaining future-feature buttons are presentational only.
 

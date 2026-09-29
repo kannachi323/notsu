@@ -10,6 +10,8 @@ import type { ConnectionCursor } from "../../friends/domain/connections";
 import { ConversationPanel } from "./ConversationPanel";
 import "../../accounts/accounts.css";
 import "../messages.css";
+import { useFriendPresence } from "../../presence/useFriendPresence";
+import { PresenceBadge } from "../../presence/components/PresenceBadge";
 
 export function MessagesScreen(){const id=useAccountStore(state=>state.identity?.id);return <MessagesPage key={id??"guest"} identity={id}/>;}
 function MessagesPage({identity}:{identity?:string}) {
@@ -22,7 +24,8 @@ function MessagesPage({identity}:{identity?:string}) {
     catch(cause){if(!controller.signal.aborted){setError(cause instanceof Error?cause.message:"Could not load conversations.");setPage({items:[],next:null});}}
     finally{if(!controller.signal.aborted)setBusy(false);}
   },[identity]);
-  const refresh=()=>{void load(null);setRevision(value=>value+1);};
+  const presence=useFriendPresence(page.items.map(item=>item.userId));
+  const refresh=()=>{void load(null);presence.refresh();setRevision(value=>value+1);};
   const live=useAccountUpdates(refresh);
   useEffect(()=>{void load(null);return()=>pending.current?.abort();},[load]);
   return <div className="notsu-home account-screen"><HomeHeader/><main className="account-main messages-main">
@@ -32,7 +35,7 @@ function MessagesPage({identity}:{identity?:string}) {
       <div className="messages-layout"><aside className="inbox-panel" aria-label="Conversations"><header><h2>Your conversations</h2><button disabled={busy} onClick={refresh} aria-label="Refresh conversations">↻</button></header>
         {error&&<p className="account-error" role="alert">{error}</p>}
         <nav aria-label="Choose a conversation">{page.items.map(item=><Link key={item.userId} to={`/messages/${item.username}`} aria-current={item.username===username?"page":undefined}>
-          <span className="chat-avatar" aria-hidden="true">{[...item.displayName][0]}</span><span className="inbox-copy"><strong>{item.displayName}</strong><span>{item.preview??"Say hello"}</span></span>{item.unread>0&&<span className="message-unread" aria-label={`${item.unread===100?"100 or more":item.unread} unread messages`}>{item.unread===100?"99+":item.unread}</span>}
+          <span className="chat-avatar" aria-hidden="true">{[...item.displayName][0]}</span><span className="inbox-copy"><strong>{item.displayName}</strong><span>{item.preview??"Say hello"}</span><PresenceBadge online={presence.get(item.userId)}/></span>{item.unread>0&&<span className="message-unread" aria-label={`${item.unread===100?"100 or more":item.unread} unread messages`}>{item.unread===100?"99+":item.unread}</span>}
         </Link>)}</nav>
         {busy&&<p role="status">Loading conversations…</p>}{!busy&&!error&&!page.items.length&&<p className="account-muted">Accepted friends appear here. <Link to="/friends">Find your circle →</Link></p>}
         {page.next&&<button disabled={busy} onClick={()=>void load(page.next)}>Load more conversations</button>}

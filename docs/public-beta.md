@@ -81,7 +81,7 @@ do not change gameplay. Pause/resume must stop time and use a count-in.
 | Shared core | Multi-lane play, holds/shared hits, score/health/mods, deterministic replays and tests | In progress |
 | Presentation | Production assets/skins/sounds, tutorial, settings and results, visual/audio review | In progress |
 | Creator workflow | Import song -> author -> save/reopen -> export -> play without code | In progress |
-| Community | Deployed accounts/maps/friends/messages/moderation, authorization checks | In progress: local accounts, profiles, friends, private messages and live updates |
+| Community | Deployed accounts/maps/friends/messages/moderation, authorization checks | In progress: local accounts, profiles, friends, messages, live updates and opt-in presence |
 | Public beta | Verified rankings, reviewed starter maps, platform releases and operational gates | Pending |
 
 Required validation: timing boundaries, FPS/input/replay equivalence, overlapping
@@ -744,3 +744,53 @@ restart. No production origin, secret, hosted deployment or public route was add
 Presence, reporting/moderation, online maps/rankings, broader outage/reconnect stress,
 capacity testing, Windows/Linux verification, signing, operations and external
 playtests remain required. The full public-beta goal remains active.
+
+### September 29 friends-only presence
+
+Added hidden-by-default online visibility with an account-wide Hidden/Friends only
+control. Friends, the inbox, conversations and accepted-friend profile controls
+show real lease-based status with textual labels. No last-seen time, device list,
+game activity or map information is exposed. Status sharing does not affect
+message access. See [presence behavior and limits](presence.md).
+
+Each signed-in window renews a bounded server-clock lease while visible. Ordered
+updates prevent a late heartbeat from undoing a release; independent windows and
+Auth sessions do not take each other offline. Session revocation cascades leases,
+and hiding expires all clients. Current friendship/block/session checks protect
+every lookup. Existing private own-account revision hints notify friends only on
+transitions; raw presence records remain private and are never replicated.
+
+- `npm test`: 471 passing TypeScript tests across 63 files. New checks cover
+  ownership/input boundaries, exact response membership, latency-adjusted expiry,
+  multiple windows, delayed responses, settings races, account changes, cleanup
+  and error sanitization. Friend lists accumulated beyond 50 entries are split
+  into bounded lookup batches instead of failing their status requests.
+- `npm run test:db`: 216 passing checks across five files. Added private
+  grants/publication, opt-in defaults, friend-only audience, sequence ordering,
+  independent sessions, Auth/lease expiry, quotas, window bounds, reclamation,
+  revoked access and deletion while online. Fixtures roll back.
+- `npm run test:online`: 39 real local integration scenarios pass. Presence
+  cases use genuine independent Auth sessions and actual Worker/PostgREST/Realtime
+  requests to verify hidden/online transitions, exact opaque friend notifications,
+  outsiders, delayed updates, expiry, blocking, bans and sign-out. Disposable
+  accounts, subscriptions and temporary Worker credentials are cleaned up.
+- Browser/macOS app: enabling visibility in the packaged app changed the
+  browser's friend, inbox, conversation and profile indicators to Online. Hiding
+  changed them to Offline without manual refresh, leaving the conversation usable.
+  Status survived desktop navigation to the game menu; after quitting, the lease
+  expired and a browser lookup showed Offline. These were local synthetic accounts,
+  not public players, human playtesting or a shutdown-latency measurement.
+- At 720×600 the visibility panel remained reachable without horizontal overflow,
+  with visible keyboard focus between choices. The viewport was reset. The fresh
+  browser session had no warning/error console entries. Evidence: ignored
+  `.tools/screenshots/presence-browser.png` and `presence-native.png`.
+- Frontend type checking/build, Worker type checking/dry-run and the unsigned
+  macOS debug bundle pass. Presence adds lazy modules; the initial game chunk
+  remains about 508 kB minified / 158 kB gzip with its existing size warning.
+  No dependency, native capability, production credential or hosted origin was added.
+
+Local services and preview data remain available; the desktop verification app
+was quit. The full goal still requires reporting/moderation, online publishing and
+rankings, hosted deployment, broader recovery/outage/load tests, platform and
+performance validation, signing, operations and external playtests. The goal
+remains active; this verified local feature is not a public-ready release.

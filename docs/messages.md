@@ -86,8 +86,9 @@ The hook subscribes to INSERT and UPDATE, coalesces hints briefly, refetches aft
 joining/reconnecting and on focus, and removes subscriptions on navigation/account
 changes. Chat, friends lists and profile connection controls share this mechanism.
 It runs only on these screens, not during gameplay. Disconnection is labeled and
-Refresh remains available. There is no periodic background polling or presence
-inference. Presence/visibility preferences are still required separately.
+Refresh remains available. Message history is not periodically polled. Separate
+[presence lookups](presence.md) update friend status on visible social screens;
+they do not infer online activity from an Auth session or message timestamp.
 
 The local stack now enables Supabase Realtime. The native local CSP overlay permits
 only its exact loopback websocket path; the production CSP still needs real hosted
@@ -110,7 +111,8 @@ a new request/acceptance. These messages are demonstration text, not playtester
 feedback. A 60-message disposable browser fixture exercised earlier-page loading
 and keyboard history scrolling, then was removed. Full reconnect/outage and
 larger-history stress, external abuse review, reporting,
-presence, Windows/Linux and public operations remain unfinished.
+Windows/Linux and public operations remain unfinished. The subsequent
+[presence slice](presence.md) adds opt-in friends-only online indicators.
 
 References reviewed September 29, 2026:
 

@@ -78,8 +78,8 @@ These bounds are not the complete public abuse-control plan. Before deployment,
 add monitored per-IP/user controls for reads and other mutations, bot/signup
 controls, request-spam policy, reporting/moderation, and service-level load tests.
 Private messages and live invalidations now use the rules in [messages](messages.md),
-including blocking on access/send and race tests. Presence must retain these
-boundaries. Raw block-table deletion events are never published; live hints carry
+including blocking on access/send and race tests. Opt-in [presence](presence.md)
+uses the same accepted-friend/block boundary and short-lived leases. Raw block-table deletion events are never published; live hints carry
 only the current account's opaque revision and authorized clients refetch.
 
 ## Verification

@@ -8,6 +8,7 @@ import { AuthFlow } from "./AuthFlow";
 import { ProfileEditor } from "./ProfileEditor";
 import { PasswordRecovery } from "./PasswordRecovery";
 import "../accounts.css";
+import { PresenceSettings } from "../../presence/components/PresenceSettings";
 
 export function AccountScreen() {
   const { identity, profile, profileStatus, profileError, recovery, profileDirty, profileSaving } = useAccountStore();
@@ -42,5 +43,6 @@ export function AccountScreen() {
         !identity ? <AuthFlow /> : recovery ? <PasswordRecovery /> : profileStatus === "ready" ? <ProfileEditor key={identity.id} profile={profile} /> :
         <section className="account-panel"><h2>Your profile</h2>{profileStatus === "error" ? <><p className="account-error" role="alert">{profileError}</p><button onClick={() => void loadOwnProfile()}>Retry loading profile</button></> : <p role="status">Loading your profile…</p>}</section>}
     </div>
+    {identity && profile && !recovery && <PresenceSettings />}
   </main><footer className="notsu-footer">Unofficial community project · Not affiliated with ppy</footer></div>;
 }

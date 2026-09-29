@@ -4,12 +4,14 @@ import { RhythmScreen } from "../features/rhythm/RhythmScreen";
 import { EditorScreen } from "../features/editor/components/EditorScreen";
 import { MapBrowser } from "../features/maps/components/MapBrowser";
 import { lazy, Suspense } from "react";
+import { useAccountStore } from "../features/accounts/accountStore";
 
 const AccountScreen = lazy(() => import("../features/accounts/components/AccountScreen").then(module => ({ default: module.AccountScreen })));
 const PublicProfileScreen = lazy(() => import("../features/accounts/components/PublicProfileScreen").then(module => ({ default: module.PublicProfileScreen })));
 const DeleteAccountScreen = lazy(() => import("../features/accounts/components/DeleteAccountScreen").then(module => ({ default: module.DeleteAccountScreen })));
 const FriendsScreen = lazy(() => import("../features/friends/components/FriendsScreen").then(module => ({ default: module.FriendsScreen })));
 const MessagesScreen = lazy(() => import("../features/messages/components/MessagesScreen").then(module => ({ default: module.MessagesScreen })));
+const PresenceSession = lazy(() => import("../features/presence/components/PresenceSession").then(module => ({ default: module.PresenceSession })));
 
 const router = createHashRouter([
   { path: "/", element: <HomeScreen /> },
@@ -23,4 +25,7 @@ const router = createHashRouter([
   { path: "/messages/:username?", element: <Suspense fallback={<main className="app"><p role="status">Loading messages…</p></main>}><MessagesScreen /></Suspense> },
   { path: "*", element: <Navigate to="/" replace /> },
 ]);
-export function App() { return <RouterProvider router={router} />; }
+export function App() {
+  const id = useAccountStore(state => state.identity?.id);
+  return <><RouterProvider router={router} />{id && <Suspense fallback={null}><PresenceSession key={id} userId={id} /></Suspense>}</>;
+}
