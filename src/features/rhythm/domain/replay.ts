@@ -1,16 +1,17 @@
 import type { Chart, ChartSource } from "./chart";
 import { loadChart } from "./chart";
-import type { Mods } from "./rules";
+import type { Assists, Mods } from "./rules";
 import { RULES_VERSION } from "./rules";
 import { RhythmSession } from "./session";
 
 export type ReplayInput = { atMs: number; action: "press" | "release"; key: number };
 export interface Replay {
-  version: 1;
+  version: 2;
   rulesVersion: typeof RULES_VERSION;
   chartId: string;
   chartHash: string;
   mods: Mods;
+  assists: Assists;
   inputs: ReplayInput[];
 }
 
@@ -20,8 +21,8 @@ export function recordReplay(session: RhythmSession, chartHash: string): Replay 
     if (!keys.has(event.key)) keys.set(event.key, keys.size);
     return { atMs: event.atMs, action: event.action, key: keys.get(event.key)! };
   });
-  const replay: Replay = { version: 1, rulesVersion: RULES_VERSION, chartId: session.chart.id,
-    chartHash, mods: { ...session.mods }, inputs };
+  const replay: Replay = { version: 2, rulesVersion: RULES_VERSION, chartId: session.chart.id,
+    chartHash, mods: { ...session.mods }, assists: { ...session.assists }, inputs };
   validateReplay(replay, session.chart, chartHash);
   return replay;
 }
@@ -32,8 +33,9 @@ export function validateReplay(value: unknown, source: ChartSource, expectedHash
   if (!/^[a-f0-9]{64}$/.test(expectedHash)) throw new Error("Invalid expected chart hash.");
   if (!value || typeof value !== "object") throw new Error("Invalid replay.");
   const replay = value as Partial<Replay>;
-  if (replay.version !== 1 || replay.rulesVersion !== RULES_VERSION || replay.chartId !== chart.id ||
+  if (replay.version !== 2 || replay.rulesVersion !== RULES_VERSION || replay.chartId !== chart.id ||
       replay.chartHash !== expectedHash || !replay.mods || typeof replay.mods.noFail !== "boolean" ||
+      !replay.assists || typeof replay.assists.freezeMotion !== "boolean" || typeof replay.assists.resumed !== "boolean" ||
       typeof replay.mods.autoplay !== "boolean" || !Array.isArray(replay.inputs) || replay.inputs.length > 250000) {
     throw new Error("Replay does not match this map and rules version.");
   }
@@ -59,14 +61,14 @@ export class ReplayPlayer {
   constructor(source: ChartSource, replay: unknown, expectedHash: string) {
     validateReplay(replay, source, expectedHash);
     this.source = loadChart(source);
-    this.replay = { ...replay, mods: { ...replay.mods }, inputs: replay.inputs.map(event => ({ ...event })) };
-    this.session = new RhythmSession(this.source, this.replay.mods);
+    this.replay = { ...replay, mods: { ...replay.mods }, assists: { ...replay.assists }, inputs: replay.inputs.map(event => ({ ...event })) };
+    this.session = new RhythmSession(this.source, this.replay.mods, this.replay.assists);
   }
 
   advance(timeMs: number) {
     if (!Number.isFinite(timeMs)) throw new Error("Replay time must be finite.");
     if (timeMs < this.timeMs) {
-      this.session = new RhythmSession(this.source, this.replay.mods);
+      this.session = new RhythmSession(this.source, this.replay.mods, this.replay.assists);
       this.index = 0;
     }
     while (this.index < this.replay.inputs.length && this.replay.inputs[this.index].atMs <= timeMs) {

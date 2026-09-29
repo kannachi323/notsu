@@ -7,11 +7,11 @@ const system = (raw: string | null, reduced = false) => {
 };
 it("defaults to the system's reduced-motion preference", () => {
   system(null,true);
-  expect(loadSettings()).toEqual({offsetMs:0,volume:.6,hitVolume:.15,skinId:"midnight",reducedMotion:true});
+  expect(loadSettings()).toEqual({offsetMs:0,volume:.6,hitVolume:.15,skinId:"midnight",reducedMotion:true,freezeMotion:false});
 });
 it("clamps corrupt saved settings", () => {
   system('{"offsetMs":9000,"volume":-2,"reducedMotion":false}');
-  expect(loadSettings()).toEqual({offsetMs:250,volume:0,hitVolume:.15,skinId:"midnight",reducedMotion:false});
+  expect(loadSettings()).toEqual({offsetMs:250,volume:0,hitVolume:.15,skinId:"midnight",reducedMotion:false,freezeMotion:false});
 });
 it("falls back on malformed JSON", () => {
   system('invalid');expect(loadSettings().offsetMs).toBe(0);
@@ -24,7 +24,7 @@ it("keeps gameplay available when storage is blocked", () => {
 });
 it("migrates old preferences without resetting their existing values", () => {
   system('{"offsetMs":35,"volume":0.25,"reducedMotion":true}');
-  expect(loadSettings()).toEqual({offsetMs:35,volume:.25,reducedMotion:true,hitVolume:.15,skinId:"midnight"});
+  expect(loadSettings()).toEqual({offsetMs:35,volume:.25,reducedMotion:true,hitVolume:.15,skinId:"midnight",freezeMotion:false});
 });
 it("preserves mute and the selected skin through saving", () => {
   system('{"hitVolume":0,"skinId":"high-contrast"}');
@@ -37,4 +37,10 @@ it("falls back for unknown skin IDs and clamps hit volume", () => {
   expect(loadSettings()).toMatchObject({hitVolume:1,skinId:"midnight"});
   system('{"hitVolume":"bad","skinId":{}}');
   expect(loadSettings()).toMatchObject({hitVolume:.15,skinId:"midnight"});
+});
+it("keeps frozen-line assistance distinct from reduced effects and requires a boolean", () => {
+  system('{"reducedMotion":true,"freezeMotion":"yes"}');
+  expect(loadSettings()).toMatchObject({ reducedMotion: true, freezeMotion: false });
+  system('{"reducedMotion":false,"freezeMotion":true}');
+  expect(loadSettings()).toMatchObject({ reducedMotion: false, freezeMotion: true });
 });

@@ -12,6 +12,9 @@ export function SettingsPanel({ settings, updateSettings }: { settings: Settings
       <label className="motion-choice"><input type="checkbox" checked={settings.reducedMotion} aria-describedby="motion-help"
         onChange={event => updateSettings({ ...settings, reducedMotion: event.target.checked })} /><span>Reduced motion</span></label>
       <p id="motion-help">Use static hit effects and hide movement hints. The authored line movement stays part of gameplay.</p>
+      <label className="motion-choice"><input type="checkbox" checked={settings.freezeMotion} aria-describedby="freeze-help"
+        onChange={event => updateSettings({ ...settings, freezeMotion: event.target.checked })} /><span>Freeze line movement</span></label>
+      <p id="freeze-help">Keep each line in its opening position. This practice assist does not qualify for rankings.</p>
     </section>
     <section className="settings-section" aria-labelledby="audio-title">
       <h2 id="audio-title">Audio and timing</h2>

@@ -26,6 +26,7 @@ export class RhythmAudio {
   private source: AudioBufferSourceNode | null = null;
   private readonly gain = this.context.createGain();
   private startTime = 0;
+  private generation = 0;
 
   constructor() { this.gain.connect(this.context.destination); }
 
@@ -67,17 +68,27 @@ export class RhythmAudio {
     return buffer;
   }
 
-  async start(buffer: AudioBuffer, chart: Chart, volume: number): Promise<void> {
+  async start(buffer: AudioBuffer, chart: Chart, volume: number, positionMs = 0, countInMs = 2000): Promise<boolean> {
+    if (!Number.isFinite(positionMs) || positionMs < -2500 || positionMs > chart.durationMs + 250 ||
+        !Number.isFinite(countInMs) || countInMs < 0 || countInMs > 5000 ||
+        !Number.isFinite(volume) || volume < 0 || volume > 1) throw new Error("Invalid audio playback position or volume.");
     this.stop();
+    const generation = this.generation;
     await this.context.resume();
+    if (generation !== this.generation) return false;
     if (this.context.state !== "running") throw new Error("Audio is suspended. Click Start again to enable playback.");
-    const source = this.context.createBufferSource();
-    source.buffer = buffer;
-    source.connect(this.gain);
     this.gain.gain.value = volume;
-    this.startTime = this.context.currentTime + 2;
-    source.start(this.startTime, chart.audioOffsetMs / 1000, chart.durationMs / 1000);
-    this.source = source;
+    this.startTime = this.context.currentTime + (countInMs - positionMs) / 1000;
+    const from = Math.max(0, positionMs);
+    // The chart clock also runs through silent countdowns and calibrated tails.
+    if (from < chart.durationMs) {
+      const source = this.context.createBufferSource();
+      source.buffer = buffer;
+      source.connect(this.gain);
+      source.start(this.startTime + from / 1000, (chart.audioOffsetMs + from) / 1000, (chart.durationMs - from) / 1000);
+      this.source = source;
+    }
+    return true;
   }
 
   timeAt(eventTime = performance.now()): number {
@@ -94,6 +105,7 @@ export class RhythmAudio {
   }
 
   stop(): void {
+    this.generation++;
     this.hits.stop();
     if (this.source) {
       this.source.stop();

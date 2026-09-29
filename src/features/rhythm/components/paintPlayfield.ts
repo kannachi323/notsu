@@ -15,7 +15,7 @@ export function paintPlayfield(ctx: CanvasRenderingContext2D, width: number, hei
   const time = preview ? Math.max(0, state.session.chart.notes[0].timeMs - APPROACH_MS * .8) : state.timeMs;
   const visible = state.session.visibleStates(time);
   const lanes = state.session.chart.lanes.map(lane => {
-    const pose = lanePoseAt(lane, Math.max(0, time));
+    const pose = lanePoseAt(lane, state.session.assists.freezeMotion ? 0 : Math.max(0, time));
     return { lane, pose, anchor: laneAnchor(pose, pose.length),
       notes: visible.filter(({ note }) => note.laneIds.includes(lane.id)) };
   });
@@ -33,7 +33,7 @@ export function paintPlayfield(ctx: CanvasRenderingContext2D, width: number, hei
       ctx.beginPath(); ctx.moveTo(-24, 0); ctx.lineTo(view.pose.length, 0);
       ctx.moveTo(view.pose.length, -4); ctx.lineTo(view.pose.length, 4); ctx.stroke();
     });
-    if (!state.settings.reducedMotion && !preview) {
+    if (!state.settings.reducedMotion && !state.session.assists.freezeMotion && !preview) {
       const next = view.lane.motion.find(frame => frame.timeMs > time && frame.timeMs - time < 900);
       if (next && (next.x !== view.pose.x || next.y !== view.pose.y || next.angle !== view.pose.angle)) {
         const target = laneAnchor(next, next.length);

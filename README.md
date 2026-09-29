@@ -65,12 +65,16 @@ Use `npm.cmd` when forwarding flags in PowerShell to avoid wrapper argument loss
 - Use **No Fail** for practice or **Autoplay** to watch a chart. These modes never
   qualify for rankings. Results offer replay playback; current replays stay in
   memory until leaving the result flow.
-- Escape or focus loss stops the attempt. Retry starts from a fresh countdown;
-  mid-run resume is deliberately not supported in this prototype.
+- Escape or focus loss pauses the attempt. **Resume** preserves the position and
+  score and gives a three-second count-in; re-grab active hold keys before
+  continuing. Resumed runs are practice. **Retry** starts a fresh attempt.
 - Open **Settings** from the Rhythm menu to choose Midnight or High Contrast, adjust music
   and hit-sound volumes separately, and set timing offset or reduced motion. Reduced motion
   keeps hit highlights static while preserving authored line motion. Only preferences are saved
   locally; audio and results are not persisted.
+- **Freeze line movement** is a separate practice assist in Settings. It preserves
+  each line's opening pose without changing note timing, and excludes the run
+  from rankings. Replays retain both movement assistance and resumed status.
 
 The song chart is an original beat-grid study, not an imported gameplay pattern
 or a finished transcription. Its rhythm and choreography need musical playtesting.

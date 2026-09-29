@@ -10,6 +10,7 @@ interface Props {
   error: string;
   chooseFile: (file: File | undefined) => void;
   start: (mode?: ChartMode, mods?: Mods) => void;
+  freezeMotion?: boolean;
 }
 const choices: { mode: ChartMode; title: string; detail: string; description: string }[] = [
   { mode: "basic", title: "Timing study", detail: "Introduction", description: "A short introduction to taps and holds. Synthesized audio is included." },
@@ -18,7 +19,7 @@ const choices: { mode: ChartMode; title: string; detail: string; description: st
   { mode: "song", title: "Mou Ii Kai?", detail: "The Oral Cigarettes", description: "A 40-second challenge with fast rolls and hold patterns. This is an original beat-grid study, not a finished transcription." },
 ];
 
-export function ChartSelect({ fileName, loading, error, chooseFile, start }: Props) {
+export function ChartSelect({ fileName, loading, error, chooseFile, start, freezeMotion = false }: Props) {
   const [selected, setSelected] = useState<ChartMode>(fileName ? "song" : "basic");
   const [mods, setMods] = useState<Mods>({ ...DEFAULT_MODS });
   const choice = choices.find(choice => choice.mode === selected)!;
@@ -47,7 +48,8 @@ export function ChartSelect({ fileName, loading, error, chooseFile, start }: Pro
       <fieldset className="mod-options"><legend>Play options</legend>
         <label><input type="checkbox" checked={mods.noFail} onChange={event => setMods({ ...mods, noFail: event.target.checked })} /> No Fail</label>
         <label><input type="checkbox" checked={mods.autoplay} onChange={event => setMods({ ...mods, autoplay: event.target.checked })} /> Autoplay</label>
-        {(mods.noFail || mods.autoplay) && <p>Practice and demonstrations do not count toward rankings.</p>}
+        {freezeMotion && <p>Freeze line movement is enabled in Settings.</p>}
+        {(mods.noFail || mods.autoplay || freezeMotion) && <p>Practice and demonstrations do not count toward rankings.</p>}
       </fieldset>
       <button className="primary chart-start" disabled={loading || (selected === "song" && !fileName)} onClick={() => start(selected, mods)}>{mods.autoplay ? "Watch" : "Play"}</button>
     </section>

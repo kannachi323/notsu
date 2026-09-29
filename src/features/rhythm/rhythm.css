@@ -17,6 +17,8 @@
 .mod-options legend { padding: 0 6px; color: var(--muted); }
 .mod-options label { display: flex; align-items: center; gap: 8px; }
 .mod-options p { flex-basis: 100%; font-size: 16px; color: var(--muted); }
+.hold-keys { display: flex; gap: 8px; align-items: center; justify-content: center; margin: 20px 0; }
+.hold-keys kbd { border: 1px solid var(--border); background: var(--bg); padding: 6px 12px; border-radius: 6px; color: var(--text); }
 .canvas-wrap { flex: 1; position: relative; min-height: 320px; }
 .playfield { display: block; width: 100%; height: 100%; position: absolute; inset: 0; }
 .countdown { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; pointer-events: none; }

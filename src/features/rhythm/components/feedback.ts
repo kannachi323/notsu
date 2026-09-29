@@ -31,7 +31,7 @@ export class HitFeedback {
       const state = event.noteId ? session.stateFor(event.noteId) : undefined;
       const ids = state?.note.laneIds ?? session.states.find(state => !state.head)?.note.laneIds ?? [session.chart.lanes[0].id];
       for (const lane of session.chart.lanes.filter(lane => ids.includes(lane.id))) {
-        const pose = lanePoseAt(lane, event.atMs);
+        const pose = lanePoseAt(lane, session.assists.freezeMotion ? 0 : event.atMs);
         const effect: HitEffect = { event, anchor: laneAnchor(pose, pose.length), durationMs: skin.effects.durationMs, reducedMotion };
         if (event.grade === "Miss" && state) {
           const held = state.note.kind === "hold" && state.head !== "Miss";

@@ -1,7 +1,7 @@
 import { loadChart } from "./chart";
 import type { Chart, ChartNote, ChartSource } from "./chart";
 import { ACCURACY_WEIGHTS, DEFAULT_MODS, HEALTH_CHANGE, HIT_WINDOW_MS, APPROACH_MS, gradeFor, maximumComboCredit } from "./rules";
-import type { Grade, Mods } from "./rules";
+import type { Assists, Grade, Mods } from "./rules";
 export { gradeFor } from "./rules";
 export type { Grade } from "./rules";
 
@@ -17,6 +17,7 @@ export interface Summary {
   status: RunStatus;
   failedAtMs: number | null;
   rankedEligible: boolean;
+  assists: Assists;
   combo: number;
   maxCombo: number;
   judged: number;
@@ -59,10 +60,12 @@ export class RhythmSession {
   private eventId = 0;
   private advancedThrough = -Infinity;
   private judgements: JudgementEvent[] = [];
+  private readonly assistance: Assists;
 
-  constructor(source: ChartSource, mods: Partial<Mods> = {}) {
+  constructor(source: ChartSource, mods: Partial<Mods> = {}, assists: Partial<Assists> = {}) {
     this.chart = loadChart(source);
     this.mods = Object.freeze({ noFail: mods.noFail === true, autoplay: mods.autoplay === true });
+    this.assistance = { freezeMotion: assists.freezeMotion === true, resumed: assists.resumed === true };
     this.states = this.chart.notes.map(note => ({ note }));
     this.byId = new Map(this.states.map(state => [state.note.id, state]));
     this.expected = this.states.reduce((sum, { note }) => sum + (note.kind === "hold" ? 2 : 1), 0);
@@ -85,6 +88,11 @@ export class RhythmSession {
 
   inputHistory(): InputEvent[] { return this.history.map(event => ({ ...event })); }
   stateFor(id: string): NoteState | undefined { return this.byId.get(id); }
+  get assists(): Readonly<Assists> { return { ...this.assistance }; }
+  get latestInputMs(): number { return this.history.at(-1)?.atMs ?? -Infinity; }
+  pressedKeys(): string[] { return [...this.pressed]; }
+  heldKeys(): string[] { return [...this.holds].map(state => state.key!); }
+  markResumed(): void { this.assistance.resumed = true; }
 
   advance(timeMs: number): void {
     this.checkTime(timeMs);
@@ -188,7 +196,9 @@ export class RhythmSession {
       health: this.health,
       status: this.status,
       failedAtMs: this.failedAtMs,
-      rankedEligible: this.status === "completed" && !this.mods.noFail && !this.mods.autoplay,
+      rankedEligible: this.status === "completed" && !this.mods.noFail && !this.mods.autoplay &&
+        !this.assistance.freezeMotion && !this.assistance.resumed,
+      assists: { ...this.assistance },
       combo: this.combo, maxCombo: this.maxCombo, judged, expected: this.expected,
       extra: this.extra, counts: { ...this.counts },
       meanErrorMs: this.errorCount ? this.errorSum / this.errorCount : null,

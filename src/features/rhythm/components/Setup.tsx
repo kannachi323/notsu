@@ -45,7 +45,7 @@ export function Setup(props: Props) {
         <button className="back-button" onClick={() => setPage("home")}><span aria-hidden="true">←</span> Home</button>
         <h1 id="menu-title" ref={heading} tabIndex={-1}>{titles[page]}</h1>
       </header>
-      {page === "play" && <ChartSelect fileName={props.fileName} loading={props.loading} error={props.error} chooseFile={props.chooseFile} start={props.start} />}
+      {page === "play" && <ChartSelect fileName={props.fileName} loading={props.loading} error={props.error} chooseFile={props.chooseFile} start={props.start} freezeMotion={props.settings.freezeMotion} />}
       {page === "settings" && <SettingsPanel settings={props.settings} updateSettings={props.updateSettings} />}
       {page === "help" && <HowToPlay />}
     </section>}

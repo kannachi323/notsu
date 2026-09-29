@@ -6,7 +6,7 @@ import { ChartSelect } from "./ChartSelect";
 import { SettingsPanel } from "./SettingsPanel";
 import { Setup } from "./Setup";
 
-const settings = { skinId: "midnight", offsetMs: 0, volume: .6, hitVolume: .15, reducedMotion: false };
+const settings = { skinId: "midnight", offsetMs: 0, volume: .6, hitVolume: .15, reducedMotion: false, freezeMotion: false };
 const actions = { fileName: "", loading: false, error: "", chooseFile: vi.fn(), start: vi.fn() };
 
 it("keeps the home screen to three real navigation choices without setup clutter", () => {

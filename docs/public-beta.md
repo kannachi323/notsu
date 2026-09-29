@@ -119,11 +119,38 @@ milestone; current gameplay still uses Canvas-drawn art.
   judgments. No warning/error console entries during those flows.
 - Browser evidence: ignored `.tools/screenshots/geometry-replay-results.png`.
 
-Shared-core work still includes count-in resume with practice eligibility, the
-separate frozen-choreography assist, and real input/audio validation. Browser
-automation above is functional evidence, not musical playtesting or a hardware
-latency/performance measurement. Native builds and all online services remain
-unverified/unimplemented. No public release has been deployed.
+### September 29 pause and assistance follow-up
+
+Implemented three-second resume from the saved musical position, re-grabbing
+active physical hold keys, cancelling resume when a required hold is released,
+and releasing non-hold keys to recover from lost keyups. Calibration and score
+survive resume; Retry resets resumed status. Audio-start cancellation now prevents
+old asynchronous starts from interfering with a new attempt.
+
+Added the separate **Freeze line movement** setting, keeping each lane's opening
+geometry and matching feedback anchors. Reduced effects continue to preserve
+authored motion. Replay v2 records assistance flags, and pure eligibility excludes
+both resumed and frozen-line attempts.
+
+- `npm test`: 141 passing tests in 15 files, including overlapping hold recovery,
+  count-in boundaries, assistance/replay round trips, frozen geometry, saved
+  preference migration, calibrated offsets and cancellation/concurrent starts.
+- `npm run build`: TypeScript and production web build passed.
+- Browser: verified pause/resume at the saved position, resumed-practice labeling,
+  a real keypress into a shared hold followed by pause, the re-grab prompt, and
+  cancellation when the re-grabbed key was released during count-in.
+- Browser: a No Fail, frozen-line, resumed geometry run completed with all 48
+  misses accounted for; its replay reproduced the same result. No warning/error
+  console entries occurred during this verification run (earlier development
+  hot-reload errors were cleared by reloading before verification).
+  The result identified every practice condition. Screenshots
+  are in ignored `.tools/screenshots/hold-resume.png` and
+  `.tools/screenshots/resumed-practice-results.png`.
+
+Real input/audio and complete held-key resume on physical keyboards still need
+platform validation. Browser automation above is functional evidence, not musical
+playtesting or a hardware latency/performance measurement. Native builds and all
+online services remain unverified/unimplemented. No public release has been deployed.
 
 Mobile, automatic mapping, extra note types, public chat, multiplayer and arbitrary
 HUD/interface skinning are out of scope. No release gate may be silently dropped.

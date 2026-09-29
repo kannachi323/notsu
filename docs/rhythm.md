@@ -51,11 +51,19 @@ weighted earned judgments by all expected judgments plus extras, even before
 completion. Unplayed notes never award score. The HUD separately shows running
 accuracy against resolved judgments and extras.
 
-Escape, focus loss, a hidden document, or suspended audio stops the attempt.
-The current pause screen offers retry or setup, not partial resume. Count-in
-resume with practice eligibility is still required by the public-beta plan.
-Retry creates fresh
-scoring and input state, stops the old source, and schedules a two-second count-in.
+Escape, focus loss, a hidden document, or suspended audio pauses the attempt.
+Resume freezes musical time during a three-second count-in and starts a new audio
+source at the saved sample position, preserving calibration, score and health.
+Resumed attempts are practice-only. Retry creates fresh scoring and input state,
+stops the old source, and schedules the original two-second count-in.
+
+Active holds retain their physical keys across a pause. Resume asks the player to
+re-grab all of them before counting in; re-grabbing does not score another head.
+Releasing a required key during the count-in cancels back to pause without breaking
+the hold. Other pressed keys are released at the pause timestamp so a lost keyup
+cannot leave a tap key stuck. Replay and Autoplay do not require physical re-grabs.
+Pending audio starts are cancelled on exit/focus loss, including races between
+an old context-resume promise and a newer attempt.
 
 ## Chart and audio
 
@@ -69,7 +77,9 @@ references before use. Active sessions own a copy of their chart.
 Smoothstep or linear interpolation reaches authored destinations at their
 timestamps. Lane bounds are constrained during rotations. Tempo conversion and
 beat/tuplet snapping work across tempo changes. Reduced-motion effects preserve
-authored lane motion; a separate frozen-choreography practice assist is pending.
+authored lane motion. **Freeze line movement** is a separate saved practice assist:
+each lane retains its opening position, angle and length, including its feedback
+anchors. Note times and scoring rules stay the same, but the run is unranked.
 
 The song study covers 35,401–75,401 ms of the user's 88-second cut. Its SHA-256 is
 `f9b17daaff3571bb758ecfe1402a2108f64121aca0e0dc053af49fb6a5b0b33f`.
@@ -126,8 +136,11 @@ required again after an application restart; only preferences are persisted.
 
 ## Replay boundary
 
-Versioned replay input records anonymous physical-key IDs, press/release timestamps,
-mods, rules version, and a canonical SHA-256 chart identity. Identity includes
+Replay version 2 records anonymous physical-key IDs, press/release timestamps,
+mods, explicit frozen-line/resumed assistance flags, rules version, and a canonical
+SHA-256 chart identity. Version 1 was an in-memory development format and is rejected
+instead of inventing missing eligibility flags. Replays omit the wall time spent
+paused while reproducing the same chart-time judgments. Identity includes
 timing, choreography, visual membership and audio identity. Verification requires
 the expected hash from the trusted map revision, never from the submitted replay.
 The player and verifier use the same pure session rules; backward seeking creates
@@ -179,6 +192,9 @@ Midnight. The local audio file is never persisted.
   overlapping effects, expiry/caps, static reduced-motion feedback, ribbon layering,
   bounded note sizes, sound voice muting/cleanup, preference migration, and scoring
   equivalence between skins.
+- Cover overlapping-hold re-grabs, lost tap-key keyups, count-in boundaries,
+  assistance eligibility through replay, frozen geometry versus reduced effects,
+  calibrated resume offsets and cancelled/concurrent audio starts.
 - Run `npm run build` and `npm.cmd run tauri -- build --debug --no-bundle`.
 - In a real WebView, load the exact recording, test a rejected file and cancellation,
   play taps and holds, retry repeatedly, lose focus mid-hold, and finish an excerpt.
@@ -189,3 +205,6 @@ Midnight. The local audio file is never persisted.
 - Listen and playtest the actual recording before treating the beat-grid study as
   a polished chart. Test wired and Bluetooth output; do not claim universal timing
   accuracy or cross-platform support based on browser-only checks.
+
+Audio scheduling references: [buffer-source start offsets](https://developer.mozilla.org/en-US/docs/Web/API/AudioBufferSourceNode/start)
+and [output-device timestamp mapping](https://developer.mozilla.org/en-US/docs/Web/API/AudioContext/getOutputTimestamp).
