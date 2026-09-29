@@ -441,3 +441,50 @@ Damaged-record salvage, large-map performance, mapper/platform playtests and the
 remaining presentation work are still open. Recovery preserves competing versions;
 there is no automatic merge. All online community, competitive backend, deployment
 and public-release gates remain unfinished. The full goal stays active.
+
+### September 29 persistent local records and replay history
+
+Browse attempts now save result metadata and versioned replays after recomputation
+with the shared gameplay rules in a bounded worker. Results expose save success,
+failure/retry and personal-best outcomes. Personal bests use completed unassisted
+Standard runs, ordered by score, maximum combo and accuracy; assisted/failed runs
+remain explicitly labeled in history. Exact map revisions, difficulties and rules
+versions stay separate. Editor playtests and studies do not populate map records.
+
+Added persistent replay loading through the actual engine, duplicate-safe attempt
+IDs, transactional result/replay storage, removal/Undo and best recomputation.
+Replay viewing never adds another attempt. Completion now shares one path for
+normal frames and a pause/focus event that advances the session to its end, avoiding
+a finished run stranded on the pause screen. Native and browser records stay local
+and unranked. Limits are 1,000 attempts, 128 MB total replay data and 32 MB per
+replay, without automatic eviction. The map list remains visible while scrolling
+long detail/history panels. See [local records](maps.md#local-records-and-replays).
+
+- `npm test`: 321 passing tests across 42 files. New cases cover score/combo/accuracy
+  ordering, exact ties, assist/failure exclusions, persisted chart/rule/revision
+  identity, shared-engine recomputation, malformed or modified replays, transactional
+  failures, duplicate saves, capacity limits, damaged replay removal/Undo, unavailable
+  storage and worker success/error/timeout cleanup.
+- Type checking, production frontend and macOS debug app packaging pass. Vite
+  reports a 500 kB chunk warning: the main JS bundle is approximately 505 kB
+  minified / 157 kB gzip. Route splitting and real runtime performance measurements
+  remain required; this build result is not a performance certification.
+- Browser: a completed no-input Standard run saved seven misses and a zero-point
+  first local best on the short fixture. A later 1,000,000-point Autoplay run saved
+  to history without replacing that Standard best. Its persistent replay reproduced
+  1,000,000 points, 100% accuracy and seven Perfect judgments. Reload preserved two
+  attempts; replay viewing added none. The older map revision showed zero attempts.
+  Removing the Standard record removed its best, and Undo restored it and its replay.
+  No warning/error console entries appeared in the final verification log.
+- Packaged macOS app: saved an Autoplay practice result, quit and relaunched the app,
+  loaded the stored replay from Browse, and reproduced 1,000,000 points, 100% accuracy
+  and seven Perfect judgments. History still contained one attempt afterward, and
+  no Standard personal best was created from the assisted result.
+- Screenshot evidence: ignored `.tools/screenshots/local-records-browser.png` and
+  `persistent-replay-native.png`.
+
+Device-wide record management for unavailable maps/damaged metadata, record backup,
+large-library pressure/performance checks and the other platform/human playtests
+remain open. There is no account sync, online score submission or human-input
+attestation. Community, ranking services, deployment, signing and public-release
+gates remain unfinished. The full public-beta goal stays active.

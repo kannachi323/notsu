@@ -1,8 +1,9 @@
 import { useEffect, useRef } from "react";
+import type { ReactNode } from "react";
 import type { Summary } from "../domain/session";
 
-export function Results({ summary, title, retry, exit, runLabel, watchReplay, exitLabel = "Home" }: {
-  summary: Summary; title: string; retry: () => void; exit: () => void; runLabel: string; watchReplay?: () => void; exitLabel?: string;
+export function Results({ summary, title, retry, exit, runLabel, watchReplay, recordStatus, retryLabel = "Play again", exitLabel = "Home" }: {
+  summary: Summary; title: string; retry: () => void; exit: () => void; runLabel: string; watchReplay?: () => void; exitLabel?: string; recordStatus?: ReactNode; retryLabel?: string;
 }) {
   const retryButton = useRef<HTMLButtonElement>(null);
   useEffect(() => { retryButton.current?.focus(); }, []);
@@ -15,6 +16,7 @@ export function Results({ summary, title, retry, exit, runLabel, watchReplay, ex
     <dl className="judgements">{Object.entries(summary.counts).map(([grade, count]) => <div key={grade}><dt>{grade}</dt><dd>{count}</dd></div>)}<div><dt>Extra presses</dt><dd>{summary.extra}</dd></div></dl>
     <p className="small muted">Holds count as two judgements: press and release. Extra presses lower accuracy.</p>
     {summary.meanErrorMs !== null && <p className="timing-result">Average timing: <strong>{Math.abs(summary.meanErrorMs).toFixed(0)} ms {summary.meanErrorMs < 0 ? "early" : "late"}</strong></p>}
-    <div className="actions"><button ref={retryButton} className="primary" onClick={retry}>Play again</button>{watchReplay && <button className="quiet" onClick={watchReplay}>Watch replay</button>}<button className="quiet" onClick={exit}>{exitLabel}</button></div>
+    {recordStatus}
+    <div className="actions"><button ref={retryButton} className="primary" onClick={retry}>{retryLabel}</button>{watchReplay && <button className="quiet" onClick={watchReplay}>Watch replay</button>}<button className="quiet" onClick={exit}>{exitLabel}</button></div>
   </section>;
 }

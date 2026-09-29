@@ -5,6 +5,7 @@ import { MAX_MAP_BYTES } from "./data/package";
 import type { LoadedMap } from "./data/package";
 import { favoriteMap, listMaps, readMap, removeMap, restoreMap, storeMap } from "./data/storage";
 import type { MapSummary, StoredMap } from "./data/storage";
+import { loadLocalReplay } from "../records/data/service";
 import type { LocalLevel } from "../rhythm/useRhythmGame";
 
 export function useMapLibrary() {
@@ -47,7 +48,7 @@ export function useMapLibrary() {
     catch (cause) { saved = false; if (mounted.current) setNotice(`Available for this session only. ${message(cause)} Keep the original package to import it again.`); }
     select(loaded, bytes, saved);
   });
-  const play = () => run(async () => {
+  const play = (recordId?: string) => run(async () => {
     const difficulty = selected?.set.difficulties.find(d => d.chart.id === difficultyId);
     if (!selected || !difficulty?.chart.notes.length) throw new Error("This difficulty needs at least one circle before it can be played.");
     const context = decoder.current ??= new AudioContext();
@@ -55,7 +56,9 @@ export function useMapLibrary() {
     if (Math.abs(song.reference.durationMs - selected.set.song.durationMs) > 25 || difficulty.chart.audioOffsetMs + difficulty.chart.durationMs > song.reference.durationMs + 1) {
       throw new Error("The recording duration does not match this map. Repair it in the editor before playing.");
     }
-    if (mounted.current) setPlaying({ chart: difficulty.chart, buffer: song.buffer });
+    const recordSource = { revision: selected.revision, setId: selected.set.id, difficulty: difficulty.name };
+    const savedReplay = recordId ? await loadLocalReplay(recordId, difficulty.chart, recordSource) : undefined;
+    if (mounted.current) setPlaying({ chart: difficulty.chart, buffer: song.buffer, recordSource, savedReplay });
   });
   const favorite = (row: MapSummary) => run(async () => { await favoriteMap(row.revision, !row.favorite); await refresh(); });
   const remove = () => run(async () => {

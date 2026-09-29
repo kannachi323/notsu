@@ -16,6 +16,7 @@ import type { Replay } from "./domain/replay";
 import { DEFAULT_MODS, HIT_WINDOW_MS } from "./domain/rules";
 import type { Mods } from "./domain/rules";
 import { PauseCheckpoint } from "./domain/pause";
+import type { CompletedRun, RecordSource } from "../records/domain/records";
 import { initializeSkins, prepareSkin } from "../skins/useSkinCatalog";
 
 export type Phase = "setup" | "starting" | "countdown" | "playing" | "paused" | "rearming" | "resuming" | "results";
@@ -33,7 +34,7 @@ export type Runtime = {
 };
 type View = { phase: Phase; timeMs: number; summary: Summary; feedback: Feedback | null; countdown: number };
 
-export type LocalLevel = { chart: Chart; buffer: AudioBuffer; editor?: boolean };
+export type LocalLevel = { chart: Chart; buffer: AudioBuffer; editor?: boolean; recordSource?: RecordSource; savedReplay?: Replay };
 export function useRhythmGame(level?: LocalLevel) {
   const initialChart = level?.chart ?? songChart;
   const [settings, setSettings] = useState(loadSettings);
@@ -53,6 +54,8 @@ export function useRhythmGame(level?: LocalLevel) {
   const fingerprint = useRef("");
   const lastReplay = useRef<Replay | null>(null);
   const [hasReplay, setHasReplay] = useState(false);
+  const [completedRun, setCompletedRun] = useState<CompletedRun | null>(null);
+  const attemptId = useRef("");
 
   const publish = () => {
     const current = runtime.current;
@@ -74,6 +77,7 @@ export function useRhythmGame(level?: LocalLevel) {
       current.timeMs = Math.max(current.timeMs, current.session.latestInputMs,
         current.audio?.context.state === "running" ? current.audio.timeAt() - current.settings.offsetMs : current.timeMs);
       advanceSession(current.timeMs);
+      if (current.session.summary().status !== "playing") { finishRun(); publish(); return; }
     }
     current.checkpoint = current.phase === "starting" ? undefined : new PauseCheckpoint(current.session, current.timeMs, !!current.playback);
     current.resumeRemainingMs = undefined; current.resumePending = false;
@@ -83,6 +87,19 @@ export function useRhythmGame(level?: LocalLevel) {
     current.phase = "paused";
     publish();
   };
+
+  function finishRun() {
+    const current = runtime.current;
+    if (current.phase === "results" || current.session.summary().status === "playing") return;
+    if (!current.playback) {
+      try {
+        lastReplay.current = recordReplay(current.session, fingerprint.current); setHasReplay(true);
+        setCompletedRun({ id: attemptId.current, finishedAt: Date.now(), chart: current.session.chart,
+          replay: lastReplay.current, summary: current.session.summary() });
+      } catch (cause) { setError(cause instanceof Error ? cause.message : "This run's replay could not be recorded."); }
+    }
+    current.audio?.stop(); current.feedback.clear(); current.phase = "results";
+  }
 
   function advanceSession(time: number) {
     const current = runtime.current;
@@ -143,13 +160,7 @@ export function useRhythmGame(level?: LocalLevel) {
             consumeFeedback();
             current.feedback.expire(current.timeMs);
           }
-          if (current.session.summary().status !== "playing") {
-            if (!current.playback) {
-              lastReplay.current = recordReplay(current.session, fingerprint.current);
-              setHasReplay(true);
-            }
-            current.audio.stop(); current.feedback.clear(); current.phase = "results";
-          }
+          if (current.session.summary().status !== "playing") finishRun();
         }
         if (now - lastPublish >= 50 || current.phase === "results") { publish(); lastPublish = now; }
       }
@@ -234,7 +245,9 @@ export function useRhythmGame(level?: LocalLevel) {
   async function start(selectedMode: ChartMode = "song", mods: Mods = { ...DEFAULT_MODS }, replay?: Replay) {
     if (["starting", "playing", "countdown", "resuming"].includes(runtime.current.phase)) return;
     const selected = level?.chart ?? chartModes[selectedMode];
-    setMode(selectedMode);
+    setMode(selectedMode); setCompletedRun(null);
+    attemptId.current = crypto.randomUUID();
+    lastReplay.current = replay ?? null; setHasReplay(!!replay);
     const token = ++generation.current;
     setError("");
     runtime.current.feedback.clear();
@@ -275,11 +288,11 @@ export function useRhythmGame(level?: LocalLevel) {
     runtime.current.playback = undefined;
     runtime.current.checkpoint = undefined; runtime.current.resumeRemainingMs = undefined; runtime.current.resumePending = false;
     activeBuffer.current = null;
-    lastReplay.current = null; setHasReplay(false);
+    lastReplay.current = null; setHasReplay(false); setCompletedRun(null);
     setChart(initialChart); publish();
   }
 
-  const retry = () => start(mode, { ...runtime.current.session.mods });
+  const retry = () => start(mode, { ...runtime.current.session.mods }, runtime.current.playback ? lastReplay.current ?? undefined : undefined);
   const watchReplay = () => lastReplay.current && start(mode, lastReplay.current.mods, lastReplay.current);
-  return { runtime, chart, view, settings, updateSettings, fileName, error, loading, chooseFile, start, retry, pause, resume, exit, hasReplay, watchReplay };
+  return { runtime, chart, view, settings, updateSettings, fileName, error, loading, chooseFile, start, retry, pause, resume, exit, hasReplay, watchReplay, completedRun };
 }

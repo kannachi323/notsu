@@ -3,8 +3,8 @@
 Home's **Browse** opens the local collection. Import a `.notsumap` file, search by
 song/artist/mapper/difficulty, filter favorites, select a difficulty, and play it
 with the same audio-clock engine used by the editor. Normal play, No Fail,
-Autoplay and in-session replay are available. Every local attempt is unranked.
-Personal score persistence and online collection/ranking features remain pending.
+Autoplay and persistent local replays are available. Every local attempt is
+unranked. Online collection and ranking features remain pending.
 
 ## Portable format
 
@@ -61,10 +61,44 @@ filename bounds, and atomically replaces the chosen file. No frontend command
 accepts an arbitrary destination path. Map and skin saves share this implementation
 but have separate size limits and extensions.
 
+## Local records and replays
+
+Finished Browse attempts save their result and replay in the separate
+`notsu-records` IndexedDB database. **Personal best** uses completed Standard runs
+without No Fail, Autoplay, frozen lines or resume assistance. Compare score first,
+then maximum combo, then accuracy. Exact ties share performance; the earliest
+saved replay represents a tied best. Revisions, difficulties and rules versions
+remain separate. A short map may be completed with misses and still set a low or
+zero first best under the current health rules.
+
+**Recent attempts** includes assisted and failed runs with explicit labels.
+**Watch replay** loads the exact selected map revision and original song, checks
+the replay, and opens playback through the real engine. The saved result and its
+input stream are recomputed in a worker before saving and before replay loading.
+Playback creates no new attempt; **Watch again** repeats playback rather than
+silently switching to live input. Editor playtests and built-in studies do not
+enter this local map history.
+
+Results show saving, success, personal-best improvement/tie, or failure with a
+retry action. Writes use a stable attempt ID and one transaction for result/replay
+storage, so retries cannot create duplicates. Saving can finish after returning
+to Browse; the collection refreshes on commit. Wait for success before closing
+the app. A storage failure does not invalidate the in-session score or replay.
+
+Storage keeps up to 1,000 attempts and 128 MB of replay data, with 32 MB per replay
+and the existing 250,000-input replay bound. It never evicts old records silently.
+**Remove attempt** offers Undo while this view remains open, until another removal.
+Undo keeps the original replay Blob even if it was damaged; it is not persistent
+Trash. Removing a best recomputes the best from remaining Standard attempts.
+Removing a map package leaves its records intact; reimport the same revision to
+access them. These are device-local records, with no account sync or online rating.
+
 ## Remaining work
 
-Online search/download/publishing, review/moderation, personal records, ratings,
-ranked attempt tickets and persistent replays are not implemented here. Larger
-real libraries need performance/storage-pressure testing. Production platform
+Online search/download/publishing, review/moderation, ratings, ranked attempt
+tickets, cloud replay storage and account sync are not implemented here. Larger
+real libraries need performance/storage-pressure testing and a device-wide record
+manager for unavailable maps and damaged entries. Record portability/backup also
+remains open; browser data clearing removes local results and replays. Production platform
 support, human musical/readability tests and release signing remain open gates.
 See [public-beta progress](public-beta.md) for verified evidence.

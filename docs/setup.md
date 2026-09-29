@@ -69,8 +69,8 @@ per-note or per-frame data crosses the native bridge.
 Audio is selected through the browser's file chooser and decoded locally. There
 is no frontend filesystem permission, telemetry, or uploaded audio. Preferences
 use local storage; imported skin archives and editor drafts/original recordings
-and map packages use separate IndexedDB databases. Replays are
-currently held in memory for the results screen. Publishing/storage/backend
+and map packages use separate IndexedDB databases. Local map results/replays use
+a separate bounded record database; editor/study replays remain in memory. Publishing/storage/backend
 services in the public-beta plan have not been deployed.
 The Rhythm preference key retains its legacy `osu-base` prefix for compatibility
 with earlier browser sessions; new native app identity storage is separate.

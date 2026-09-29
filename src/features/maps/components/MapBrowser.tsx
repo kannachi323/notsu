@@ -4,6 +4,7 @@ import { HomeHeader } from "../../home/components/HomeHeader";
 import { RhythmScreen } from "../../rhythm/RhythmScreen";
 import { useMapLibrary } from "../useMapLibrary";
 import { MapExport } from "./MapExport";
+import { RecordPanel } from "../../records/components/RecordPanel";
 import type { MapSummary } from "../data/storage";
 
 const duration = (ms: number) => `${Math.floor(ms / 60000)}:${String(Math.floor(ms / 1000) % 60).padStart(2, "0")}`;
@@ -49,6 +50,7 @@ export function MapBrowser() {
         <div className="map-secondary">{row && <button disabled={busy} aria-pressed={row.favorite} onClick={() => void library.favorite(row)}>{row.favorite ? "★ Favorited" : "☆ Favorite"}</button>}<MapExport bytes={selected.bytes} title={selected.set.title} /></div>
         <details className="map-file-details"><summary>Package details</summary><p>Revision {selected.revision.slice(0, 12)} · {(selected.bytes.length / 1024 / 1024).toFixed(1)} MB</p><p>Importing changed content keeps earlier revisions. Scores from different revisions must remain separate.</p>
           {selected.saved && <button disabled={busy} onClick={() => void library.remove()}>Remove this revision</button>}</details>
+        <RecordPanel key={`${selected.revision}:${difficulty.chart.id}`} revision={selected.revision} chartId={difficulty.chart.id} busy={busy} watch={id => void library.play(id)} />
       </> : <div className="map-detail-empty"><span aria-hidden="true">↖</span><h2>Choose a map</h2><p>Pick a song to see its difficulties and start playing.</p></div>}
     </aside></div>
   </main><footer className="notsu-footer"><span>Local collection · Offline play</span><span>Unofficial community project · Not affiliated with ppy</span></footer></div>;

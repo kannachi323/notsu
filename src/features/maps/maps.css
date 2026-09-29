@@ -49,3 +49,4 @@
 .local-no-fail { display: flex; align-items: center; gap: 10px; }
 @media (max-width: 1000px) { .map-main { padding: 28px 24px; }.map-heading { align-items: start; }.map-columns { gap: 18px; grid-template-columns: minmax(0, 1fr) minmax(310px, .9fr); }.map-card { gap: 12px; }.map-card-art { display: none; }.map-detail { padding: 22px; } }
 @media (max-width: 760px) { .map-heading { display: block; }.map-import { display: block; margin-top: 24px; }.map-search { flex-wrap: wrap; gap: 12px; }.map-search > label:first-child { flex-basis: 100%; }.map-columns { grid-template-columns: 1fr; }.map-detail-empty { padding: 16px; }.map-heading h1 { font-size: 30px; }.map-notice { flex-wrap: wrap; } }
+@media (min-width: 761px) { .map-list { position: sticky; top: 24px; max-height: calc(100dvh - 48px); overflow-y: auto; padding-right: 4px; } }

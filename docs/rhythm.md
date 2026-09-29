@@ -145,7 +145,10 @@ timing, choreography, visual membership and audio identity. Verification require
 the expected hash from the trusted map revision, never from the submitted replay.
 The player and verifier use the same pure session rules; backward seeking creates
 a fresh session. Invalid ordering, duplicated key transitions, unknown rules and
-wrong map identities are rejected. Results can replay the last local attempt.
+wrong map identities are rejected. Results can replay the last attempt; Browse
+also persists local map results and their input streams for later playback. See
+[local records](maps.md#local-records-and-replays). Playback never creates another
+attempt, and editor/study demonstrations do not enter map history.
 
 Replay validation is not proof of human play. Online attempt tickets, submission,
 server recomputation and suspicious-score moderation are still unimplemented.
