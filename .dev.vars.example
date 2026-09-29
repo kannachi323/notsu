@@ -1,2 +1,5 @@
-# Local publishable/anon key from `supabase status`. Never use a service-role key.
+# Public key for ordinary authenticated/RLS requests. Never put a privileged key here.
 SUPABASE_PUBLISHABLE_KEY=
+# Optional server-only local secret/service-role key for account deletion.
+# Never put this in VITE_* variables, frontend files, Rust, or committed config.
+SUPABASE_SECRET_KEY=

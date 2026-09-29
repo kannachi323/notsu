@@ -91,6 +91,7 @@ describe("account API boundary", () => {
     expect(result.status).toBe(204);
     expect(result.headers.get("Access-Control-Allow-Origin")).toBe(headers.Origin);
     expect(result.headers.get("Access-Control-Allow-Credentials")).toBeNull();
+    expect(result.headers.get("Access-Control-Allow-Methods")).toContain("DELETE");
     for (const Origin of ["null", "https://evil.test", "http://127.0.0.1:1420.evil.test"]) {
       const denied = await app.request("/v1/me/profile", { method: "OPTIONS", headers: { ...headers, Origin } }, env);
       expect(denied.status).toBe(403);

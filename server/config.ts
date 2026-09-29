@@ -1,6 +1,8 @@
 export interface Bindings {
   SUPABASE_URL: string;
   SUPABASE_PUBLISHABLE_KEY: string;
+  // Optional server-only secret, used exclusively by account deletion.
+  SUPABASE_SECRET_KEY?: string;
   ALLOWED_ORIGINS: string;
 }
 

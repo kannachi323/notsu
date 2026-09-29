@@ -60,7 +60,9 @@ server fallback requirements. `/#/` opens the notsu home screen; `/#/rhythm` ope
 the existing prototype; `/#/editor` opens the local creator workflow, and
 `/#/browse` opens the local map library. The data
 router enables unsaved-draft navigation guards. `/#/account` loads the account
-screen separately and connects to configured online services. Unknown routes return to Home. The home feature owns a
+screen separately and connects to configured online services. `/#/players` and
+`/#/players/:username` provide public player lookup; `/#/account/delete` is the
+password-confirmed deletion flow. Unknown routes return to Home. The home feature owns a
 small, non-persisted Zustand store for its music dropdown. Playback controls and
 the remaining future-feature buttons are presentational only.
 

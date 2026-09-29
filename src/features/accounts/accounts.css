@@ -7,3 +7,40 @@
 .account-form-links { display: flex; gap: 4px 18px; flex-wrap: wrap; margin-top: 12px; }.account-form-links button { border: 0; background: transparent; color: #a8dce9; padding: 10px 0; min-height: 44px; }.account-session-note { margin: 24px 0 0; padding-top: 22px; border-top: 1px solid #2c3b47; color: #a7bac1; font-size: 16px; line-height: 1.6; }.account-actions { display: flex; gap: 12px; flex-wrap: wrap; }.account-error, .account-notice { padding: 14px 16px; border-radius: 8px; font-size: 16px; line-height: 1.6; margin: 18px 0; border: 1px solid #724659; color: #ffe0e8; background: #311d2a; }.account-notice { border-color: #39687b; color: #d1effa; background: #102c3a; }.account-notice p { margin-bottom: 12px; }.notsu-home .account-guest { display: inline-flex; gap: 24px; align-items: center; margin-top: 18px; min-height: 48px; border-bottom: 1px solid #3b5b69; color: #bde7f2; }.account-identity button { background: transparent; }
 @media (max-width: 880px) { .account-main { padding: 30px 8px; }.account-columns { gap: 28px; grid-template-columns: minmax(200px,.7fr) minmax(320px,1fr); }.account-panel { padding: 24px; }.account-heading h1 { font-size: 34px; } }
 @media (max-width: 680px) { .account-columns { grid-template-columns: 1fr; gap: 24px; }.account-summary { padding: 0; }.account-orbit { display: none; }.account-summary h2 { font-size: 24px; }.account-summary > .account-muted { margin-bottom: 0; }.account-heading { margin-bottom: 26px; }.account-identity { margin-top: 20px; }.account-panel { padding: 22px; } }
+
+.account-profile-links { display: flex; flex-direction: column; align-items: start; }
+.notsu-home .account-delete-link { display: block; width: fit-content; margin-top: 18px; padding: 10px 0; color: #d9a5b5; font-size: 16px; }
+.account-narrow { max-width: 720px; }
+.account-delete-identity { overflow-wrap: anywhere; padding-top: 16px; border-top: 1px solid #3e3441; }
+.account-delete-identity strong { font-weight: 550; }
+.account-screen .account-danger { background: #552b3b; border-color: #b57489; color: #ffedf2; }
+.account-screen .account-danger:hover:not(:disabled) { background: #714056; }
+.player-main { padding-top: 24px; }
+.player-main .account-heading { margin-bottom: 20px; }
+.player-main .account-heading > a { margin-bottom: 10px; padding: 4px 0; }
+.player-main .account-heading h1 { font-size: 32px; }
+.player-search { display: flex; align-items: end; flex-wrap: wrap; gap: 16px; padding: 16px 20px; }
+.player-search label { flex: 1; margin: 0; min-width: 180px; gap: 6px; }
+.player-search > button { min-height: 48px; }
+.player-search > .account-error { flex-basis: 100%; margin: 0; }
+.player-card { margin-top: 20px; padding: 28px; }
+.player-profile-head { display: flex; align-items: center; gap: 40px; min-width: 0; }
+.player-profile-head > div:last-child { min-width: 0; }
+.player-profile-head .account-orbit { flex-shrink: 0; width: 96px; height: 96px; margin: 0 12px; }
+.player-profile-head .account-orbit::after { inset: 46px -16px; }
+.player-profile-head .account-orbit > i { left: 42px; }
+.player-profile-head .account-orbit > span { width: 72px; height: 72px; font-size: 32px; }
+.player-profile-head h2 { font-size: 34px; overflow-wrap: anywhere; }
+.player-profile-head p:last-child { margin-bottom: 0; }
+.player-eyebrow { text-transform: uppercase; letter-spacing: .15em; font-size: 13px; color: #aa97dc; margin-bottom: 12px; }
+.player-about { margin-top: 22px; border-top: 1px solid #2d3c47; padding-top: 16px; max-width: 680px; }
+.player-about h3 { font-size: 16px; color: #a7bac1; font-weight: 500; }
+.player-about .account-bio { margin-bottom: 0; }
+.player-status { margin: 36px 0; }
+@media (max-width: 680px) {
+  .player-card { padding: 24px; }.player-profile-head { gap: 20px; }.player-profile-head h2 { font-size: 28px; }
+  .player-profile-head .account-orbit { display: grid; width: 80px; height: 80px; margin: 0; }
+  .player-profile-head .account-orbit > span { width: 60px; height: 60px; font-size: 26px; }
+  .player-profile-head .account-orbit::after { inset: 38px -10px; }.player-profile-head .account-orbit > i { left: 33px; }
+  .player-profile-head .account-muted { font-size: 14px; }
+}

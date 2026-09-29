@@ -30,11 +30,13 @@ export function AccountScreen() {
       <div className="account-orbit" aria-hidden="true"><i /><span>{profile ? [...profile.displayName][0]?.toUpperCase() : "n"}</span></div>
       <h2>{profile?.displayName || (identity ? "Welcome to notsu" : "Play as a guest")}</h2>
       {profile ? <><p className="account-handle">@{profile.username}</p>{profile.bio && <p className="account-bio">{profile.bio}</p>}</> : <p className="account-muted">Local maps and the editor are yours to explore, with or without an account.</p>}
+      <div className="account-profile-links">{profile && <Link className="account-guest" to={`/players/${profile.username}`}>View public profile →</Link>}<Link className="account-guest" to="/players">Find a player →</Link></div>
       <Link className="account-guest" to="/browse">Browse local maps <span aria-hidden="true">↗</span></Link>
       {identity && <div className="account-identity"><p>Signed in as<br /><strong>{identity.email}</strong></p>
         <button disabled={busy || profileSaving} onClick={() => void leave()}>{busy ? "Signing out…" : "Sign out"}</button>
         {confirmLeave && profileDirty && <div className="account-notice"><p>Discard your unsaved profile changes and sign out?</p><div className="account-actions"><button disabled={busy || profileSaving} onClick={() => void leave(true)}>Discard and sign out</button><button onClick={() => setConfirmLeave(false)}>Keep editing</button></div></div>}
-        {error && <p role="alert" className="account-error">{error}</p>}</div>}
+        {error && <p role="alert" className="account-error">{error}</p>}
+        {!recovery && <Link className="account-delete-link" to="/account/delete">Delete account</Link>}</div>}
     </aside>
       {!configuration ? <section className="account-panel"><h2>Local play is ready</h2><p>Online accounts are unavailable in this build. You can play, create maps and save local records.</p><Link className="account-guest" to="/rhythm">Start playing →</Link></section> :
         !identity ? <AuthFlow /> : recovery ? <PasswordRecovery /> : profileStatus === "ready" ? <ProfileEditor key={identity.id} profile={profile} /> :

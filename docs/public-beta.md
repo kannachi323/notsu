@@ -583,3 +583,57 @@ service, public account or production deployment was created. Account deletion,
 public player pages/moderation, remaining account settings and cross-platform
 coverage, friends/messages/presence, online maps/rankings and all broader release
 gates remain unfinished. The complete public-beta goal stays active.
+
+### September 29 public profiles and account deletion
+
+Added exact-username player lookup and public profile pages. Guests can read the
+same public name/bio/profile-created date as signed-in players, with loading,
+missing-user and retry states. The account screen links to the public page and
+back to editing. Public content is rendered as text; no email, invented ranking,
+presence or account-verification badge is exposed. A renamed username changes its
+current profile address; permanent links/name policy remain part of release work.
+
+Added a separate account-deletion screen with current-password authentication and
+an exact `DELETE` confirmation. A temporary, non-persisting Auth client obtains a
+fresh password session for the same identity; the Worker independently verifies
+its live session and signed password-authentication timestamp. Ordinary data
+requests keep the caller's JWT and public key. Only the narrow deletion adapter
+uses a separate Worker secret to hard-delete the verified caller through Auth.
+There is no caller-selected user ID or generic admin route. Local game data stays
+on the device. See [deletion semantics and limits](online.md).
+
+- `npm test`: 414 passing tests in 52 files. Added freshness/identity checks,
+  isolated admin-key use, explicit confirmation, forged/revoked-token denial,
+  missing-secret rejection, lost-response handling, temporary-session cleanup,
+  deleted-account client disposal and public-profile response validation.
+- `npm run test:online`: 18 real local scenarios pass. The new scenarios reject
+  target-ID injection, incorrect password and edited JWT claims; age a disposable
+  password proof and refresh it through real Auth; delete the fixture account;
+  confirm profile removal and denial of old sessions, password sign-in, refresh
+  and direct PostgREST writes. The other account remains intact. Fixtures and the
+  private Worker env file are removed afterward. No hosted services are touched.
+- Browser UI: own/public navigation, exact-name and uppercase/@ lookup, missing
+  profile, signed-out viewing, unsaved-edit guard before deletion, disabled
+  confirmation and cancellation all passed. The preview account was preserved.
+  A fresh browser tab had no warning/error entries after sign-in, deletion-screen
+  cancellation and profile navigation. Development hot reload had left stale
+  router-blocker warnings in the earlier tab; they did not reproduce in the fresh
+  session. At 720×600 there was no horizontal overflow.
+- macOS debug app: guest exact-name lookup loaded the same real local profile.
+  Frontend/native packaging and Worker dry-run build pass. The initial game chunk
+  remains about 507 kB / 157 kB gzip with the existing size warning. Account/profile
+  screens are separate lazy chunks sharing the Auth SDK.
+- UI confirmation/cancellation was checked, but the permanent-delete button was
+  not submitted interactively. Real irreversible deletion was verified through
+  automated disposable local accounts. Completed browser/native deletion forms,
+  Windows/Linux behavior and broader outage/race/platform tests remain release gates.
+- Screenshot evidence: ignored `.tools/screenshots/public-profile-browser.png`
+  and `public-profile-native.png`. A scan confirmed the local admin credential is
+  absent from the frontend build and native source.
+
+The local Worker now has the separate deletion binding in ignored `.dev.vars`;
+no production key, hosted service, public deployment or new native capability was
+added. Friends, private messaging, presence, blocking/reporting/moderation,
+rankings and online map publishing are still required. Finalize deletion retention
+for those records and backups before release. Complete operational, performance,
+platform and public-playtest gates in the full plan. The goal remains active.

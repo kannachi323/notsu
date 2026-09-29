@@ -1,7 +1,7 @@
 // Real local Auth + PostgREST + PostgreSQL + workerd. No hosted URL override.
 import assert from "node:assert/strict";
 import { execFileSync, spawn } from "node:child_process";
-import { createWriteStream, mkdirSync } from "node:fs";
+import { createWriteStream, mkdirSync, mkdtempSync, writeFileSync, rmSync } from "node:fs";
 import { randomUUID } from "node:crypto";
 import { once } from "node:events";
 import { createServer } from "node:net";
@@ -24,8 +24,14 @@ probe.listen({ host: "127.0.0.1", port: 8791, exclusive: true });
 await once(probe, "listening");
 await new Promise((resolve, reject) => probe.close((error) => error ? reject(error) : resolve()));
 mkdirSync(".tools/online", { recursive: true });
+// Explicit env file overrides ambient .dev.vars; secrets never appear in command
+// arguments or committed config. This disposable file is private to this test run.
+const secretDirectory = mkdtempSync(".tools/online/account-test-");
+const secretFile = `${secretDirectory}/worker.env`;
+writeFileSync(secretFile, `SUPABASE_SECRET_KEY=${status.SERVICE_ROLE_KEY}\n`, { mode: 0o600 });
 const log = createWriteStream(".tools/online/integration-worker.log", { flags: "w" });
 const worker = spawn(process.execPath, ["node_modules/wrangler/bin/wrangler.js", "dev", "--local", "--port", "8791",
+  "--env-file", secretFile,
   "--var", `SUPABASE_PUBLISHABLE_KEY:${key}`, "--var", `SUPABASE_URL:${status.API_URL}`,
   "--var", "ALLOWED_ORIGINS:http://127.0.0.1:1420"], { stdio: ["ignore", "pipe", "pipe"],
   env: { ...process.env, WRANGLER_SEND_METRICS: "false", CI: "true" } });
@@ -44,8 +50,12 @@ async function createAccount(label, verified = true) {
   accounts.push(data.user.id);
   const client = publicClient();
   const login = await client.auth.signInWithPassword({ email, password });
-  return { id: data.user.id, client, token: login.data.session?.access_token, login };
+  return { id: data.user.id, email, client, token: login.data.session?.access_token, login };
 }
+const deletion = (token, body = { confirmation: "DELETE" }) => fetch(`${endpoint}/v1/me/account`, {
+  method: "DELETE", headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+  body: JSON.stringify(body), signal: AbortSignal.timeout(20_000),
+});
 
 try {
   const deadline = Date.now() + 30_000;
@@ -134,11 +144,66 @@ try {
     const write = await b.client.rpc("save_profile", { p_username: profileB.username, p_display_name: "Banned", p_bio: "" });
     assert.equal(write.error?.code, "42501");
   });
+  const c = await createAccount("delete-account");
+  const profileC = { username: `del_${suffix}`, displayName: "Disposable player", bio: "Local deletion check" };
+  assert.equal((await request("/v1/me/profile", c.token, profileC)).status, 200);
+  const otherSession = publicClient();
+  assert.equal((await otherSession.auth.signInWithPassword({ email: c.email, password })).error, null);
+  const otherAuthSession = (await otherSession.auth.getSession()).data.session;
+  const otherToken = otherAuthSession.access_token;
+  // Keep an unrotated token from a separate session, so the later failure proves
+  // deletion revoked it rather than an earlier refresh having consumed it.
+  const refreshToken = otherAuthSession.refresh_token;
+  assert.equal((await request("/v1/me/profile", otherToken)).status, 200);
+  await check("deletion rejects caller-selected victims and incomplete confirmation", async () => {
+    assert.equal((await deletion(c.token, { confirmation: "DELETE", id: b.id })).status, 400);
+    assert.equal((await deletion(c.token, { confirmation: "delete" })).status, 400);
+    assert.equal((await admin.auth.admin.getUserById(c.id)).error, null);
+  });
+  await check("an incorrect password cannot produce deletion authorization", async () => {
+    assert.equal((await publicClient().auth.signInWithPassword({ email: c.email, password: "wrong-local-password" })).error?.code, "invalid_credentials");
+    assert.equal((await admin.auth.admin.getUserById(c.id)).error, null);
+  });
+  await check("edited password proof claims fail real signature verification", async () => {
+    const parts = c.token.split(".");
+    const claims = JSON.parse(Buffer.from(parts[1], "base64url").toString());
+    parts[1] = Buffer.from(JSON.stringify({ ...claims, amr: [{ method: "password", timestamp: 1 }] })).toString("base64url");
+    assert.equal((await deletion(parts.join("."))).status, 401);
+  });
+  await check("an old password proof is denied after a genuine token refresh", async () => {
+    // Age only this disposable fixture's authentication method, then let Auth sign
+    // the refreshed JWT. This exercises real claims without sleeping for two minutes.
+    const claims = JSON.parse(Buffer.from(c.token.split(".")[1], "base64url").toString());
+    assert.match(claims.session_id, /^[0-9a-f-]{36}$/);
+    execFileSync("docker", ["exec", "supabase_db_notsu-local", "psql", "-U", "postgres", "-d", "postgres", "-X", "-v", "ON_ERROR_STOP=1", "-c",
+      `update auth.mfa_amr_claims set updated_at = now() - interval '10 minutes' where session_id = '${claims.session_id}' and authentication_method = 'password'`], { stdio: "pipe" });
+    const refreshed = await c.client.auth.refreshSession();
+    assert.equal(refreshed.error, null);
+    const result = await deletion(refreshed.data.session.access_token);
+    assert.equal(result.status, 403);
+    assert.equal((await result.json()).error.code, "reauthentication_required");
+  });
+  await check("fresh password confirmation hard-deletes the account and public profile", async () => {
+    const fresh = await c.client.auth.signInWithPassword({ email: c.email, password });
+    assert.equal(fresh.error, null);
+    assert.equal((await deletion(fresh.data.session.access_token)).status, 204);
+    assert.equal((await admin.auth.admin.getUserById(c.id)).error?.code, "user_not_found");
+    assert.equal((await request(`/v1/profiles/${profileC.username}`)).status, 404);
+  });
+  await check("deleted accounts lose old sessions, refresh tokens and direct database writes", async () => {
+    assert.ok([401, 403].includes((await request("/v1/me/profile", otherToken)).status));
+    const stale = createClient(status.API_URL, key, { ...options, global: { headers: { Authorization: `Bearer ${otherToken}` } } });
+    assert.equal((await stale.rpc("save_profile", { p_username: profileC.username, p_display_name: "Stale", p_bio: "" })).error?.code, "42501");
+    assert.ok((await publicClient().auth.refreshSession({ refresh_token: refreshToken })).error);
+    assert.equal((await publicClient().auth.signInWithPassword({ email: c.email, password })).error?.code, "invalid_credentials");
+    assert.ok([401, 403].includes((await deletion(c.token)).status));
+    assert.equal((await admin.auth.admin.getUserById(b.id)).error, null);
+  });
   console.log(`${checks} real online integration checks passed.`);
 } finally {
   for (const id of accounts) {
     const { error } = await admin.auth.admin.deleteUser(id);
-    if (error) { console.error("Could not remove a local test account."); process.exitCode = 1; }
+    if (error && error.code !== "user_not_found") { console.error("Could not remove a local test account."); process.exitCode = 1; }
   }
   if (worker.exitCode === null) {
     const stopped = once(worker, "exit");
@@ -146,4 +211,5 @@ try {
     await stopped;
   }
   log.end();
+  rmSync(secretDirectory, { recursive: true });
 }

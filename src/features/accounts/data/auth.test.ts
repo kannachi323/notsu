@@ -22,7 +22,7 @@ describe("in-memory Auth lifecycle", () => {
     expect(mock.create).not.toHaveBeenCalled();
     expect(auth.accountClient()).toBe(auth.accountClient());
     expect(mock.create).toHaveBeenCalledOnce();
-    expect(mock.create.mock.calls[0][2].auth).toEqual({ persistSession: false, autoRefreshToken: true, detectSessionInUrl: false });
+    expect(mock.create.mock.calls[0][2].auth).toMatchObject({ persistSession: false, autoRefreshToken: true, detectSessionInUrl: false, storageKey: expect.stringMatching(/^notsu-session-/) });
   });
   it("retains recovery across refreshes, but not across different accounts", async () => {
     const auth = await import("./auth"), { useAccountStore } = await import("../accountStore");
@@ -52,5 +52,20 @@ describe("in-memory Auth lifecycle", () => {
   it("does not display raw authentication service details", async () => {
     const { authError } = await import("./auth");
     expect(authError({ code: "unknown", message: "secret private details" } as AuthError).message).not.toContain("private details");
+  });
+  it("forgets a deleted identity without another server request and replaces its client", async () => {
+    const auth = await import("./auth"), { useAccountStore } = await import("../accountStore");
+    auth.accountClient(); mock.callback!("SIGNED_IN", session("one"));
+    await auth.forgetDeletedAccount("one");
+    expect(useAccountStore.getState().identity).toBeNull();
+    expect(mock.signOut).not.toHaveBeenCalled();
+    auth.accountClient(); expect(mock.create).toHaveBeenCalledTimes(2);
+  });
+  it("does not clear a different identity after an earlier deletion completes", async () => {
+    const auth = await import("./auth"), { useAccountStore } = await import("../accountStore");
+    auth.accountClient(); mock.callback!("SIGNED_IN", session("two"));
+    await auth.forgetDeletedAccount("one");
+    expect(useAccountStore.getState().identity?.id).toBe("two");
+    auth.accountClient(); expect(mock.create).toHaveBeenCalledOnce();
   });
 });

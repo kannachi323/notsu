@@ -5,7 +5,8 @@ import type { Bindings } from "../../config";
 import { readConfig } from "../../config";
 import { ApiError } from "../../errors";
 import { databaseError, profileColumns, requestClient, requireAccount, toProfile } from "./data/supabase";
-import { readProfileBody } from "./data/profileBody";
+import { readAccountBody } from "./data/accountBody";
+import { deleteAuthenticatedAccount, requireRecentPassword } from "./data/deleteAccount";
 
 type AccountEnv = { Bindings: Bindings; Variables: { db: SupabaseClient; userId: string } };
 export const accounts = new Hono<AccountEnv>();
@@ -47,7 +48,7 @@ accounts.put("/me/profile", async (c) => {
     throw new ApiError(415, "json_required", "Send profile details as JSON.");
   }
   let input;
-  try { input = parseProfileInput(await readProfileBody(c.req.raw)); }
+  try { input = parseProfileInput(await readAccountBody(c.req.raw)); }
   catch (error) {
     if (error instanceof ApiError) throw error;
     throw new ApiError(400, "invalid_profile", error instanceof SyntaxError
@@ -59,4 +60,18 @@ accounts.put("/me/profile", async (c) => {
   if (error) throw databaseError(error.code);
   if (!data || typeof data !== "object") throw databaseError("");
   return c.json({ profile: toProfile(data) });
+});
+
+accounts.delete("/me/account", async (c) => {
+  if (c.req.header("Content-Type")?.split(";")[0].trim().toLowerCase() !== "application/json") {
+    throw new ApiError(415, "json_required", "Send confirmation as JSON.");
+  }
+  const input = await readAccountBody(c.req.raw);
+  if (!input || typeof input !== "object" || Array.isArray(input) ||
+      Object.keys(input).length !== 1 || !("confirmation" in input) || input.confirmation !== "DELETE") {
+    throw new ApiError(400, "confirmation_required", "Type DELETE to confirm permanent account deletion.");
+  }
+  requireRecentPassword(c.req.header("Authorization")!.slice(7), c.get("userId"));
+  await deleteAuthenticatedAccount(c.env, c.get("userId"));
+  return c.body(null, 204);
 });

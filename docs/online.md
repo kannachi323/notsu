@@ -2,7 +2,11 @@
 
 The full account/community release is still in progress. The account screen at
 `/#/account` implements sign-up, email verification, sign-in, recovery, profile
-editing and sign-out against real Supabase Auth and the Hono profile API. Services
+editing, sign-out and permanent account deletion against real Supabase Auth and
+the Hono API. Public player pages at `/#/players/:username` work while signed out;
+`/#/players` looks up exact usernames. A deleted or renamed profile releases its
+former handle, which can be reused. Handles are current addresses, not permanent
+identity links. Services
 are configured at build time; an unconfigured build explains that online accounts
 are unavailable. No hosted account service has been deployed. Existing guest/offline
 gameplay, maps and records continue independently.
@@ -37,9 +41,9 @@ Profile editing displays errors/retry and guards unsaved changes on navigation,
 sign-out and browser unload. Pending loads cannot overwrite a newer save or another
 account's profile. A profile-service outage retains account identity and offers
 retry; local play remains accessible. Native close/unload behavior and long-running
-network/refresh stress tests still need broader platform coverage. Account deletion,
-public player-profile screens, profile moderation, optional persistent sessions,
-and additional account controls remain unfinished.
+network/refresh stress tests still need broader platform coverage. Profile
+moderation, optional persistent sessions and additional account controls remain
+unfinished.
 
 ## Implemented API
 
@@ -53,6 +57,7 @@ The entry is `server/app.ts`; feature routes/adapters live under
 | `GET /v1/profiles/:username` | Public profile, or 404 |
 | `GET /v1/me/profile` | Verified caller's profile, or `null` before onboarding |
 | `PUT /v1/me/profile` | Atomically create/update username, display name and bio |
+| `DELETE /v1/me/account` | Fresh password proof + explicit confirmation; permanently delete caller |
 
 Profile requests accept JSON `{ username, displayName, bio }` only. Usernames
 normalize to lowercase and use 3–20 ASCII letters, digits or underscores, starting
@@ -67,8 +72,8 @@ Protected routes accept only bearer tokens, validate identity against Supabase
 Auth, and then check a live verified account/session in PostgreSQL. Cookies,
 caller-supplied account IDs and user-editable metadata cannot establish identity.
 Every request gets its own non-persisting Supabase client. Database calls retain
-the user's JWT and a publishable/anon key. The Worker rejects secret/service-role
-configuration and requires exact allowed origins; it does not enable credentialed
+the user's JWT and a publishable/anon key. The ordinary data client rejects
+secret/service-role keys. The API requires exact allowed origins; it does not enable credentialed
 CORS. CORS is not authorization. Sensitive responses use `private, no-store`, and
 unexpected errors log only a request ID/event, never raw provider errors or tokens.
 
@@ -87,12 +92,47 @@ anonymous status, soft deletion, ban and session expiry. Both RLS writes and the
 API use that check, so directly calling PostgREST does not bypass it. Client writes
 cannot change identity/timestamps or delete an account. `save_profile` is a
 security-invoker RPC with column-limited writes; it does not elevate callers.
-Hard deletion of an Auth user cascades their profile, but the complete deletion
-workflow and retention rules for future community data are not implemented.
+Hard deletion of an Auth user cascades their profile and sessions. Retention and
+deletion rules for future community data must be added with those features.
 
 No rankings, messages, friends, presence, map publishing, uploads or administrative
 endpoints have been exposed in this slice. Add grants/RLS and adversarial tests in
 the same migration as each future feature.
+
+## Permanent account deletion
+
+The account screen links to a separate confirmation page. Unsaved profile edits
+are guarded before navigation; deletion itself blocks navigation while pending.
+The user enters their current password and the exact word `DELETE`. The password
+goes directly to Supabase Auth through an isolated memory-only client with its
+own session namespace; it never goes to the Worker. The app requires the fresh
+session's user ID to match the signed-in identity and rechecks that identity
+before sending the destructive request.
+
+The Worker first verifies the exact bearer token through Auth and the live-session
+check, then reads its signed `amr` claim. Password authentication must be no more
+than 120 seconds old (five seconds of future clock tolerance); token `iat`, refresh,
+recovery, and user-editable metadata cannot satisfy this check. This limits an old
+session's ability to delete; possession of a fresh password-authenticated token is
+still sufficient during that window. Do not present this as protection against all
+token theft. Clients cannot supply a target user ID or a password in the body.
+
+Only the deletion adapter accepts the optional server-only `SUPABASE_SECRET_KEY`
+binding and calls `auth.admin.deleteUser(verifiedUserId, false)`. It never exposes
+a general administrative route or uses this key for ordinary profile/RLS requests.
+Without this binding, deletion fails closed while ordinary account features keep
+working. For hosted deployments provision it as a Worker secret, never as `VITE_*`,
+Rust configuration, a committed variable or a command-line argument.
+
+A confirmed deletion returns 204 and drops the app's memory session. The client
+never retries deletion automatically or reports success for an uncertain response.
+After an ambiguous upstream error the server performs one account lookup and can
+confirm success only when Auth explicitly says the account is absent. Otherwise
+the UI explains that the result could not be confirmed and asks the player to
+check sign-in. Repeated requests after deletion are denied by normal authentication;
+there is no persistent deletion receipt yet. Failed attempts best-effort sign out
+the temporary proof session; network outages can prevent that cleanup. Local maps,
+drafts, skins, preferences and records are independent and remain on the device.
 
 ## Local development and verification
 
@@ -115,9 +155,14 @@ npm run api:build
 `test:db` runs transactional pgTAP authorization tests that roll back all fixtures.
 `test:online` refuses a non-local Supabase URL, starts a temporary Worker on port
 8791, creates real local Auth accounts, signs in using passwords and tests API and
-direct PostgREST access. It deletes its accounts and stops its Worker in `finally`.
-It reads the local admin key only into the test process; that key never enters the
-Worker or frontend. Ignored `.tools/online/` contains diagnostic output. No hosted
+direct PostgREST access, password freshness, deletion and stale-token denial.
+It deletes its accounts and stops its Worker in `finally`. A fixture-only SQL update
+ages one authentication method before a real refresh; this test depends on the
+installed local Auth schema and never modifies a preview/user account.
+The test supplies a local admin key to its temporary Worker through a private
+ignored env file, solely for deletion. It removes that file afterward. The key
+never enters command arguments, the frontend, Rust or committed configuration.
+Ignored `.tools/online/` contains diagnostic output. No hosted
 Supabase project or Cloudflare account is touched. Do not pass hosted credentials
 to these local fixtures. The tests require the local stack to be running; they do
 not silently skip when it is absent.
@@ -129,7 +174,9 @@ and captured messages. It refuses non-local service URLs and never delivers emai
 outside Mailpit.
 
 For interactive API development, copy `.dev.vars.example` to `.dev.vars` and set
-only the local publishable/anon key from `supabase status`, then run
+the local publishable/anon key from `supabase status`. Deletion also requires the
+local secret/service-role key in the separate `SUPABASE_SECRET_KEY` binding. Keep
+this file private (mode 0600), then run
 `npm run api:dev`. `.dev.vars` is ignored. `supabase stop` stops this project's
 containers while preserving its database volume. `api:build` performs type checking
 and a Worker dry run only; it does not publish. The Worker configuration has no
@@ -168,7 +215,10 @@ rate limits/anti-abuse, moderation and load tests. Direct Supabase access also n
 an abuse-control strategy: limiting Worker traffic alone does not limit PostgREST.
 Public name reservations, renaming/impersonation policy and profile moderation
 need completion alongside community UI. Do not deploy this local configuration
-as a production service. No production project, domain, credentials, billing,
+as a production service. Define and disclose backup/audit retention and the handling of published maps,
+messages, reports and rankings on deletion before those features go live. The
+current flow deletes Auth/profile rows; it is not a promise of immediate erasure
+from future backups or third-party logs. No production project, domain, credentials, billing,
 signing or public deployment has been configured.
 
 ## Research
@@ -184,6 +234,11 @@ Reviewed official documentation September 29, 2026:
 - [Auth session storage](https://supabase.com/docs/guides/auth/server-side/advanced-guide):
   SDK defaults and cookie/refresh considerations; the memory-only client decision
   above is notsu's choice, not a requirement of Supabase.
+- [Auth deletion](https://supabase.com/docs/reference/javascript/auth-admin-deleteuser)
+  and [user management](https://supabase.com/docs/guides/auth/managing-user-data):
+  server-only hard deletion, cascading sessions and the remaining JWT expiry window.
+- [JWT claims](https://supabase.com/docs/guides/auth/jwt-fields): signed password
+  authentication timestamps are separate from access-token issuance/refresh.
 - [Sign-out scopes](https://supabase.com/docs/guides/auth/signout).
 - [Local database migrations](https://supabase.com/docs/guides/local-development/database-migrations).
 - [Hono on Workers](https://hono.dev/docs/getting-started/cloudflare-workers).

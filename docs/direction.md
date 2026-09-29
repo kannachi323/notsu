@@ -37,7 +37,9 @@ separate feature and the existing Rhythm prototype remains available through Pla
 The dropdown, Play, local Editor, local Browse and Account routes are wired;
 chat and friends remain placeholders. The account screen continues the dark
 cyan/violet palette with a static orb, clearly labeled forms and a text-only public
-profile preview. Keep keyboard access, visible focus, Escape dismissal, reduced-motion
+profile preview. Public player pages share this visual language and show real
+public profile fields only, with exact-name lookup and explicit missing/error
+states. Account deletion has a separate confirmation screen. Keep keyboard access, visible focus, Escape dismissal, reduced-motion
 support, and an unobtrusive unofficial-community-project attribution. Do not show
 fabricated live performance or playback metrics.
 

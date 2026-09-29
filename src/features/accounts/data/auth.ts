@@ -32,7 +32,7 @@ export function accountClient() {
   if (!configuration) throw new AccountError("Accounts are not available in this build.");
   if (!client) {
     client = createClient(configuration.authUrl, configuration.key, {
-      auth: { persistSession: false, autoRefreshToken: true, detectSessionInUrl: false },
+      auth: { persistSession: false, autoRefreshToken: true, detectSessionInUrl: false, storageKey: `notsu-session-${crypto.randomUUID()}` },
       global: { fetch: (input, init) => fetch(input, { ...init,
         signal: init?.signal ? AbortSignal.any([init.signal, AbortSignal.timeout(8000)]) : AbortSignal.timeout(8000),
       }) },
@@ -52,6 +52,16 @@ export async function signOut() {
   const { error } = await accountClient().auth.signOut({ scope: "local" });
   if (error) throw authError(error);
   acceptIdentity(null);
+}
+
+/** The server has deleted this identity. Drop the in-memory SDK session without another network request. */
+export async function forgetDeletedAccount(userId: string) {
+  if (useAccountStore.getState().identity?.id !== userId) return;
+  unsubscribe?.(); unsubscribe = undefined;
+  const previous = client;
+  client = undefined;
+  acceptIdentity(null);
+  try { await previous?.auth.dispose(); } catch { /* Confirmed deletion is not undone by local cleanup failure. */ }
 }
 
 if (import.meta.hot) import.meta.hot.dispose(() => {

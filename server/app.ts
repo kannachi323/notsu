@@ -24,7 +24,7 @@ app.use("/v1/*", async (c, next) => {
   if (origin && !config.origins.includes(origin)) {
     throw new ApiError(403, "origin_denied", "This origin is not allowed.");
   }
-  return cors({ origin: config.origins, allowMethods: ["GET", "PUT", "OPTIONS"],
+  return cors({ origin: config.origins, allowMethods: ["GET", "PUT", "DELETE", "OPTIONS"],
     allowHeaders: ["Authorization", "Content-Type"], exposeHeaders: ["X-Request-Id"], maxAge: 600 })(c, next);
 });
 app.route("/v1", accounts);
