@@ -60,6 +60,7 @@ it("rejects invalid schedules and reports suspended audio", async () => {
   await expect(audio.start(buffer, songChart, NaN)).rejects.toThrow("Invalid");
   await expect(audio.start(buffer, songChart, .5, -3000)).rejects.toThrow("Invalid");
   await expect(audio.start(buffer, songChart, .5, 0, -1)).rejects.toThrow("Invalid");
+  await expect(audio.start(buffer, songChart, .5, 0, 240101)).rejects.toThrow("Invalid");
   context.state = "suspended";
   await expect(audio.start(buffer, songChart, .5)).rejects.toThrow("suspended");
 });

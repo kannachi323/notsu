@@ -11,7 +11,7 @@ export function Timeline({ chart, peaks, timeMs, divisor, seek, place, selected,
 }) {
   const canvas = useRef<HTMLCanvasElement>(null), [span, setSpan] = useState(8000);
   const drag = useRef<Drag | null>(null), [ghost, setGhost] = useState<Drag | null>(null);
-  const start = Math.floor(timeMs / span) * span, end = Math.min(chart.durationMs, start + span);
+  const start = Math.floor(Math.min(timeMs, Math.max(0, chart.durationMs - .001)) / span) * span, end = Math.min(chart.durationMs, start + span);
   const labelWidth = 76, waveHeight = 72, rowHeight = 32;
   const visible = useMemo(() => {
     const rows = new Map(chart.lanes.map(lane => [lane.id, [] as ChartNote[]]));

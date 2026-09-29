@@ -363,3 +363,41 @@ existing destination frames, with no pose replacement. See [editor guide](editor
 Metronome/count-in, richer draft/recovery management, large-map performance and
 mapper/platform testing remain open in the creator milestone. This progress does
 not complete the community, competitive backend or public-release requirements.
+
+### September 29 editor metronome and count-in
+
+Implemented original synthesized metronome clicks, two/four-beat audible count-in,
+independent song/click volumes and live metronome toggling. Quarter-note clicks
+follow local tempo anchors; count-in uses the chosen cursor's tempo and freezes
+the playhead until music begins. The song and clicks share the existing audio
+clock, with scheduling independent of React frames and output-latency display
+compensation. Pending starts and queued voices cancel on pause, seek, edits,
+hidden-page events and disposal. Delayed callbacks skip overdue clicks, and bounded
+scheduling reports excessive tempo density instead of allocating unbounded voices.
+
+Fixed a browser-observed end-of-song issue: pause now captures the actual audio
+clock even between UI updates, the playhead reaches the exact duration, Listen
+restarts from zero, and the timeline keeps the last populated page at the end.
+
+- `npm test`: 291 passing tests across 36 files. New coverage includes section
+  boundaries, off-grid cursors, fractional tempos, count-in at 1–1,000 BPM,
+  output latency versus scheduling time, original sample bounds, delayed callbacks,
+  live configuration during asynchronous resume, cancellation/concurrent starts,
+  suspension, pending voice cleanup and excessive-density failure.
+- Type checking, production frontend and packaged macOS debug builds pass.
+- Browser: verified four-beat count-in, cancellation at an unchanged 8,000 ms
+  cursor, live song/click volume changes and metronome toggling, automatic stop at
+  exactly 16,000 ms, and restart from zero with two-beat count-in. Settings did not
+  modify the draft. A development hot-reload hook-order error occurred at 11:40 UTC
+  while hooks were being added; a fresh reload and the subsequent checks produced
+  no additional errors.
+- Packaged macOS app: verified four-beat count-in with the playhead fixed at zero,
+  cancellation by focusing a line-editing control, and playback from 15,000 ms
+  through count-in to an exact stopped 16,000 ms. The saved fixture was unchanged.
+- Screenshot evidence: ignored `.tools/screenshots/editor-metronome-native.png`
+  and `editor-metronome.png`.
+
+These are software scheduling and functional checks, not physical latency
+measurements or human listening approval. Richer draft/recovery management,
+large-map performance, mapper playtests, additional platform checks, online
+community/rankings, deployment and release gates remain open. The goal stays active.

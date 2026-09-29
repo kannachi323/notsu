@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from "react";
-import { RhythmAudio } from "../rhythm/data/audio";
+import { EditorTransport, defaultPlayback } from "./data/EditorTransport";
+import type { EditorPlayback } from "./data/EditorTransport";
+import { loadSettings } from "../rhythm/data/settings";
 import { createDocument, readDocument, restoreDocument } from "./domain/document";
 import type { EditorDocument } from "./domain/document";
 import { EditorHistory } from "./domain/history";
@@ -20,11 +22,25 @@ export function useEditor() {
   const [drafts, setDrafts] = useState<DraftSummary[]>([]);
   const [busy, setBusy] = useState(false), [error, setError] = useState(""), [saveStatus, setSaveStatus] = useState("");
   const [timeMs, setTimeMs] = useState(0), [playing, setPlaying] = useState(false);
-  const audioRef = useRef<RhythmAudio | null>(null), active = useRef<Workspace | null>(null);
+  const [remaining, setRemaining] = useState(0), [playback, setPlayback] = useState<EditorPlayback>(() => ({ ...defaultPlayback, musicVolume: loadSettings().volume }));
+  const audioRef = useRef<EditorTransport | null>(null), active = useRef<Workspace | null>(null);
   const mounted = useRef(true), generation = useRef(0), playingRef = useRef(false);
-  const clock = () => audioRef.current ??= new RhythmAudio();
+  const clock = () => audioRef.current ??= new EditorTransport(error => {
+    playingRef.current = false;
+    if (mounted.current) { setPlaying(false); setRemaining(0); setError(error); }
+  });
   const refresh = () => listDrafts().then(rows => { if (mounted.current) setDrafts(rows); }).catch(cause => { if (mounted.current) setError(message(cause)); });
-  const stop = () => { generation.current++; audioRef.current?.stop(); playingRef.current = false; setPlaying(false); };
+  const stop = () => {
+    // Capture the actual stopped clock, including the final song boundary between UI frames.
+    if (playingRef.current && audioRef.current?.running && active.current) {
+      setTimeMs(Math.min(active.current.document.chart.durationMs, audioRef.current.sample().timeMs));
+    }
+    generation.current++; audioRef.current?.stop(); playingRef.current = false; setPlaying(false); setRemaining(0);
+  };
+  const configurePlayback = (next: EditorPlayback) => {
+    if (next.countInBeats !== playback.countInBeats) stop();
+    try { audioRef.current?.configure(next); setPlayback(next); } catch (cause) { setError(message(cause)); }
+  };
   async function flush() {
     const current = active.current;
     if (!current?.writer) return;
@@ -35,10 +51,10 @@ export function useEditor() {
     mounted.current = true; void refresh();
     let frame = 0, last = 0;
     const tick = (now: number) => {
-      if (playingRef.current && audioRef.current && active.current) {
-        const time = Math.max(0, audioRef.current.timeAt());
+      if (playingRef.current && audioRef.current?.running && active.current) {
+        const { timeMs: time, remaining } = audioRef.current.sample();
         if (audioRef.current.context.state !== "running" || time >= active.current.document.chart.durationMs) stop();
-        if (now - last > 30) { setTimeMs(Math.min(time, active.current.document.chart.durationMs)); last = now; }
+        if (now - last > 30) { setTimeMs(Math.min(time, active.current.document.chart.durationMs)); setRemaining(remaining); last = now; }
       }
       frame = requestAnimationFrame(tick);
     }; frame = requestAnimationFrame(tick);
@@ -94,12 +110,13 @@ export function useEditor() {
   function seek(time: number) { if (!Number.isFinite(time)) return; stop(); setTimeMs(Math.max(0, Math.min(active.current?.document.chart.durationMs ?? 0, time))); }
   async function listen() {
     if (playingRef.current) { stop(); return; }
-    const current = active.current; if (!current) return;
+    const current = active.current; if (!current || busy) return;
     const token = ++generation.current, from = timeMs >= current.document.chart.durationMs ? 0 : timeMs;
+    playingRef.current = true; setPlaying(true); setRemaining(playback.countInBeats); setError("");
     try {
-      if (!await clock().start(current.song.buffer, current.document.chart, .6, from, 0) || token !== generation.current || !mounted.current) return;
-      playingRef.current = true; setPlaying(true); setTimeMs(from);
-    } catch (cause) { setError(message(cause)); }
+      if (!await clock().start(current.song.buffer, current.document.chart, from, playback) || token !== generation.current || !mounted.current) return;
+      setTimeMs(from);
+    } catch (cause) { if (token === generation.current && mounted.current) { stop(); setError(message(cause)); } }
   }
   async function close(discard = false) {
     if (busy) return;
@@ -144,7 +161,7 @@ export function useEditor() {
     } catch (cause) { if (mounted.current) setError(message(cause)); }
     finally { if (mounted.current) setBusy(false); }
   }
-  return { workspace, drafts, busy, error, saveStatus, timeMs, playing, open, change, seek, listen, stop, close, flush, setError,
+  return { workspace, drafts, busy, error, saveStatus, timeMs, playing, remaining, playback, configurePlayback, open, change, seek, listen, stop, close, flush, setError,
     duplicate, importPackage,
     currentDocument: () => active.current && readDocument(active.current.document) };
 }

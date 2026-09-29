@@ -70,7 +70,8 @@ export class RhythmAudio {
 
   async start(buffer: AudioBuffer, chart: Chart, volume: number, positionMs = 0, countInMs = 2000): Promise<boolean> {
     if (!Number.isFinite(positionMs) || positionMs < -2500 || positionMs > chart.durationMs + 250 ||
-        !Number.isFinite(countInMs) || countInMs < 0 || countInMs > 5000 ||
+        // Four editor count-in beats at the minimum chart tempo (1 BPM), plus scheduling lead.
+        !Number.isFinite(countInMs) || countInMs < 0 || countInMs > 240100 ||
         !Number.isFinite(volume) || volume < 0 || volume > 1) throw new Error("Invalid audio playback position or volume.");
     this.stop();
     const generation = this.generation;
@@ -89,6 +90,14 @@ export class RhythmAudio {
       this.source = source;
     }
     return true;
+  }
+
+  /** Scheduling uses the context clock; input/display timeAt includes output latency. */
+  contextTimeAt(chartMs: number): number { return this.startTime + chartMs / 1000; }
+
+  setMusicVolume(volume: number) {
+    if (!Number.isFinite(volume) || volume < 0 || volume > 1) throw new Error("Invalid music volume.");
+    this.gain.gain.setTargetAtTime(volume, this.context.currentTime, .01);
   }
 
   timeAt(eventTime = performance.now()): number {

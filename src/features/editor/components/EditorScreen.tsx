@@ -16,6 +16,7 @@ import { NoteTools } from "./NoteTools";
 import { NoteSelection } from "./NoteSelection";
 import { DraftBackup } from "./DraftBackup";
 import { PackageExport } from "./PackageExport";
+import { PlaybackControls } from "./PlaybackControls";
 
 export function EditorScreen() {
   const editor = useEditor(), { workspace } = editor;
@@ -81,6 +82,7 @@ export function EditorScreen() {
       <button onClick={() => editor.seek(snapTime(chart.timing, editor.timeMs, divisor))}>Snap playhead</button>
       <button disabled={!history.canUndo} onClick={() => editor.change("undo")}>Undo</button><button disabled={!history.canRedo} onClick={() => editor.change("redo")}>Redo</button>
     </div>
+    <PlaybackControls options={editor.playback} change={editor.configurePlayback} playing={editor.playing} remaining={editor.remaining} />
     <div className="editor-workspace" onFocusCapture={editor.stop}><LaneTools chart={chart} selected={selectedIds} select={setSelected} timeMs={position} change={editor.change} seek={editor.seek} />
       <div className="editor-center"><div className="editor-stage-shell"><EditorStage key={String(artReady)} chart={chart} timeMs={editor.timeMs} settings={settings} /><span className="editor-stage-label">Arrangement · {(editor.timeMs / 1000).toFixed(2)} s</span></div>
         <Timeline chart={chart} peaks={workspace.song.peaks} timeMs={editor.timeMs} divisor={divisor} seek={editor.seek} place={place} selected={noteIds} select={setSelectedNotes} change={editor.change} />

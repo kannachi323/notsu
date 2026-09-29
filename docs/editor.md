@@ -28,6 +28,32 @@ The creator milestone remains in progress; this is not the finished publishing U
    path, with No Fail or Autoplay. These runs are unranked; playtests use authored
    motion even when the player's frozen-line practice setting is enabled.
 
+## Listening and count-in
+
+Enable **Metronome** for quarter-note clicks that follow each explicit tempo anchor.
+A higher click marks the start of a tempo section; no time signature is implied.
+Choose **2 beats** or **4 beats** for an audible count-in before Listen starts the
+song. Count-in uses the tempo at the selected cursor, even when the cursor is off
+the grid or the metronome is off. The playhead stays fixed through count-in.
+Afterward, clicks follow the actual song grid rather than an off-grid cursor.
+
+**Playback sound** has separate song and click volume controls. Song volume starts
+from the player's saved music preference. These editor controls are session-only
+and do not modify charts. Volume and metronome changes work while listening;
+changing count-in pauses playback. Pause, seek, edit, hidden-page events and leaving
+the editor cancel the song and queued clicks together. Listen at the song end
+restarts from zero, and the timeline keeps its final populated page visible.
+
+The song and original synthesized clicks share a Web Audio context. A 25 ms timer
+schedules up to 150 ms ahead using the context clock; React frames only update the
+view. The heard-time estimate accounts for output timestamps/latency. Each start
+has a 60 ms scheduling lead. Stalled callbacks skip overdue beats instead of playing
+them in a burst. A bounded click queue rejects pathological tempo-change density
+with an actionable error; the song remains usable with the metronome off.
+
+Scheduling tests are separate from perceptual sound and physical audio-latency
+validation, which still require listening and target-device playtests.
+
 ## Selecting and retiming circles
 
 Click a timeline head to select its logical circle, or use the labeled checkboxes
@@ -110,7 +136,7 @@ stereo waveform peaks, save/reopen, stale-window conflicts, failed writes, timeo
 cleanup and serialized/coalesced autosaves. See the current counts and actual
 browser/native evidence in [public-beta delivery](public-beta.md).
 
-Still required for the creator milestone: metronome/count-in, richer difficulty/draft
+Still required for the creator milestone: richer difficulty/draft
 management, recovery UX, performance with large real maps, platform/browser verification and mapper
 playtests. Publishing, online browsing and moderation remain separate pending work.
 
@@ -118,3 +144,6 @@ Implementation references: [Web Audio decoding](https://developer.mozilla.org/en
 [channel data](https://developer.mozilla.org/en-US/docs/Web/API/AudioBuffer/getChannelData),
 [IndexedDB transactions](https://developer.mozilla.org/en-US/docs/Web/API/IDBTransaction),
 and [navigation blocking](https://reactrouter.com/api/hooks/useBlocker).
+Playback scheduling references: [scheduled source start](https://developer.mozilla.org/en-US/docs/Web/API/AudioScheduledSourceNode/start),
+[context time](https://developer.mozilla.org/en-US/docs/Web/API/BaseAudioContext/currentTime),
+and [output timestamps](https://developer.mozilla.org/en-US/docs/Web/API/AudioContext/getOutputTimestamp).
