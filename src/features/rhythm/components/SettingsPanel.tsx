@@ -11,7 +11,7 @@ export function SettingsPanel({ settings, updateSettings }: { settings: Settings
       </select>
       <label className="motion-choice"><input type="checkbox" checked={settings.reducedMotion} aria-describedby="motion-help"
         onChange={event => updateSettings({ ...settings, reducedMotion: event.target.checked })} /><span>Reduced motion</span></label>
-      <p id="motion-help">Keep the line stationary and use static hit effects.</p>
+      <p id="motion-help">Use static hit effects and hide movement hints. The authored line movement stays part of gameplay.</p>
     </section>
     <section className="settings-section" aria-labelledby="audio-title">
       <h2 id="audio-title">Audio and timing</h2>

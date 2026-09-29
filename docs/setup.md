@@ -17,12 +17,17 @@ The identifier change creates a separate native app identity from earlier builds
 ## Prerequisites
 
 - Node.js 22.12+ or a newer supported LTS, with npm.
-- Rust and Cargo, Windows MSVC C++ build tools, and WebView2 for desktop builds.
-- Follow the [official Windows prerequisites](https://v2.tauri.app/start/prerequisites/).
+- Rust/Cargo and the target operating system’s native development requirements
+  for desktop builds (including MSVC/WebView2 on Windows). Browser development
+  does not require Rust.
+- Follow the [official platform prerequisites](https://v2.tauri.app/start/prerequisites/).
+  Windows, macOS and Linux release verification is still pending.
 
 Do not install toolchains or dependencies, compile, or run builds/tests without
-an explicit user request. The home-screen update only resolved dependency metadata
-into the lockfile; it did not install the new runtime packages or run builds/tests.
+an explicit user request. The accepted public-beta goal explicitly authorizes its implementation and
+verification. Dependencies were restored with `npm ci` for that work; the frontend
+test/build evidence is recorded in `docs/public-beta.md`. No native toolchain has
+been installed as part of this slice.
 
 ## Commands
 
@@ -56,12 +61,14 @@ the remaining future-feature buttons are presentational only.
 
 React owns setup, settings, HUD, and results. Canvas draws each animation frame
 without React state updates per frame. Pure TypeScript owns scoring, chart
-validation, and movement interpolation. Web Audio owns the timing clock. No
+validation, multiple-lane movement interpolation, and replay recomputation. Web Audio owns the timing clock. No
 per-note or per-frame data crosses the native bridge.
 
 Audio is selected through the browser's file chooser and decoded locally. There
 is no unrestricted filesystem plugin, network download, telemetry, or uploaded
-audio. Only preferences are stored in browser local storage.
+audio. Only preferences are currently stored in browser local storage. Replays are
+currently held in memory for the results screen. Publishing/storage/backend
+services in the public-beta plan have not been deployed.
 The Rhythm preference key retains its legacy `osu-base` prefix for compatibility
 with earlier browser sessions; new native app identity storage is separate.
 

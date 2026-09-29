@@ -1,24 +1,30 @@
 # notsu
 
-An unofficial desktop companion for osu!. This community project is not affiliated
-with or endorsed by ppy. Windows is the initial target.
+An independent rhythm game built around moving lines and timed circles. This
+unofficial community project is not affiliated with or endorsed by ppy.
 
 The home screen brings together Play, Browse, Editor, a music dropdown, and
 player/social controls in a dark, cyan-accented shell. **Play** opens the existing
-**Rhythm** prototype: a single moving lane with timed taps, hold releases, and
-music-synchronized movement. Browse, Editor, profile, chat, friends, and update
+**Rhythm** prototype: independent moving lines with timed taps, holds, shared hits,
+health, scoring, and replay playback. Browse, Editor, profile, chat, friends, and update
 actions are UI placeholders. The music card opens and closes; playback is not
-connected. No song audio or artwork is bundled.
+connected. Practice audio is synthesized locally; no third-party song audio or
+artwork is bundled.
+
+The [public-beta plan](docs/public-beta.md) targets desktop browsers, Windows,
+macOS and Linux. This is development work in progress, not a public-ready release.
+Native builds, online services and public deployment still require verification.
 
 Trivia remains a separate planned feature; its placeholders are preserved.
 
 ## Run
 
-Requires Node.js 22.12+ (or a newer supported LTS), npm, Rust, the Windows C++
-build tools, and WebView2. See [setup](docs/setup.md) for the native prerequisites.
+Browser development requires Node.js 22.12+ (or a newer supported LTS) and npm.
+Desktop development additionally requires Rust and the target platform's native
+tools. See [setup](docs/setup.md) for prerequisites.
 
 ```sh
-npm install
+npm ci
 npm run tauri dev
 ```
 
@@ -41,6 +47,9 @@ Use `npm.cmd` when forwarding flags in PowerShell to avoid wrapper argument loss
 - Select **Two-hand rhythm drill** for a slower, 144 BPM practice of dotted
   rhythms, triplets, sixteenth rolls, and holds with independent taps. Try
   alternating F/J; all normal gameplay keys remain interchangeable.
+- Select **Moving together** for a four-line, rotating-square study. Simultaneous
+  circles at multiple targets share one judgment and take one press. Its original
+  synthesized practice audio is included.
 - For **Mou Ii Kai?**, select your own `audio.mp3` from the 88-second cut in
   beatmap set 807850. The app verifies the exact recording locally. The chart
   covers 0:35.401–1:15.401; no music or artwork is included in this repository.
@@ -50,12 +59,17 @@ Use `npm.cmd` when forwarding flags in PowerShell to avoid wrapper argument loss
   the target ring.
 - For a hold ribbon, press its solid head and release its hollow endpoint with the same key. Use
   other keys for taps during the hold. Key repeats and shortcut combinations
-  are ignored. Missing notes or pressing extra keys breaks combo and lowers accuracy.
+  are ignored. Independent holds can overlap on different keys. Missing notes or
+  pressing extra keys breaks combo, lowers accuracy, and costs health. Zero health
+  ends the run. Score gives 70% weight to combo continuity and 30% to accuracy.
+- Use **No Fail** for practice or **Autoplay** to watch a chart. These modes never
+  qualify for rankings. Results offer replay playback; current replays stay in
+  memory until leaving the result flow.
 - Escape or focus loss stops the attempt. Retry starts from a fresh countdown;
   mid-run resume is deliberately not supported in this prototype.
 - Open **Settings** from the Rhythm menu to choose Midnight or High Contrast, adjust music
   and hit-sound volumes separately, and set timing offset or reduced motion. Reduced motion
-  keeps the lane stationary and hit highlights static. Only preferences are saved
+  keeps hit highlights static while preserving authored line motion. Only preferences are saved
   locally; audio and results are not persisted.
 
 The song chart is an original beat-grid study, not an imported gameplay pattern
@@ -73,7 +87,7 @@ src/
       components/            Header, activity cards, and original SVG artwork
     rhythm/                  Feature screen, hook, and presentation state
       components/            Menus, results, and Canvas renderer
-      domain/                Pure TypeScript scoring, input rules, chart geometry
+      domain/                Pure scoring, Chart v2, timing, geometry, and replay rules
       data/                  Authored charts, audio, and local preference adapters
     trivia/                  Preserved future feature boundary
   shared/                    Only genuinely shared responsibilities
@@ -92,6 +106,6 @@ colocate tests, and avoid duplicate rules in Rust. Keep semantic controls,
 keyboard navigation, visible focus, and reduced-motion support. Commit both
 `package-lock.json` and `src-tauri/Cargo.lock`.
 
-Account connection and other companion capabilities are future work. Resolve
-supported desktop OAuth and secret handling before implementing authentication.
-Never embed production client secrets in frontend assets or Rust binaries.
+The approved account plan uses verified email/password sign-in with backend access
+policies. Accounts, maps, friends, messaging and competitive rankings are still
+pending. Never embed privileged service keys in frontend assets or Rust binaries.

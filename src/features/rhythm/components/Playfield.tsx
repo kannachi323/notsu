@@ -22,5 +22,5 @@ export function Playfield({ runtime }: { runtime: RefObject<Runtime> }) {
     draw();
     return () => { observer.disconnect(); cancelAnimationFrame(frame); };
   }, [runtime]);
-  return <canvas ref={canvas} className="playfield" role="img" aria-label="Moving rhythm lane. Tap when orb centres cross the target ring; hold solid heads and release at hollow endpoints." />;
+  return <canvas ref={canvas} className="playfield" role="img" aria-label="Moving rhythm lines. Tap once for circles arriving together at their targets; hold solid heads and release at hollow endpoints." />;
 }

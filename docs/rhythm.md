@@ -13,7 +13,7 @@ Avoid slogans and forced uppercase. Body text is 18px and secondary text at leas
 
 ## Rules
 
-One straight lane carries shaded tap orbs and hold ribbons toward its target ring.
+Independent straight lanes carry shaded tap orbs and hold ribbons toward target rings.
 The orb's centre crossing the ring is the timing cue. Holds have a solid press
 head and a hollow release endpoint; shape distinguishes the two independently
 of color. A pressed head stays at the target while its ribbon shortens. Taps
@@ -24,8 +24,11 @@ retain normal keyboard behavior when focused.
 
 Each press consumes at most one eligible head in chronological order. A hold
 owns its starting physical key until released; other keys can tap during it.
-Charts disallow simultaneous heads and overlapping holds, including a release
-window between consecutive holds. Hold release timing is scored independently.
+Independent holds may overlap on different physical keys. Simultaneous circles
+are visual instances of one logical note with several lane IDs: one press scores
+them once. Shared holds have one head and tail. Separate heads with identical
+timestamps are rejected; the editor must merge them into a shared hit.
+Hold release timing is scored independently.
 An early or overdue release misses once; re-pressing cannot rescue it.
 
 | Judgement | Absolute timing error | Accuracy weight |
@@ -38,19 +41,35 @@ An early or overdue release misses once; re-pressing cannot rescue it.
 Accuracy is weighted earned judgements divided by resolved judgements plus extra
 presses. Each hold contributes a head and tail. At completion every expected
 judgement is resolved. Combo advances per successful judgement, resetting on a
-miss or extra press. Mistakes never end the excerpt early.
+miss or extra press. Health starts at 100: Perfect +2, Good +1, Okay 0, Miss -12,
+extra press -4, clamped to 0–100. Zero health ends ordinary attempts. No Fail
+continues and Autoplay demonstrates the chart; both are always unranked.
+
+Score is `round(1,000,000 * (0.7*C + 0.3*A))`, where C accumulates the square root
+of combo after each success, normalized by the uninterrupted maximum. A divides
+weighted earned judgments by all expected judgments plus extras, even before
+completion. Unplayed notes never award score. The HUD separately shows running
+accuracy against resolved judgments and extras.
 
 Escape, focus loss, a hidden document, or suspended audio stops the attempt.
-The pause screen offers retry or setup, not partial resume. Retry creates fresh
+The current pause screen offers retry or setup, not partial resume. Count-in
+resume with practice eligibility is still required by the public-beta plan.
+Retry creates fresh
 scoring and input state, stops the old source, and schedules a two-second count-in.
 
 ## Chart and audio
 
-Chart version 1 contains metadata, audio offset, duration, notes in excerpt-relative
-milliseconds, and normalized position/angle keyframes. Movement times are authored
-on the 192 BPM beat grid. Smoothstep interpolation reaches each destination exactly
-at its timestamp. Lane bounds are constrained during rotations. Stationary mode
-changes only presentation, never scoring or note timing.
+Chart version 2 contains metadata, audio offset, duration, tempo sections, logical
+notes in excerpt-relative milliseconds, and independent lanes. Notes reference
+one or more lane IDs. Each lane has position, angle, length, and easing keyframes.
+Version 1 charts migrate to one lane without changing any note timestamps.
+Validation bounds imported collections, checks nested data, and rejects broken
+references before use. Active sessions own a copy of their chart.
+
+Smoothstep or linear interpolation reaches authored destinations at their
+timestamps. Lane bounds are constrained during rotations. Tempo conversion and
+beat/tuplet snapping work across tempo changes. Reduced-motion effects preserve
+authored lane motion; a separate frozen-choreography practice assist is pending.
 
 The song study covers 35,401–75,401 ms of the user's 88-second cut. Its SHA-256 is
 `f9b17daaff3571bb758ecfe1402a2108f64121aca0e0dc053af49fb6a5b0b33f`.
@@ -62,8 +81,10 @@ study awaiting musical playtesting, not a finished transcription of the song.
 The ten-second introductory chart is preserved. A separate 144 BPM two-hand drill
 lasts 64 beats (about 27 seconds): dotted-quarter spacing, eighth-note triplets,
 sixteenth bursts, dotted-eighth syncopation, then holds with independent taps.
-Both synthesize original tones directly into an audio buffer, making their exact
-rhythms audible without external media. No chart editor,
+These and the new 120 BPM, 32-second four-lane **Moving together** study synthesize
+original tones directly into an audio buffer, making their exact rhythms audible
+without external media. The geometry study rotates a square and introduces shared
+taps and holds. No chart editor,
 automatic mapping, arbitrary chart import, or chart/audio download is included.
 
 Song arrangement v2 uses repeated triplet/sixteenth motifs, dotted rhythms, short
@@ -97,8 +118,26 @@ late hits. The results show mean signed error for successful judgements only.
 
 Canvas draws with `requestAnimationFrame`, while React's HUD updates at most twenty
 times a second. Scoring takes explicit millisecond timestamps rather than frame
-counts. No Rust IPC calls are made during gameplay. A local file selection is
+counts. Miss timestamps are authored deadlines, not the frame that noticed them.
+If a timestamped input arrives after a speculative frame miss, the pure engine
+reconciles its input history and emits only changed feedback. This does not replace
+real hardware/input latency testing. No Rust IPC calls are made during gameplay. A local file selection is
 required again after an application restart; only preferences are persisted.
+
+## Replay boundary
+
+Versioned replay input records anonymous physical-key IDs, press/release timestamps,
+mods, rules version, and a canonical SHA-256 chart identity. Identity includes
+timing, choreography, visual membership and audio identity. Verification requires
+the expected hash from the trusted map revision, never from the submitted replay.
+The player and verifier use the same pure session rules; backward seeking creates
+a fresh session. Invalid ordering, duplicated key transitions, unknown rules and
+wrong map identities are rejected. Results can replay the last local attempt.
+
+Replay validation is not proof of human play. Online attempt tickets, submission,
+server recomputation and suspicious-score moderation are still unimplemented.
+The domain eligibility flag only describes completed normal play; it is not an
+authorization to publish a ranked score. Guest/offline play remains unranked.
 
 ## Skins and feedback
 
@@ -108,6 +147,8 @@ colors and Canvas values for notes, target, lane, and feedback, plus synthesized
 hit-sound envelopes. Note radii are constrained to 8–10 world units. Skins cannot
 change layout, chart coordinates, approach time, timing windows, input, or scoring.
 There are no downloaded packs, custom CSS/scripts, layout replacements, or imports.
+The approved sprite reference is retained in `assets/gameplay-reference.png`; it
+is not yet a production atlas. The renderer still uses its original Canvas art.
 
 The scoring session emits ordered judgement events with an increasing ID, optional
 note ID, action, grade, and chart timestamp. `drainJudgements()` delivers them once;
@@ -142,7 +183,7 @@ Midnight. The local audio file is never persisted.
 - In a real WebView, load the exact recording, test a rejected file and cancellation,
   play taps and holds, retry repeatedly, lose focus mid-hold, and finish an excerpt.
 - Inspect setup, gameplay, and results at narrow and wide sizes; verify keyboard
-  focus, offset persistence, stationary mode, and no browser console errors.
+  focus, offset persistence, reduced effects, and no browser console errors.
 - Inspect dense notes, held and broken ribbons, and all lane orientations with both
   skins. Keep gameplay and visual-review screenshots in ignored `.tools/screenshots/`.
 - Listen and playtest the actual recording before treating the beat-grid study as

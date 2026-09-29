@@ -21,13 +21,16 @@ export function RhythmScreen() {
   const pauseButton = useRef<HTMLButtonElement>(null);
   useEffect(() => { if (view.phase === "paused") pauseButton.current?.focus(); }, [view.phase]);
   const feedback = view.feedback && view.timeMs - view.feedback.atMs < 550 ? view.feedback : null;
+  const { mods } = game.runtime.current.session;
+  const runLabel = game.runtime.current.playback ? "Replay" : mods.autoplay ? "Autoplay" : mods.noFail ? "No Fail · practice" : "Standard run";
 
   return <main className={`app phase-${view.phase}`}>
     {view.phase !== "setup" && <header className="app-header"><div className="brand">notsu</div></header>}
     {view.phase === "setup" && <Setup settings={game.settings} updateSettings={game.updateSettings} fileName={game.fileName} loading={game.loading} error={game.error} chooseFile={game.chooseFile} start={game.start} />}
     {view.phase === "starting" && <div className="starting" role="status">Preparing audio…</div>}
     {playing && <section className="game-stage" aria-label="Rhythm gameplay">
-      <div className="game-hud"><div><h1>{chart.title}</h1><p>{chart.artist}</p></div><div className="hud-right"><div><strong>{view.summary.accuracy.toFixed(1)}%</strong><span>accuracy</span></div><div><strong>{view.summary.combo}</strong><span>combo</span></div><button className="pause-button" onClick={game.pause} aria-label="Pause gameplay">Esc</button></div></div>
+      <div className="game-hud"><div><h1>{chart.title}</h1><p>{chart.artist}</p><p className="run-label">{runLabel}</p></div><div className="hud-right"><div><strong>{view.summary.score.toLocaleString()}</strong><span>score</span></div><div><strong>{view.summary.accuracy.toFixed(1)}%</strong><span>accuracy</span></div><div><strong>{view.summary.combo}</strong><span>combo</span></div><button className="pause-button" onClick={game.pause} aria-label="Pause gameplay">Esc</button></div></div>
+      <div className="health-bar"><label htmlFor="health">Health</label><meter id="health" min={0} max={100} low={25} optimum={100} value={view.summary.health}>{view.summary.health}%</meter></div>
       <div className="canvas-wrap"><Playfield runtime={game.runtime} />
         {view.phase === "countdown" && <div className="countdown" role="status" aria-label="Countdown"><strong>{Math.min(2, Math.max(1, Math.ceil(-view.timeMs / 1000)))}</strong></div>}
         {view.phase === "playing" && <div className={`hit-feedback ${feedback?.grade === "Miss" || feedback?.grade === "Extra" ? "bad" : ""}`} aria-hidden="true"><strong>{feedback?.grade ?? ""}</strong><span>{feedback?.errorMs !== undefined ? `${Math.abs(feedback.errorMs).toFixed(0)} ms ${feedback.errorMs < 0 ? "early" : "late"}` : ""}</span></div>}
@@ -35,7 +38,8 @@ export function RhythmScreen() {
       </div>
       <div className="progress-area"><progress aria-label="Excerpt progress" value={Math.max(0, view.timeMs)} max={chart.durationMs} /><div><span>{seconds(view.timeMs)}</span><p>Any key to tap. Press and release holds on time.</p><span>{seconds(chart.durationMs)}</span></div></div>
     </section>}
-    {view.phase === "results" && <Results summary={view.summary} title={chart.title} retry={retry} exit={game.exit} />}
+    {view.phase === "results" && <Results summary={view.summary} title={chart.title} retry={retry} exit={game.exit} runLabel={runLabel}
+      watchReplay={game.hasReplay ? () => void game.watchReplay() : undefined} />}
     <footer className="app-footer">
       <Link className="rhythm-home-link" to="/">← notsu home</Link>
       <span>Unofficial community project · Not affiliated with ppy</span>

@@ -10,6 +10,11 @@ import type { Feedback, Summary } from "./domain/session";
 import type { Chart } from "./domain/chart";
 import { HitFeedback } from "./components/feedback";
 import { getSkin } from "./components/skins";
+import { chartFingerprint } from "./data/chartFingerprint";
+import { recordReplay, ReplayPlayer } from "./domain/replay";
+import type { Replay } from "./domain/replay";
+import { DEFAULT_MODS, HIT_WINDOW_MS } from "./domain/rules";
+import type { Mods } from "./domain/rules";
 
 export type Phase = "setup" | "starting" | "countdown" | "playing" | "paused" | "results";
 export type Runtime = {
@@ -19,12 +24,15 @@ export type Runtime = {
   audio: RhythmAudio | null;
   settings: Settings;
   feedback: HitFeedback;
+  playback?: ReplayPlayer;
 };
 type View = { phase: Phase; timeMs: number; summary: Summary; feedback: Feedback | null };
 
 export function useRhythmGame() {
   const [settings, setSettings] = useState(loadSettings);
-  const runtime = useRef<Runtime>({ phase: "setup", session: new RhythmSession(songChart), timeMs: 0, audio: null, settings, feedback: new HitFeedback() });
+  const [runtime] = useState<{ current: Runtime }>(() => ({ current: {
+    phase: "setup", session: new RhythmSession(songChart), timeMs: 0, audio: null, settings, feedback: new HitFeedback(),
+  } }));
   const [chart, setChart] = useState<Chart>(songChart);
   const [mode, setMode] = useState<ChartMode>("song");
   const [view, setView] = useState<View>({ phase: "setup", timeMs: 0, summary: runtime.current.session.summary(), feedback: null });
@@ -34,6 +42,9 @@ export function useRhythmGame() {
   const loaded = useRef<AudioBuffer | null>(null);
   const generation = useRef(0);
   const mounted = useRef(true);
+  const fingerprint = useRef("");
+  const lastReplay = useRef<Replay | null>(null);
+  const [hasReplay, setHasReplay] = useState(false);
 
   const publish = () => {
     const current = runtime.current;
@@ -69,11 +80,18 @@ export function useRhythmGame() {
           if (current.timeMs >= 0) {
             current.phase = "playing";
             // Rendering reads this state; scoring never depends on a frame's duration.
-            current.session.advance(current.timeMs);
+            if (current.playback) {
+              current.playback.advance(current.timeMs);
+              current.session = current.playback.session;
+            } else current.session.advance(current.timeMs);
             consumeFeedback();
             current.feedback.expire(current.timeMs);
           }
-          if (current.timeMs >= current.session.chart.durationMs + 150) {
+          if (current.session.summary().status !== "playing") {
+            if (!current.playback) {
+              lastReplay.current = recordReplay(current.session, fingerprint.current);
+              setHasReplay(true);
+            }
             current.audio.stop(); current.feedback.clear(); current.phase = "results";
           }
         }
@@ -85,15 +103,17 @@ export function useRhythmGame() {
     const down = (event: KeyboardEvent) => {
       if (event.code === "Escape") { pause(); return; }
       const current = runtime.current;
-      if (current.phase !== "playing" || !isGameplayKey(event)) return;
+      if (!["playing", "countdown"].includes(current.phase) || current.playback || !isGameplayKey(event)) return;
       if (event.target instanceof Element && event.target.closest("input, select, textarea, button, a, [contenteditable=true]")) return;
       event.preventDefault();
-      current.session.press(event.code, current.audio!.timeAt(event.timeStamp) - current.settings.offsetMs);
+      const time = current.audio!.timeAt(event.timeStamp) - current.settings.offsetMs;
+      if (time < -HIT_WINDOW_MS) return;
+      current.session.press(event.code, time);
       consumeFeedback();
     };
     const up = (event: KeyboardEvent) => {
       const current = runtime.current;
-      if (current.phase === "playing") {
+      if (["playing", "countdown"].includes(current.phase) && !current.playback) {
         current.session.release(event.code, current.audio!.timeAt(event.timeStamp) - current.settings.offsetMs);
         consumeFeedback();
       }
@@ -139,7 +159,7 @@ export function useRhythmGame() {
     }
   }
 
-  async function start(selectedMode: ChartMode = "song") {
+  async function start(selectedMode: ChartMode = "song", mods: Mods = { ...DEFAULT_MODS }, replay?: Replay) {
     if (["starting", "playing", "countdown"].includes(runtime.current.phase)) return;
     const selected = chartModes[selectedMode];
     setMode(selectedMode);
@@ -152,10 +172,14 @@ export function useRhythmGame() {
       const clock = audio();
       const buffer = selectedMode === "song" ? loaded.current : clock.makeStudy(selected);
       if (!buffer) throw new Error("Choose your audio file first, or try the timing study.");
+      const hash = await chartFingerprint(selected);
+      if (!mounted.current || token !== generation.current) return;
+      fingerprint.current = hash;
+      runtime.current.playback = replay ? new ReplayPlayer(selected, replay, hash) : undefined;
+      runtime.current.session = runtime.current.playback?.session ?? new RhythmSession(selected, mods);
       await clock.start(buffer, selected, settings.volume);
       if (!mounted.current || token !== generation.current) { clock.stop(); return; }
       if (!document.hasFocus() || document.hidden) { clock.stop(); runtime.current.phase = "paused"; publish(); return; }
-      runtime.current.session = new RhythmSession(selected);
       runtime.current.timeMs = -2000;
       runtime.current.phase = "countdown";
       setChart(selected); publish();
@@ -172,9 +196,12 @@ export function useRhythmGame() {
     runtime.current.feedback.clear();
     runtime.current.phase = "setup"; runtime.current.timeMs = 0;
     runtime.current.session = new RhythmSession(songChart);
+    runtime.current.playback = undefined;
+    lastReplay.current = null; setHasReplay(false);
     setChart(songChart); publish();
   }
 
-  const retry = () => start(mode);
-  return { runtime, chart, view, settings, updateSettings, fileName, error, loading, chooseFile, start, retry, pause, exit };
+  const retry = () => start(mode, { ...runtime.current.session.mods });
+  const watchReplay = () => lastReplay.current && start(mode, lastReplay.current.mods, lastReplay.current);
+  return { runtime, chart, view, settings, updateSettings, fileName, error, loading, chooseFile, start, retry, pause, exit, hasReplay, watchReplay };
 }

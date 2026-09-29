@@ -1,5 +1,6 @@
 import type { Chart } from "../domain/chart";
 import { HitSounds } from "./hitSounds";
+import { timeAtBeat, beatAtTime } from "../domain/timing";
 
 type ClockSample = {
   currentTime: number;
@@ -58,7 +59,7 @@ export class RhythmAudio {
         samples[start + i] += Math.sin(2 * Math.PI * frequency * i / rate) * volume * envelope;
       }
     };
-    for (let at = 0; at < chart.durationMs; at += 60_000 / chart.bpm) tone(at, 160, .08, .16);
+    for (let beat = 0; beat < beatAtTime(chart.timing, chart.durationMs); beat++) tone(timeAtBeat(chart.timing, beat), 160, .08, .16);
     for (const note of chart.notes) {
       tone(note.timeMs, note.kind === "hold" ? 440 : 880, .11, .28);
       if (note.kind === "hold") tone(note.endMs, 660, .1, .22);

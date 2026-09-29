@@ -42,7 +42,7 @@ it("hold presses pulse without sparks; warnings have no success particles", () =
   }
 });
 it.each(skins)("draws live tap orbs after hold ribbons in $name", skin => {
-  const chart={...songChart,notes:[{id:"h",kind:"hold" as const,timeMs:1000,endMs:2000},{id:"t",kind:"tap" as const,timeMs:1300}]};
+  const chart={...songChart,notes:[{id:"h",kind:"hold" as const,timeMs:1000,endMs:2000,laneIds:["main"]},{id:"t",kind:"tap" as const,timeMs:1300,laneIds:["main"]}]};
   const session=new RhythmSession(chart); session.press("KeyA",1000);
   const {context,calls}=canvas();
   paintPlayfield(context,800,520,{phase:"playing",session,timeMs:1100,audio:null,feedback:new HitFeedback(),
@@ -52,7 +52,7 @@ it.each(skins)("draws live tap orbs after hold ribbons in $name", skin => {
   expect(ribbonIndex).toBeGreaterThan(-1); expect(tapIndex).toBeGreaterThan(ribbonIndex);
 });
 it("renders every authored orientation at narrow and wide sizes with finite coordinates", () => {
-  for(const skin of skins) for(const frame of songChart.motion) for(const [width,height] of [[640,480],[1280,720],[1920,1080]]) {
+  for(const skin of skins) for(const frame of songChart.lanes[0].motion) for(const [width,height] of [[640,480],[1280,720],[1920,1080]]) {
     const {context,calls}=canvas();
     paintPlayfield(context,width,height,{phase:"playing",session:new RhythmSession(songChart),timeMs:frame.timeMs,audio:null,feedback:new HitFeedback(),
       settings:{skinId:skin.id,reducedMotion:false,offsetMs:0,volume:.6,hitVolume:.15}});

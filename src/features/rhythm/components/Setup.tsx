@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { Settings } from "../data/settings";
 import type { ChartMode } from "../data/charts";
+import type { Mods } from "../domain/rules";
 import { MenuHome } from "./MenuHome";
 import type { MenuPage } from "./MenuHome";
 import { ChartSelect } from "./ChartSelect";
@@ -14,7 +15,7 @@ interface Props {
   loading: boolean;
   error: string;
   chooseFile: (file: File | undefined) => void;
-  start: (mode?: ChartMode) => void;
+  start: (mode?: ChartMode, mods?: Mods) => void;
 }
 
 const titles = { play: "Play", settings: "Settings", help: "How to play" };

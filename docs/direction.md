@@ -2,10 +2,11 @@
 
 ## Scope
 
-notsu is an unofficial desktop companion for osu!, releasing on Windows first.
-Other desktop platforms are deferred.
-It should be useful while osu! is closed. Rhythm is now the first implemented
-prototype; the remaining companion capabilities are still planned.
+notsu is an independent rhythm game and unofficial community project. The accepted
+September 29 public beta targets desktop browsers, Windows, macOS and Linux.
+Each target still needs its own release validation. The full accepted scope and
+release gates are tracked in [public-beta delivery](public-beta.md). The earlier
+companion and Trivia research below remains historical context.
 
 The selected stack is Tauri 2 with React, TypeScript, HTML/CSS, and Vite. Keep
 ordinary application logic in TypeScript and add Rust native integration as
@@ -15,8 +16,8 @@ determine this application's dependencies.
 
 Trivia remains a planned casual feature. Preserve its fixture-based, deterministic
 daily design and its separate boundary. Rhythm is implemented independently; do
-not create a general game framework. The requested home-screen destinations are
-UI placeholders until their individual features are approved.
+not create a general game framework. The home-screen destinations currently remain UI placeholders; their editor,
+library and community implementations are now approved by the public-beta plan.
 
 ## Current home-screen direction
 
@@ -43,8 +44,10 @@ fabricated live performance or playback metrics.
 The user approved a minimal dark blue-gray stage, shaded cyan tap orbs, violet hold
 ribbons, and a hollow target ring. Short local hit effects are allowed; avoid
 background particle fields, bloom, drum imagery, or colour-to-key matching.
-A single line moves and rotates smoothly to authored
-musical beats. Every movement has a scheduled start, destination, and arrival.
+Independent straight lines move, rotate and change length to authored musical
+beats, forming polygons and other geometric arrangements. Shared circles at one
+timestamp take one press. Lines do not transfer notes at intersections. Every
+movement has a scheduled start, destination, and arrival.
 The same musical phrase can reuse the same movement vocabulary.
 
 The retained prototype menu is a simple rhythm-game screen, inspired by the clarity
@@ -58,8 +61,9 @@ focus, native radio-keyboard selection, and Escape/back navigation. Keep the hom
 art static, including with reduced motion. Do not add speculative menu destinations.
 
 This supersedes the old black-and-sage palette below, which is retained as
-historical reference only. The generated mockups were planning references, not
-shipped assets. See [Rhythm](rhythm.md) for mechanics, limitations, and verification.
+historical reference only. The approved September 29 cyan/violet sprite sheet is preserved as
+`src/features/rhythm/assets/gameplay-reference.png`. It is a style reference, not
+a production atlas; exact bounds, anchors and clean exports are still required. See [Rhythm](rhythm.md) for mechanics, limitations, and verification.
 
 ## Historical supplied design reference
 
@@ -104,7 +108,7 @@ Use a bundled snapshot first. Proposed challenge identity: UTC date + algorithm
 version + dataset fingerprint. Store the generated questions and each answer
 immediately. UTC gives everyone the same rollover; explain that in the eventual UI.
 
-## Future integration boundaries
+## Historical companion integration research
 
 - Official API: evaluate player profiles, beatmaps, and scores against documented
   routes and scopes. The documented authorization-code exchange requires a client
@@ -116,7 +120,9 @@ immediately. UTC gives everyone the same rollover; explain that in the eventual 
   supported integration mechanisms, reliability, authentication, licensing/terms,
   and which functionality notsu owns versus delegates.
 
-None of these integrations is implemented or required for the initial Trivia slice.
+None of these integrations is implemented or required by the accepted public beta.
+The current account plan is notsu-owned email/password authentication through
+Supabase; it does not connect external game accounts or use social OAuth.
 
 ## Identity and assets
 

@@ -3,12 +3,13 @@ import { RhythmSession } from "../domain/session";
 import { demoChart } from "../data/charts";
 import { HitFeedback, MAX_EFFECTS } from "./feedback";
 import { getSkin, noteRadius, skins, skinVariables } from "./skins";
-import { laneAnchor, REST_POSE } from "../domain/layout";
+import { laneAnchor } from "../domain/layout";
+import { lanePoseAt } from "../domain/chart";
 import type { Chart } from "../domain/chart";
 
 const chart: Chart = { ...demoChart, durationMs: 5000, notes: [
-  {id:"hold",kind:"hold",timeMs:1000,endMs:2000}, {id:"tap",kind:"tap",timeMs:1500},
-], motion:[{timeMs:0,x:.2,y:.4,angle:0},{timeMs:3000,x:.4,y:.7,angle:90}] };
+  {id:"hold",kind:"hold",timeMs:1000,endMs:2000,laneIds:["main"]}, {id:"tap",kind:"tap",timeMs:1500,laneIds:["main"]},
+], lanes:[{id:"main",motion:[{timeMs:0,x:.2,y:.4,angle:0,length:420},{timeMs:3000,x:.4,y:.7,angle:90,length:420}]}] };
 const skin = getSkin("midnight");
 
 it("consumes once, retains overlaps, snapshots anchors, and expires on the boundary", () => {
@@ -37,13 +38,13 @@ it("keeps a broken hold at the target and gives successful releases their own so
     session.press("KeyS",1500); feedback.consume(session,skin,true,play);
     session.release("KeyA",releaseTime); feedback.consume(session,skin,true,play);
     const last = feedback.effects.at(-1)!;
-    expect(last.anchor).toEqual(laneAnchor(REST_POSE)); expect(last.reducedMotion).toBe(true);
+    expect(last.anchor).toEqual(laneAnchor(lanePoseAt(chart.lanes[0],releaseTime))); expect(last.reducedMotion).toBe(true);
     if (releaseTime === 1600) { expect(last.failed).toMatchObject({head:0,held:true}); expect(play).toHaveBeenCalledTimes(2); }
     else { expect(last.failed).toBeUndefined(); expect(play).toHaveBeenLastCalledWith(skin.sounds.release); }
   }
 });
 it("caps effects and clears all per-attempt history for retry", () => {
-  const session = new RhythmSession(chart), feedback = new HitFeedback();
+  const session = new RhythmSession(chart,{noFail:true}), feedback = new HitFeedback();
   for (let i=0;i<100;i++) session.press(`key${i}`,0);
   feedback.consume(session,skin,false,()=>{}); expect(feedback.effects).toHaveLength(MAX_EFFECTS);
   feedback.clear(); expect(feedback.effects).toHaveLength(0);

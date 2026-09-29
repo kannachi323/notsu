@@ -8,6 +8,15 @@
 .hud-right strong { font-size: 28px; font-weight: 500; font-variant-numeric: tabular-nums; }
 .hud-right span { color: var(--muted); font-size: 16px; }
 .pause-button { font-size: 16px; padding: 10px; }
+.run-label { margin-top: 8px; color: var(--accent) !important; }
+.health-bar { display: flex; align-items: center; gap: 14px; padding-top: 16px; color: var(--muted); font-size: 16px; }
+.health-bar meter { flex: 1; height: 12px; }
+.result-score { color: var(--text); font-size: 36px; font-variant-numeric: tabular-nums; margin-top: 28px; }
+.result-score span { color: var(--muted); font-size: 16px; }
+.mod-options { display: flex; flex-wrap: wrap; gap: 14px; padding: 16px; margin-top: 20px; border: 1px solid var(--border); border-radius: 10px; }
+.mod-options legend { padding: 0 6px; color: var(--muted); }
+.mod-options label { display: flex; align-items: center; gap: 8px; }
+.mod-options p { flex-basis: 100%; font-size: 16px; color: var(--muted); }
 .canvas-wrap { flex: 1; position: relative; min-height: 320px; }
 .playfield { display: block; width: 100%; height: 100%; position: absolute; inset: 0; }
 .countdown { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; pointer-events: none; }

@@ -25,8 +25,8 @@ it("opens the menu at home, with audio loading only inside chart selection", () 
 });
 it("defaults to playable practice when no file is loaded", () => {
   const html = renderToStaticMarkup(<ChartSelect {...actions} />);
-  const radios = html.match(/<input[^>]+>/g)!;
-  expect(radios).toHaveLength(3);
+  const radios = html.match(/<input[^>]+type="radio"[^>]*>/g)!;
+  expect(radios).toHaveLength(4);
   expect(radios.find(input => input.includes('value="basic"'))).toContain('checked=""');
   expect(html).not.toContain('disabled=""');
   expect(html).not.toContain('type="file"');
