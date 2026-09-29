@@ -2,7 +2,7 @@ import { useState } from "react";
 import type { Chart } from "../../rhythm/domain/chart";
 import type { EditorCommand } from "../domain/commands";
 import { beatAtTime, timeAtBeat } from "../../rhythm/domain/timing";
-export function NoteTools({ chart, selected, timeMs, divisor, change, seek }: { chart: Chart; selected: string[]; timeMs: number; divisor: number; change: (command: EditorCommand) => void; seek: (ms: number) => void }) {
+export function NoteTools({ chart, selected, noteIds, selectNotes, timeMs, divisor, change, seek }: { chart: Chart; selected: string[]; noteIds: string[]; selectNotes: (ids: string[]) => void; timeMs: number; divisor: number; change: (command: EditorCommand) => void; seek: (ms: number) => void }) {
   const [beats, setBeats] = useState(1);
   const tempo = [...chart.timing].reverse().find(point => point.timeMs <= timeMs)!;
   const near = chart.notes.filter(note => (note.kind === "hold" ? note.endMs : note.timeMs) >= timeMs - 1000).slice(0, 10);
@@ -13,6 +13,7 @@ export function NoteTools({ chart, selected, timeMs, divisor, change, seek }: { 
     <button disabled={!selected.length || !Number.isFinite(beats) || beats <= 0} onClick={() => change({ type: "place", id: crypto.randomUUID(), timeMs, endMs: timeAtBeat(chart.timing, beatAtTime(chart.timing, timeMs) + beats), divisor, laneIds: selected })}>Add hold at playhead</button>
     <h3>Near the playhead</h3>{!near.length && <p className="editor-hint">No circles here yet.</p>}
     <ul className="editor-note-list">{near.map(note => <li key={note.id}>
+      <input type="checkbox" aria-label={`Select circle at ${note.timeMs} milliseconds`} checked={noteIds.includes(note.id)} onChange={event => selectNotes(event.target.checked ? [...noteIds, note.id] : noteIds.filter(id => id !== note.id))} />
       <button className="editor-note-time" onClick={() => seek(note.timeMs)}><strong>{(note.timeMs / 1000).toFixed(3)} s</strong><span>{note.kind === "hold" ? `Hold → ${(note.endMs / 1000).toFixed(3)} s` : "Tap"} · {note.laneIds.length} {note.laneIds.length === 1 ? "line" : "lines"}</span></button>
       <button aria-label={`Remove circle at ${note.timeMs} milliseconds`} onClick={() => change({ type: "delete-note", id: note.id })}>×</button>
     </li>)}</ul>

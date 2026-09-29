@@ -13,6 +13,7 @@ import { Timeline } from "./Timeline";
 import { MapDetails } from "./MapDetails";
 import { LaneTools } from "./LaneTools";
 import { NoteTools } from "./NoteTools";
+import { NoteSelection } from "./NoteSelection";
 import { DraftBackup } from "./DraftBackup";
 import { PackageExport } from "./PackageExport";
 
@@ -20,6 +21,7 @@ export function EditorScreen() {
   const editor = useEditor(), { workspace } = editor;
   const [settings] = useState(loadSettings), revision = useSkinCatalog(state => state.revision);
   const [selected, setSelected] = useState<string[]>([]), [divisor, setDivisor] = useState(4), [preview, setPreview] = useState(false);
+  const [selectedNotes, setSelectedNotes] = useState<string[]>([]);
   const [restored, setRestored] = useState<EditorDocument | undefined>(), [restoreText, setRestoreText] = useState("");
   const [discard, setDiscard] = useState(false);
   const [artReady, setArtReady] = useState(false);
@@ -31,7 +33,7 @@ export function EditorScreen() {
     return () => { cancelled = true; };
   }, [settings.skinId]);
   useEffect(() => {
-    setSelected(workspace ? [workspace.document.chart.lanes[0].id] : []); setPreview(false);
+    setSelected(workspace ? [workspace.document.chart.lanes[0].id] : []); setSelectedNotes([]); setPreview(false);
     if (workspace) { setRestored(undefined); setRestoreText(""); }
   }, [workspace?.document.id]);
   const heading = <header className="editor-header"><Link to="/" className="editor-brand">notsu</Link><h1>Editor</h1><span className="editor-save" role="status">{workspace ? editor.saveStatus : "Local drafts"}</span></header>;
@@ -61,6 +63,7 @@ export function EditorScreen() {
   </section><footer>Unofficial community project · Not affiliated with ppy</footer></main>;
   const { document: doc, history } = workspace, chart = doc.chart;
   const selectedIds = selected.filter(id => chart.lanes.some(lane => lane.id === id));
+  const existingNotes = new Set(chart.notes.map(note => note.id)), noteIds = selectedNotes.filter(id => existingNotes.has(id));
   const position = Math.round(editor.timeMs * 1000) / 1000;
   const place = (timeMs: number, laneId: string) => { setSelected([laneId]); editor.change({ type: "place", id: crypto.randomUUID(), timeMs, laneIds: [laneId], divisor }); };
   const previewMap = () => { try { playableChart(doc); editor.stop(); setPreview(true); } catch { editor.setError("Add at least one circle before playtesting."); } };
@@ -80,8 +83,9 @@ export function EditorScreen() {
     </div>
     <div className="editor-workspace" onFocusCapture={editor.stop}><LaneTools chart={chart} selected={selectedIds} select={setSelected} timeMs={position} change={editor.change} seek={editor.seek} />
       <div className="editor-center"><div className="editor-stage-shell"><EditorStage key={String(artReady)} chart={chart} timeMs={editor.timeMs} settings={settings} /><span className="editor-stage-label">Arrangement · {(editor.timeMs / 1000).toFixed(2)} s</span></div>
-        <Timeline chart={chart} peaks={workspace.song.peaks} timeMs={editor.timeMs} divisor={divisor} seek={editor.seek} place={place} />
-      </div><NoteTools chart={chart} selected={selectedIds} timeMs={position} divisor={divisor} change={editor.change} seek={editor.seek} /></div>
+        <Timeline chart={chart} peaks={workspace.song.peaks} timeMs={editor.timeMs} divisor={divisor} seek={editor.seek} place={place} selected={noteIds} select={setSelectedNotes} change={editor.change} />
+        <NoteSelection key={doc.id} chart={chart} ids={noteIds} select={setSelectedNotes} laneIds={selectedIds} timeMs={position} divisor={divisor} change={editor.change} />
+      </div><NoteTools chart={chart} selected={selectedIds} noteIds={noteIds} selectNotes={setSelectedNotes} timeMs={position} divisor={divisor} change={editor.change} seek={editor.seek} /></div>
     <PackageExport key={doc.id} document={doc} audio={workspace.song.bytes} /><DraftBackup document={doc} /><footer>Local draft · {workspace.song.reference.fileName} · {(chart.durationMs / 1000).toFixed(1)} s · Unofficial community project</footer>
   </main>;
 }

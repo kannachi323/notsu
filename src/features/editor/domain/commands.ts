@@ -3,8 +3,10 @@ import { snapTime } from "../../rhythm/domain/timing";
 import { HIT_WINDOW_MS } from "../../rhythm/domain/rules";
 import { readDocument } from "./document";
 import type { EditorDocument } from "./document";
+import { editNotes } from "./noteEditing";
+import type { NoteEdit } from "./noteEditing";
 
-export type EditorCommand =
+export type EditorCommand = NoteEdit
   | { type: "metadata"; title: string; artist: string; author: string; difficulty: string }
   | { type: "place"; id: string; laneIds: string[]; timeMs: number; endMs?: number; divisor: number }
   | { type: "delete-note"; id: string }
@@ -14,6 +16,7 @@ export type EditorCommand =
   | { type: "add-lane"; id: string; frame: LaneKeyframe }
   | { type: "delete-lane"; id: string }
   | { type: "motion"; frames: { laneId: string; frame: LaneKeyframe }[] }
+  | { type: "easing"; laneIds: string[]; timeMs: number; easing: "smooth" | "linear" }
   | { type: "add-lanes"; lanes: { id: string; frame: LaneKeyframe }[] }
   | { type: "delete-motion"; laneIds: string[]; timeMs: number };
 const precise = (ms: number) => Math.round(ms * 1000) / 1000;
@@ -21,6 +24,8 @@ const precise = (ms: number) => Math.round(ms * 1000) / 1000;
 export function editDocument(source: EditorDocument, command: EditorCommand): EditorDocument {
   const document = readDocument(source), chart = document.chart;
   switch (command.type) {
+    case "edit-note": case "move-notes": case "snap-notes": case "delete-notes": case "assign-note-lanes": case "paste-notes":
+      chart.notes = editNotes(chart, command); break;
     case "metadata":
       chart.title = command.title; chart.artist = command.artist; document.author = command.author; document.difficulty = command.difficulty; break;
     case "place": {
@@ -66,6 +71,13 @@ export function editDocument(source: EditorDocument, command: EditorCommand): Ed
         const lane = chart.lanes.find(lane => lane.id === laneId); if (!lane) throw new Error("Choose an existing line.");
         const timeMs = precise(frame.timeMs);
         lane.motion = [...lane.motion.filter(point => point.timeMs !== timeMs), { ...frame, timeMs }].sort((a, b) => a.timeMs - b.timeMs);
+      } break;
+    case "easing":
+      if (!command.laneIds.length) throw new Error("Select lines with keyframes at this time.");
+      for (const id of new Set(command.laneIds)) {
+        const frame = chart.lanes.find(lane => lane.id === id)?.motion.find(frame => frame.timeMs === command.timeMs);
+        if (!frame) throw new Error("Each selected line needs a keyframe at the playhead. Set a line or group keyframe first.");
+        frame.easing = command.easing;
       } break;
     case "delete-motion":
       if (command.timeMs === 0) throw new Error("The opening line positions are required.");

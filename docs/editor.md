@@ -28,6 +28,44 @@ The creator milestone remains in progress; this is not the finished publishing U
    path, with No Fail or Autoplay. These runs are unranked; playtests use authored
    motion even when the player's frozen-line practice setting is enabled.
 
+## Selecting and retiming circles
+
+Click a timeline head to select its logical circle, or use the labeled checkboxes
+beside the circle list. Shift-click adds/removes circles. The Selection panel also
+selects all circles or an inclusive range of start times across every line.
+Shared instances always move and score together.
+
+Drag a head to move the selection by milliseconds with that head snapped to the
+current grid. Drag a hollow hold endpoint to resize only that hold. A white outline
+marks selected circles; a preview shows the proposed drag. Releasing commits one
+undo step; Escape or pointer cancellation abandons it. Keyboard-accessible controls
+provide the same retiming operations without dragging.
+
+**Earlier/Later** moves the selection by beats or exact milliseconds. Beat moves
+transform both starts and ends through the tempo map; millisecond moves preserve
+elapsed durations. **Snap selection** snaps each start/end locally to its tempo
+section and the chosen divisor. The single-circle inspector preserves typed times,
+converts taps/holds, and edits shared lines. **Use selected lines** replaces the
+line instances of the entire selection.
+
+**Copy phrase** stores relative beat offsets and shared lines in the current editor
+view. **Paste at playhead** anchors its first circle to the grid and follows the
+destination tempo, with new circle identities. It is an in-app clipboard, cleared
+when changing drafts or leaving the editor view. Removing a referenced line requires
+recopying the phrase. Timing collisions, collapsed holds, missing lines and song
+bounds fail atomically; retiming never silently merges distinct scored circles.
+Delete, paste, reassignment and batch timing edits are individually undoable.
+
+## Movement easing
+
+**Arrival easing** controls the transition into a destination keyframe: Smooth
+slows at both ends; Linear advances at a constant rate. New line/group/preset
+keyframes use this choice. The default preserves existing easing or uses Smooth
+for a new frame. **Apply easing here** changes only the easing of existing frames
+on all selected lines; it preserves their positions, lengths and angles. Every
+selected line must have a keyframe at the playhead. The panel identifies mixed
+easing in selected groups. The first frame has no incoming movement.
+
 The stage and waveform use Canvas. All authoring actions also have labeled form
 controls. Narrow windows reflow and scroll; editing controls stay accessible while
 scrolling. The editor follows the approved dark cyan/violet gameplay direction.
@@ -72,8 +110,7 @@ stereo waveform peaks, save/reopen, stale-window conflicts, failed writes, timeo
 cleanup and serialized/coalesced autosaves. See the current counts and actual
 browser/native evidence in [public-beta delivery](public-beta.md).
 
-Still required for the creator milestone: metronome/count-in, robust note
-retiming/selection tools, keyframe easing controls, richer difficulty/draft
+Still required for the creator milestone: metronome/count-in, richer difficulty/draft
 management, recovery UX, performance with large real maps, platform/browser verification and mapper
 playtests. Publishing, online browsing and moderation remain separate pending work.
 

@@ -81,14 +81,15 @@ export function useEditor() {
     finally { if (mounted.current) setBusy(false); }
   }
   function change(command: EditorCommand | "undo" | "redo") {
-    const current = active.current; if (!current || busy) return;
+    const current = active.current; if (!current || busy) return false;
     stop(); setError("");
     try {
       const doc = command === "undo" ? current.history.undo() : command === "redo" ? current.history.redo() : current.history.apply(command);
-      if (JSON.stringify(doc) === JSON.stringify(current.document)) return;
+      if (JSON.stringify(doc) === JSON.stringify(current.document)) return true;
       const next = { ...current, document: doc }; active.current = next; setWorkspace(next);
       current.writer?.enqueue(doc); setSaveStatus(current.writer ? "Saving…" : "Session only · not saved");
-    } catch (cause) { setError(message(cause)); }
+      return true;
+    } catch (cause) { setError(message(cause)); return false; }
   }
   function seek(time: number) { if (!Number.isFinite(time)) return; stop(); setTimeMs(Math.max(0, Math.min(active.current?.document.chart.durationMs ?? 0, time))); }
   async function listen() {

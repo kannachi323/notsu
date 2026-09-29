@@ -10,10 +10,14 @@ export function LaneTools({ chart, selected, select, timeMs, change, seek }: {
   change: (command: EditorCommand) => void; seek: (ms: number) => void;
 }) {
   const [preset, setPreset] = useState<GeometryPreset>("triangle");
+  const [easing, setEasing] = useState<"keep" | "smooth" | "linear">("keep");
   const lanes = chart.lanes.filter(lane => selected.includes(lane.id)), frames = presetFrames(preset, timeMs);
   const pose = lanes.length === 1 ? lanePoseAt(lanes[0], timeMs) : undefined;
   const times = [...new Set(lanes.flatMap(lane => lane.motion.map(frame => frame.timeMs)))].sort((a, b) => a - b);
-  const applyPreset = () => change({ type: "motion", frames: lanes.map((lane, i) => ({ laneId: lane.id, frame: frames[i] })) });
+  const easingFor = (id: string) => easing === "keep" ? chart.lanes.find(lane => lane.id === id)?.motion.find(frame => frame.timeMs === timeMs)?.easing ?? "smooth" : easing;
+  const existingFrames = lanes.map(lane => lane.motion.find(frame => frame.timeMs === timeMs));
+  const currentEasings = [...new Set(existingFrames.filter(frame => frame !== undefined).map(frame => frame.easing ?? "smooth"))];
+  const applyPreset = () => change({ type: "motion", frames: lanes.map((lane, i) => ({ laneId: lane.id, frame: { ...frames[i], easing: easingFor(lane.id) } })) });
   return <section className="editor-panel" aria-label="Line choreography">
     <h2>Lines <span>{chart.lanes.length}/16</span></h2><p className="editor-hint">Select lines for shared circles and group movement.</p>
     <div className="editor-line-list">{chart.lanes.map((lane, i) => <label key={lane.id}><input type="checkbox" checked={selected.includes(lane.id)}
@@ -31,10 +35,13 @@ export function LaneTools({ chart, selected, select, timeMs, change, seek }: {
     <p className="editor-hint">Arrange {presetCounts[preset]} selected lines at the playhead. Earlier keyframes create the transition.</p>
     {!!lanes.length && <>
       <h3>Movement at {(timeMs / 1000).toFixed(3)} s</h3>
+      <label>Arrival easing<select value={easing} onChange={event => setEasing(event.target.value as typeof easing)}><option value="keep">Keep existing · smooth if new</option><option value="smooth">Smooth</option><option value="linear">Linear</option></select></label>
+      <p className="editor-hint">Controls the approach into this keyframe. Smooth slows at each end; linear keeps a constant rate. Current: {currentEasings.length > 1 ? "mixed" : currentEasings[0] ?? "no keyframe here"}.</p>
+      <button disabled={easing === "keep" || existingFrames.some(frame => !frame)} onClick={() => { if (easing !== "keep") change({ type: "easing", laneIds: selected, timeMs, easing }); }}>Apply easing here</button>
       {pose ? <form key={`${lanes[0].id}:${timeMs}:${JSON.stringify(pose)}`} onSubmit={event => {
         event.preventDefault(); const data = new FormData(event.currentTarget);
         change({ type: "motion", frames: [{ laneId: lanes[0].id, frame: { timeMs, x: Number(data.get("x")) / 100, y: Number(data.get("y")) / 100,
-          angle: Number(data.get("angle")), length: Number(data.get("length")), easing: "smooth" } }] });
+          angle: Number(data.get("angle")), length: Number(data.get("length")), easing: easingFor(lanes[0].id) } }] });
       }}><div className="editor-field-grid">
         <label>X %<input name="x" type="number" min={0} max={100} step="any" defaultValue={+(pose.x * 100).toFixed(3)} required /></label>
         <label>Y %<input name="y" type="number" min={0} max={100} step="any" defaultValue={+(pose.y * 100).toFixed(3)} required /></label>
@@ -44,7 +51,7 @@ export function LaneTools({ chart, selected, select, timeMs, change, seek }: {
       <form onSubmit={event => {
         event.preventDefault(); const data = new FormData(event.currentTarget);
         const moved = transformedFrames(lanes, timeMs, { rotation: Number(data.get("rotation")), scale: Number(data.get("scale")), dx: Number(data.get("dx")) / 100, dy: Number(data.get("dy")) / 100 });
-        change({ type: "motion", frames: lanes.map((lane, i) => ({ laneId: lane.id, frame: moved[i] })) });
+        change({ type: "motion", frames: lanes.map((lane, i) => ({ laneId: lane.id, frame: { ...moved[i], easing: easingFor(lane.id) } })) });
       }}><div className="editor-field-grid">
         <label>Rotate °<input name="rotation" type="number" defaultValue={45} required /></label><label>Scale<input name="scale" type="number" min={.1} max={4} step={.05} defaultValue={1} required /></label>
         <label>Move X %<input name="dx" type="number" min={-100} max={100} defaultValue={0} required /></label><label>Move Y %<input name="dy" type="number" min={-100} max={100} defaultValue={0} required /></label>

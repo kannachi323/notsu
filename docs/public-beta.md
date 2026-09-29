@@ -325,3 +325,41 @@ See [map package and library details](maps.md). The creator milestone still need
 advanced editing, metronome, richer recovery/draft management and mapper testing.
 Personal records, online maps/community/rankings, deployment, performance and
 cross-platform release gates remain unfinished. The full goal stays active.
+
+### September 29 selection, rhythmic phrases and movement easing
+
+Added single/multiple circle selection, inclusive time-range selection, exact
+tap/hold inspection, batch beat/millisecond retiming, local-grid snapping, shared
+line reassignment, deletion and an in-editor rhythmic phrase clipboard. Pasting
+keeps beat offsets across destination tempo changes with fresh logical identities.
+Timeline heads and hold endpoints can be dragged with a visual preview and one
+history entry. Pointer cancellation/Escape abandons a drag. Invalid batches fail
+without partially modifying notes or merging scored objects.
+
+Arrival easing is exposed for individual/group/preset movement. Existing easing
+is preserved by default; an explicit easing edit changes only that property on
+existing destination frames, with no pose replacement. See [editor guide](editor.md).
+
+- `npm test`: 273 passing tests across 34 files. New cases cover tempo-crossing
+  phrase moves/paste, shared instances, exact endpoints, tap/hold conversion,
+  duplicate identities, bounds, orphan lines, collisions, collapsed holds,
+  atomic undo/redo and destination easing without geometry changes.
+- Frontend type checking/production build and the packaged macOS debug build pass.
+  Native code is unchanged in this slice.
+- Browser: moved two selected circles together, rejected their next colliding move
+  unchanged, undid the move, copied the phrase into a faster section, edited an
+  exact hold endpoint, and changed destination easing. Selected three circles by
+  time range, deleted them as one operation, and restored all three with Undo.
+  Reload/reopen preserved all eight circles, the edited hold endpoint and linear
+  arrival easing. The clean browser session reported no warning/error logs.
+- macOS debug app: dragged a shared tap from 1,000 to 1,500 ms and a hold endpoint
+  from 10,000 to 10,500 ms. The hold start stayed at 8,000 ms across all three line
+  instances. The edited chart completed actual-engine Autoplay with 1,000,000
+  points, 100% accuracy and seven Perfect judgments. Both edits were then undone
+  and the original test fixture saved. Pointer coordinate checks used the native
+  app; the in-app browser's scaled pointer test did not verify dragging.
+- Screenshot evidence: ignored `.tools/screenshots/editor-selection-native.png`.
+
+Metronome/count-in, richer draft/recovery management, large-map performance and
+mapper/platform testing remain open in the creator milestone. This progress does
+not complete the community, competitive backend or public-release requirements.
