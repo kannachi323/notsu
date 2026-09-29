@@ -12,14 +12,17 @@ Removing a friendship or blocking in either direction hides history and prevents
 sending at the database boundary. Unblocking alone does not restore access; a new
 accepted friendship makes the retained history available again. Previously delivered
 content cannot be taken back from another person's device. Public profiles remain
-public. Reporting, moderation and retention for reports are separate release work.
+public unless hidden by account availability or a community restriction. A received
+message's Report link opens [private reporting](moderation.md). Its exact server
+copy remains reportable after blocking, without restoring conversation access.
 
 Deleting either account deletes both sides of its conversations, their read
-positions and private message-rate records. This is disclosed on the account
-deletion screen. The current local database has no restore policy exposed to users;
-production backup retention/deletion and moderation evidence handling must be
-defined before public release. Messages are access-controlled, not end-to-end
-encrypted. No service operator privacy or human moderation capability is invented.
+positions and private message-rate records. Existing report evidence can survive
+deletion for private review: 90 days after the latest review or 180 days after an
+unreviewed submission, then scheduled removal. The account-deletion screen discloses
+this exception. Production backup retention/deletion and restore behavior remain
+release gates. Messages are access-controlled, not end-to-end encrypted; authorized
+reviewers can inspect server-captured reported messages.
 
 ## Database and API
 
@@ -110,9 +113,10 @@ open history and disable its composer. The preview friendship was restored throu
 a new request/acceptance. These messages are demonstration text, not playtester
 feedback. A 60-message disposable browser fixture exercised earlier-page loading
 and keyboard history scrolling, then was removed. Full reconnect/outage and
-larger-history stress, external abuse review, reporting,
+larger-history stress, external abuse review, moderation operations,
 Windows/Linux and public operations remain unfinished. The subsequent
-[presence slice](presence.md) adds opt-in friends-only online indicators.
+[presence slice](presence.md) adds opt-in friends-only online indicators, and
+[reporting](moderation.md) adds private received-message reports and reviewer actions.
 
 References reviewed September 29, 2026:
 

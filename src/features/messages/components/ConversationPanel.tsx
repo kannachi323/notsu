@@ -45,7 +45,7 @@ export function ConversationPanel({username,identity,revision,onChange}:{usernam
       {thread.next&&<button disabled={thread.busy} onClick={()=>{if(scroll.current)olderPosition.current={height:scroll.current.scrollHeight,top:scroll.current.scrollTop};setAtBottom(false);thread.older();}}>Load earlier messages</button>}
       {!thread.items.length&&!thread.busy&&!thread.error&&<div className="message-welcome"><span aria-hidden="true">◌</span><h3>A new conversation</h3><p>Talk maps, compare patterns, or just say hello.</p></div>}
       <ol aria-label="Messages">{[...thread.items].reverse().map(message=><li key={message.sequence} className={message.senderId===identity?"message-own":"message-peer"}>
-        <div className="message-bubble"><p>{message.body}</p><time dateTime={message.createdAt} title={new Date(message.createdAt).toLocaleString()}>{new Date(message.createdAt).toLocaleTimeString(undefined,{hour:"2-digit",minute:"2-digit"})}</time></div>
+        <div className="message-bubble"><p>{message.body}</p><time dateTime={message.createdAt} title={new Date(message.createdAt).toLocaleString()}>{new Date(message.createdAt).toLocaleTimeString(undefined,{hour:"2-digit",minute:"2-digit"})}</time>{message.senderId!==identity && <Link className="report-message-link" to={`/report/${message.senderId}/${message.id}`}>Report message</Link>}</div>
       </li>)}</ol>
       {thread.busy&&<p role="status">Loading messages…</p>}
     </div>

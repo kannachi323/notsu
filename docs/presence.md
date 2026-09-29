@@ -23,7 +23,11 @@ No scheduled cleanup job is required for expiry to affect reads.
 Separate clients/sessions have independent leases. Closing one does not take
 another offline. Deleting/revoking an Auth session cascades its leases; banned,
 unverified or deleted users fail the availability check. An Auth session alone
-never means online. A newer release wins over an older delayed renewal, including
+never means online. [Community restrictions](moderation.md) expire existing leases
+and prevent renewal; the public RPC locks the profile before checking availability
+and delegates to the private lease implementation only when allowed. Neither direct
+RPC calls nor an already-waiting renewal can bypass a committed restriction.
+A newer release wins over an older delayed renewal, including
 a release that arrives before the first renewal. Hiding is account-wide and
 expires every client lease. Heartbeats cannot override the saved visibility.
 

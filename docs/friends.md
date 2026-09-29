@@ -12,7 +12,9 @@ a block list is visible only to its owner. Blocking removes an accepted friendsh
 or pending request and prevents new requests in either direction. Unblocking does
 not restore old relationships. Public profile names and bios remain public. The
 other player receives a generic unavailable state, never the blocker’s block ID
-or list. Banned/unverified/deleted targets cannot receive requests; no presence
+or list. Banned, unverified, deleted or community-restricted targets cannot receive
+requests. Restrictions also hide public profiles; ordinary blocking does not.
+No presence
 status is inferred from friendship or from an existing Auth session.
 
 The UI has Friends, Requests, Sent and Blocked views, explicit empty/error states,
@@ -76,7 +78,9 @@ refresh to see newly arriving rows or changes made while paging.
 
 These bounds are not the complete public abuse-control plan. Before deployment,
 add monitored per-IP/user controls for reads and other mutations, bot/signup
-controls, request-spam policy, reporting/moderation, and service-level load tests.
+controls, request-spam policy, moderation operations, and service-level load tests.
+Private [reporting and review](moderation.md) are implemented locally, including
+optional atomic blocking when submitting a report.
 Private messages and live invalidations now use the rules in [messages](messages.md),
 including blocking on access/send and race tests. Opt-in [presence](presence.md)
 uses the same accepted-friend/block boundary and short-lived leases. Raw block-table deletion events are never published; live hints carry

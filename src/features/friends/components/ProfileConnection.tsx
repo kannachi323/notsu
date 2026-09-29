@@ -28,6 +28,7 @@ export function ProfileConnection({ target,username }: { target: string;username
   if (identity.id === target) return <Link className="account-guest" to="/friends">Your friends →</Link>;
   if (!profile) return <p className="connection-sign-in"><Link to="/account">Create or load your profile</Link> to connect with this player.</p>;
   return <section className="profile-connection" aria-label="Player connection">
+    <Link className="account-guest" to={`/report/${target}`}>Report player →</Link>
     {connection?.state==="friends" && <PresenceBadge online={presence.get(target)}/>}
     {connection?.state==="friends" && <Link className="account-guest" to={`/messages/${username}`}>Message →</Link>}
     {error ? <><p role="alert" className="account-error">{error}</p><button onClick={() => setRevision(value => value + 1)}>Retry connection</button></> :

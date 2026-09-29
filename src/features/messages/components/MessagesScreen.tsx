@@ -10,6 +10,7 @@ import type { ConnectionCursor } from "../../friends/domain/connections";
 import { ConversationPanel } from "./ConversationPanel";
 import "../../accounts/accounts.css";
 import "../messages.css";
+import "../../moderation/moderation.css";
 import { useFriendPresence } from "../../presence/useFriendPresence";
 import { PresenceBadge } from "../../presence/components/PresenceBadge";
 

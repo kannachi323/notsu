@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { checkFriends } from "./check-friends.mjs";
 import { checkMessages } from "./check-messages.mjs";
 import { checkPresence } from "./check-presence.mjs";
+import { checkModeration } from "./check-moderation.mjs";
 import { execFileSync, spawn } from "node:child_process";
 import { createWriteStream, mkdirSync, mkdtempSync, writeFileSync, rmSync } from "node:fs";
 import { randomUUID } from "node:crypto";
@@ -136,6 +137,7 @@ try {
   await checkFriends({ check, request, createAccount, admin, a, b, suffix });
   await checkMessages({ check, request, createAccount, publicClient, admin, a, b, suffix });
   await checkPresence({ check, request, createAccount, publicClient, admin, password, suffix });
+  await checkModeration({ check, request, createAccount, admin, deletion, suffix });
   await check("sign-out revokes API writes and direct database writes", async () => {
     assert.equal((await a.client.auth.signOut({ scope: "local" })).error, null);
     const result = await request("/v1/me/profile", a.token, profileA);

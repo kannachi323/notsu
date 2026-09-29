@@ -41,9 +41,9 @@ Profile editing displays errors/retry and guards unsaved changes on navigation,
 sign-out and browser unload. Pending loads cannot overwrite a newer save or another
 account's profile. A profile-service outage retains account identity and offers
 retry; local play remains accessible. Native close/unload behavior and long-running
-network/refresh stress tests still need broader platform coverage. Profile
-moderation, optional persistent sessions and additional account controls remain
-unfinished.
+network/refresh stress tests still need broader platform coverage. Local profile
+reporting and moderation are implemented; optional persistent sessions and further
+account controls remain unfinished.
 
 ## Implemented API
 
@@ -84,7 +84,9 @@ enables RLS and grants only public reads plus owner inserts/updates on editable
 columns. Profiles contain public ID/handle/name/bio/timestamps only; email and
 authentication data stay in Supabase's private `auth` schema. Public profiles remain
 public even if the viewer is signed out; blocking is not a privacy control for
-these already-public fields. Profile hiding/moderation is still pending.
+these already-public fields. Banned, unverified and community-restricted profiles
+are hidden from public reads. A live verified owner retains their own profile read
+during a community restriction. See [moderation](moderation.md).
 
 The private, fixed-search-path `account_is_active` helper checks the current
 authenticated user against a matching `auth.sessions` row, verified email,
@@ -94,14 +96,18 @@ cannot change identity/timestamps or delete an account. `save_profile` is a
 security-invoker RPC with column-limited writes; it does not elevate callers.
 Hard deletion of an Auth user cascades their profile, sessions, friendships,
 blocks, request counters and both sides of its private message history/read
-positions. Retention and deletion rules for reports, published maps, scores and
-production backups must be finalized before release.
+positions. Existing report evidence and review history survive under the disclosed
+90/180-day retention policy in [moderation](moderation.md); deletion clears identity
+foreign keys but does not anonymize captured evidence. Published-map, score and
+production-backup deletion policies remain release work.
 
 Friends and blocking now use a separate migration and feature boundary; see
 [friends and authorization](friends.md). Protected feature endpoints share the
 account live-session middleware. [Private messages and live updates](messages.md)
-are implemented locally. Rankings, presence, map publishing,
-uploads and administrative endpoints remain unfinished. Add grants/RLS and
+and [friends-only presence](presence.md) are implemented locally. Private
+[reports and review](moderation.md) now cover profiles and received messages.
+Rankings, map publishing, uploads and their administrative endpoints remain
+unfinished. Add grants/RLS and
 adversarial tests in the same migration as each future feature.
 
 ## Permanent account deletion
@@ -138,6 +144,9 @@ check sign-in. Repeated requests after deletion are denied by normal authenticat
 there is no persistent deletion receipt yet. Failed attempts best-effort sign out
 the temporary proof session; network outages can prevent that cleanup. Local maps,
 drafts, skins, preferences and records are independent and remain on the device.
+Before confirmation, the UI discloses retained report evidence and its scheduled
+removal. This includes reported message/profile copies even though the original
+conversation and profile rows are deleted.
 
 ## Local development and verification
 
@@ -214,18 +223,19 @@ adopts a patched version. The lockfile includes both client and server tooling.
 ## Gates before exposure to the public
 
 The local community now includes friends, private messaging, private realtime
-invalidations and opt-in [friends-only presence](presence.md). Presence adds a
-private settings/lease/quota migration and narrow authenticated RPCs. No raw
-presence rows are published, and no new native capability or hosted origin is
-needed for local verification.
+invalidations, opt-in [friends-only presence](presence.md), and private
+[reports/moderation](moderation.md). Reports use private evidence/action tables,
+database-authorized reviewers and a daily retention job. Neither report content
+nor raw presence is published. No new native capability or hosted origin is needed
+for local verification.
 
 Finish the remaining account controls and cross-platform flows; wire exact hosted
 CSP/CORS origins, recovery templates and HTTPS service URLs. Establish staging/production,
 SMTP delivery, migrations/backups/restore/rollback, monitored failure handling,
-rate limits/anti-abuse, moderation and load tests. Direct Supabase access also needs
+rate limits/anti-abuse, moderation operations and load tests. Direct Supabase access also needs
 an abuse-control strategy: limiting Worker traffic alone does not limit PostgREST.
-Public name reservations, renaming/impersonation policy and profile moderation
-need completion alongside community UI. Do not deploy this local configuration
+Public name reservations, renaming/impersonation policy, staff MFA, appeals and
+operator escalation still need completion. Do not deploy this local configuration
 as a production service. Define and disclose backup/audit retention and the handling of published maps,
 messages, reports and rankings on deletion before those features go live. The
 current flow deletes Auth/profile rows; it is not a promise of immediate erasure

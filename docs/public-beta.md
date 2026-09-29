@@ -81,7 +81,7 @@ do not change gameplay. Pause/resume must stop time and use a count-in.
 | Shared core | Multi-lane play, holds/shared hits, score/health/mods, deterministic replays and tests | In progress |
 | Presentation | Production assets/skins/sounds, tutorial, settings and results, visual/audio review | In progress |
 | Creator workflow | Import song -> author -> save/reopen -> export -> play without code | In progress |
-| Community | Deployed accounts/maps/friends/messages/moderation, authorization checks | In progress: local accounts, profiles, friends, messages, live updates and opt-in presence |
+| Community | Deployed accounts/maps/friends/messages/moderation, authorization checks | In progress: local accounts, profiles, friends, messages, presence, reporting and review; online maps and deployment pending |
 | Public beta | Verified rankings, reviewed starter maps, platform releases and operational gates | Pending |
 
 Required validation: timing boundaries, FPS/input/replay equivalence, overlapping
@@ -794,3 +794,62 @@ was quit. The full goal still requires reporting/moderation, online publishing a
 rankings, hosted deployment, broader recovery/outage/load tests, platform and
 performance validation, signing, operations and external playtests. The goal
 remains active; this verified local feature is not a public-ready release.
+
+### September 29 private reports and moderation
+
+Added reporting from public profiles and received messages, guarded drafts,
+server-captured evidence, optional atomic blocking and private submission receipts.
+Authorized reviewers have paged Open/Reviewed queues, captured context, explicit
+decision confirmation and action history. Account actions include stale-safe
+profile cleanup, seven/thirty-day community restrictions and lifting the exact
+restriction created by a report. A report alone applies no penalty. Details and
+operational prerequisites are in [reporting and review](moderation.md).
+
+Database membership supplies reviewer authority; editable metadata cannot grant
+access. Revision checks and locks serialize competing decisions and role revocation.
+Restrictions protect public profiles, edits, friends, messages and presence through
+direct database access as well as the API, while retaining account controls and
+offline play. Only existing opaque own-account revision hints are replicated.
+Report evidence survives account deletion under the disclosed 90/180-day policy;
+a daily private purge job removes expired reports and their action history.
+
+- `npm test`: 487 passing TypeScript tests across 66 files, including new strict
+  report input/response boundaries, identity races, precise cursors, lost-response
+  retries, role forgery, bounded JSON and safe error mapping.
+- `npm run test:db`: 285 passing checks across six files. New checks include private
+  grants, evidence authorization, post-block reporting, quotas/idempotency, reviewer
+  exclusion and role revocation, protected staff accounts, stale decisions/profile
+  evidence, restrictions/natural expiry, tied-cursor paging, deletion and actual
+  retention cleanup. Fixtures roll back. The retention job definition is active;
+  unattended scheduled execution and hosted retention monitoring are not verified.
+- `npm run test:online`: 46 real local scenarios pass against Auth, Worker,
+  PostgREST and Realtime. New scenarios prove concurrent retries create one report,
+  competing reviews create one decision, direct access observes restrictions,
+  cleanup refuses newer content, deletion retains only the disclosed report copy,
+  and role revocation affects an existing JWT. A deterministic database lock barrier
+  also proves already-waiting direct profile writes, save RPCs and presence renewals
+  cannot pass a newly committed restriction. Test accounts, evidence and credentials
+  are cleaned up afterward.
+- Packaged macOS app: submitted a synthetic report, kept its unfinished draft
+  through a navigation guard, inspected the private receipt, opened the staff queue,
+  reviewed captured evidence and confirmed a seven-day restriction. The affected
+  account could still sign in and saw its explanation/expiry with disabled profile
+  editing. An authenticated API lift removed that notice and restored editing
+  without manual refresh. The synthetic restriction was lifted and the app quit.
+  Evidence: ignored `.tools/screenshots/report-native.png`, `moderation-native.png`
+  and `restriction-native.png`.
+- Browser pointer/keyboard automation timed out before command dispatch. The native
+  flow above completed, but this slice does not claim a browser report/review UI
+  pass, a compact-viewport pass, or interactive verification of every reviewer action.
+- Frontend type checking/build, Worker type checking/dry-run and the unsigned
+  macOS debug app bundle pass. Moderation screens load in separate chunks. The
+  initial game chunk remains about 510 kB minified / 158 kB gzip with the existing
+  size warning; this is not a frame-rate or latency benchmark. No dependency,
+  native permission, production secret or hosted origin was added.
+
+This completes a verified local reporting/review slice, not public moderation
+operations. Staff enrollment/MFA, appeals and operator escalation, conduct rules,
+backup/retention monitoring, direct-service abuse controls, load/security review
+and broader UI/platform coverage remain required. Online map publishing, rankings,
+staging/production deployment, signing, performance validation and external
+playtests also remain active requirements of the complete public-beta goal.

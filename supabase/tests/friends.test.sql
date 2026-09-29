@@ -65,7 +65,8 @@ select is((select count(*) from public.blocks),0::bigint,'blocked person cannot 
 select is(public.get_connection('22222222-2222-4222-8222-222222222222')->>'state','unavailable','blocked recipient is generically unavailable');
 select throws_ok($$select public.change_connection('22222222-2222-4222-8222-222222222222','send')$$,'P0001','connection_unavailable','blocked requests fail at the database');
 select is(public.change_connection('22222222-2222-4222-8222-222222222222','unblock',current_setting('test.block_id')::uuid)->>'state','unavailable','cannot unblock on someone else''s behalf');
-select is((select count(*) from public.profiles where username in ('friend_one','friend_two','friend_three','friend_four')),4::bigint,'blocking does not promise public-profile privacy');
+select is((select count(*) from public.profiles where username='friend_two'),1::bigint,'blocking does not promise public-profile privacy');
+select is((select count(*) from public.profiles where username='friend_four'),0::bigint,'unverified accounts are not public community profiles');
 
 select set_config('request.jwt.claims','{"sub":"22222222-2222-4222-8222-222222222222","session_id":"bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb","role":"authenticated"}',true);
 select is(public.change_connection('11111111-1111-4111-8111-111111111111','unblock',current_setting('test.block_id')::uuid)->>'state','none','unblocking does not restore friendship');

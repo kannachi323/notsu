@@ -9,11 +9,15 @@ import { ProfileEditor } from "./ProfileEditor";
 import { PasswordRecovery } from "./PasswordRecovery";
 import "../accounts.css";
 import { PresenceSettings } from "../../presence/components/PresenceSettings";
+import { useModerationAccess } from "../../moderation/useModerationAccess";
+import { CommunityAccess } from "../../moderation/components/CommunityAccess";
+import "../../moderation/moderation.css";
 
 export function AccountScreen() {
   const { identity, profile, profileStatus, profileError, recovery, profileDirty, profileSaving } = useAccountStore();
   const [busy, setBusy] = useState(false), [error, setError] = useState("");
   const [confirmLeave, setConfirmLeave] = useState(false);
+  const access = useModerationAccess();
   useEffect(() => { if (configuration) accountClient(); }, []);
   useEffect(() => { if (identity) void loadOwnProfile(); }, [identity?.id]); // Refresh after a different account signs in.
   async function leave(discard = false) {
@@ -40,9 +44,10 @@ export function AccountScreen() {
         {!recovery && <Link className="account-delete-link" to="/account/delete">Delete account</Link>}</div>}
     </aside>
       {!configuration ? <section className="account-panel"><h2>Local play is ready</h2><p>Online accounts are unavailable in this build. You can play, create maps and save local records.</p><Link className="account-guest" to="/rhythm">Start playing →</Link></section> :
-        !identity ? <AuthFlow /> : recovery ? <PasswordRecovery /> : profileStatus === "ready" ? <ProfileEditor key={identity.id} profile={profile} /> :
+        !identity ? <AuthFlow /> : recovery ? <PasswordRecovery /> : profileStatus === "ready" ? <ProfileEditor key={identity.id} profile={profile} restricted={!!access.value?.restriction} /> :
         <section className="account-panel"><h2>Your profile</h2>{profileStatus === "error" ? <><p className="account-error" role="alert">{profileError}</p><button onClick={() => void loadOwnProfile()}>Retry loading profile</button></> : <p role="status">Loading your profile…</p>}</section>}
     </div>
     {identity && profile && !recovery && <PresenceSettings />}
+    {identity && !recovery && <CommunityAccess access={access}/>}
   </main><footer className="notsu-footer">Unofficial community project · Not affiliated with ppy</footer></div>;
 }

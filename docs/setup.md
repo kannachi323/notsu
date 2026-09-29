@@ -66,7 +66,11 @@ password-confirmed deletion flow. `/#/friends` opens private friendship/request
 and block management. `/#/messages` and `/#/messages/:username` open the private
 inbox and conversations with accepted friends. Account also owns the visibility
 control for [friends-only presence](presence.md); the signed-in app maintains a
-bounded heartbeat across routes. Unknown routes return to Home. The home feature owns a
+bounded heartbeat across routes. `/#/report/:target/:message?` creates a private
+profile/message report; `/#/reports` lists the caller's receipts. Authorized staff
+use `/#/moderation` and `/#/moderation/:id`. These routes are loaded separately;
+see [reporting and review setup](moderation.md), including the private role and
+database retention job. Unknown routes return to Home. The home feature owns a
 small, non-persisted Zustand store for its music dropdown. Playback controls and
 the remaining future-feature buttons are presentational only.
 
