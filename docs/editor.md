@@ -98,17 +98,23 @@ scrolling. The editor follows the approved dark cyan/violet gameplay direction.
 
 ## Persistence and recovery
 
-IndexedDB database `notsu-editor` stores drafts and original song Blobs separately.
+IndexedDB database `notsu-editor` version 2 stores drafts, Trash and original song
+Blobs separately. Migration preserves version-one drafts and recordings.
 Songs deduplicate by hash; edits only rewrite the chart. Creation is transactional.
-Autosave coalesces changes and serializes writes; a revision check rejects stale
-writes from another window. The UI reports success only after transaction commit.
-Limits are 50 drafts, 512 MB of original songs and 4 MB per serialized document.
+Autosave coalesces changes and serializes writes; revision and lifetime-token
+checks reject stale writes from another window, including after restore/re-import. The UI reports success only after transaction commit.
+Limits are 50 drafts including Trash, 512 MB of original songs and 4 MB per serialized document.
 Undo history retains at most 100 snapshots and 8 million characters per stack.
 History is session-only; the current document and song survive restart.
 
 If initial storage fails, the draft remains usable for this session with a visible
 notice. Later failures preserve the last saved draft and the current in-memory
-edits. Navigation/reload guards prevent silent loss while work is unsaved.
+edits. **Retry save** tries the latest edits again after a transient failure.
+A conflicting revision cannot be retried over someone else's changes.
+**Save recovery copy** creates a separate map set with the complete current chart
+and recording; the original saved version stays intact. If creating the copy also
+fails, the unsaved session remains open. Navigation/reload guards warn while work
+is unsaved; chart backups remain available even when device storage is full.
 **Back up draft** exposes a chart-only JSON backup. Browser builds provide a real
 download link; the native app currently provides selectable backup text. Keep the
 original song separately. **Restore a draft backup** validates the pasted JSON and
@@ -117,15 +123,26 @@ requires a recording with the same hash, then creates a new draft identity.
 **Prepare map package** produces a complete `.notsumap` archive with the original
 recording. Save it through a native dialog or browser download link, or add it
 directly to the local library. **Create another difficulty** copies the current
-saved chart under a new difficulty ID in the same set. Give each difficulty a
-unique name; package export can include all other saved difficulties in that set.
+saved chart under a new difficulty ID in the same set. It proposes an unused
+copy name and checks the sixteen-difficulty limit. Keep difficulty names unique; package export can include all other saved difficulties in that set.
 The current in-memory difficulty is included even when autosave is unavailable.
 
 **Import a complete map package** restores every difficulty and its song in one
 transaction, preserving map-set/chart identities and timing. Existing draft IDs
 cause a clear conflict instead of overwriting local work. Old JSON drafts without
 a set ID use their document ID as the initial set. See [package format](maps.md).
-Draft deletion and conflict-resolution UX remain pending.
+The draft collection searches song, artist and difficulty, and sorts by recency
+or title. **Refresh** loads changes made in another window. **Move to Trash** keeps
+the full chart and recording until you restore or permanently remove it. Trash has
+no automatic expiry and still uses device capacity. Its removal action has an
+explicit confirmation; it never removes exported packages or Browse entries.
+
+Permanent removal collects a recording only when no active or trashed draft
+references it, in the same transaction. If another damaged record has an unknown
+song reference, collection preserves recordings for later recovery. Stale list
+actions and old removal confirmations fail instead of changing a newer version.
+Unreadable records remain visible and preserved, but automatic repair/raw-record
+salvage is not implemented. Keep independent backups for those cases.
 
 ## Verification and remaining work
 
@@ -136,9 +153,9 @@ stereo waveform peaks, save/reopen, stale-window conflicts, failed writes, timeo
 cleanup and serialized/coalesced autosaves. See the current counts and actual
 browser/native evidence in [public-beta delivery](public-beta.md).
 
-Still required for the creator milestone: richer difficulty/draft
-management, recovery UX, performance with large real maps, platform/browser verification and mapper
-playtests. Publishing, online browsing and moderation remain separate pending work.
+Still required for the creator milestone: large-map performance, mapper playtests,
+broader platform/browser verification, and damaged-record salvage. Recovery copies
+preserve current edits; they do not merge divergent versions automatically. Publishing, online browsing and moderation remain separate pending work.
 
 Implementation references: [Web Audio decoding](https://developer.mozilla.org/en-US/docs/Web/API/BaseAudioContext/decodeAudioData),
 [channel data](https://developer.mozilla.org/en-US/docs/Web/API/AudioBuffer/getChannelData),

@@ -14,6 +14,8 @@ import { MapDetails } from "./MapDetails";
 import { LaneTools } from "./LaneTools";
 import { NoteTools } from "./NoteTools";
 import { NoteSelection } from "./NoteSelection";
+import { DraftLibrary } from "./DraftLibrary";
+import { DraftRecovery } from "./DraftRecovery";
 import { DraftBackup } from "./DraftBackup";
 import { PackageExport } from "./PackageExport";
 import { PlaybackControls } from "./PlaybackControls";
@@ -55,12 +57,7 @@ export function EditorScreen() {
         <button onClick={() => { try { setRestored(readDocument(JSON.parse(restoreText))); editor.setError(""); } catch (cause) { editor.setError(cause instanceof Error ? cause.message : "Invalid draft backup."); } }}>Use backup</button>
         {restored && <button onClick={() => { setRestored(undefined); setRestoreText(""); }}>Cancel restore</button>}
       </details>
-    </div><section className="editor-drafts"><h2>Your drafts <span>{editor.drafts.length}</span></h2>
-      {!editor.drafts.length && <p className="muted">Your saved maps will appear here. You can return to them after closing the game.</p>}
-      {editor.drafts.map(draft => <button key={draft.id} disabled={editor.busy} className="editor-draft" onClick={() => void editor.open(draft.id)}>
-        <strong>{draft.title}</strong><span>{draft.artist} · {draft.difficulty}</span><small>{draft.notes} circles · {draft.updatedAt ? new Date(draft.updatedAt).toLocaleDateString() : "Could not read saved data"}</small>
-      </button>)}
-    </section>
+    </div><DraftLibrary drafts={editor.drafts} trash={editor.trash} notice={editor.notice} busy={editor.busy} open={editor.open} refresh={editor.refresh} manage={editor.manageDraft} />
   </section><footer>Unofficial community project · Not affiliated with ppy</footer></main>;
   const { document: doc, history } = workspace, chart = doc.chart;
   const selectedIds = selected.filter(id => chart.lanes.some(lane => lane.id === id));
@@ -70,10 +67,11 @@ export function EditorScreen() {
   const previewMap = () => { try { playableChart(doc); editor.stop(); setPreview(true); } catch { editor.setError("Add at least one circle before playtesting."); } };
   return <main className="editor-app">{heading}{warning}
     <div className="editor-document-title"><div><h2>{chart.title}</h2><p>{chart.artist} <span>· {doc.difficulty}</span></p></div><div className="editor-small-actions">
-      <button onClick={async () => { try { await editor.flush(); if (workspace.writer) await editor.close(); else setDiscard(true); } catch { setDiscard(true); } }}>Drafts</button><button className="primary" disabled={!chart.notes.length} onClick={previewMap}>Playtest</button>
+      <button disabled={editor.busy} onClick={async () => { try { await editor.flush(); if (workspace.writer) await editor.close(); else setDiscard(true); } catch { setDiscard(true); } }}>Drafts</button><button className="primary" disabled={!chart.notes.length} onClick={previewMap}>Playtest</button>
     </div></div>
     {discard && <section className="editor-error"><p>Wait for autosave, or back up your draft before leaving. Unsaved changes will be lost if you discard them.</p>
       <button onClick={() => setDiscard(false)}>Keep editing</button><button onClick={() => { setDiscard(false); void editor.close(true); }}>Discard unsaved changes</button></section>}
+    <DraftRecovery writer={workspace.writer} busy={editor.busy} recover={editor.recover} />
     <MapDetails document={doc} change={editor.change} />
     <div className="editor-small-actions"><button disabled={editor.busy} onClick={() => void editor.duplicate()}>Create another difficulty</button></div>
     <div className="editor-toolbar" aria-label="Editing controls"><button onClick={() => void editor.listen()}>{editor.playing ? "Pause song" : "Listen"}</button>

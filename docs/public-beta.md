@@ -401,3 +401,43 @@ These are software scheduling and functional checks, not physical latency
 measurements or human listening approval. Richer draft/recovery management,
 large-map performance, mapper playtests, additional platform checks, online
 community/rankings, deployment and release gates remain open. The goal stays active.
+
+### September 29 draft management and recovery
+
+Added searchable/sortable draft collections, recoverable Trash, explicit permanent
+removal, transient save retries and a recovery-copy action for conflicting or
+session-only edits. Recovery copies receive independent map-set/chart identities
+and retain the complete authored chart and original recording. Related difficulty
+copies propose unused names and check the sixteen-difficulty limit.
+
+Draft storage version 2 preserves the previous database and adds Trash. Revision
+plus lifetime-token checks reject stale writes after another window saves, trashes,
+restores or re-imports a draft. Trash counts toward the fifty-draft limit. Permanent
+removal and song collection are atomic, retain audio used by active/trashed siblings,
+and conservatively preserve songs when damaged records have unknown references.
+
+- `npm test`: 303 passing tests across 38 files. New cases cover version-one
+  migration, exact chart/recording recovery, stale actions/confirmations, lifetime
+  reuse, shared audio collection, rollback during song deletion, capacity accounting,
+  recovery-copy isolation, unique copy names, transient retries, concurrent retry
+  calls and retaining the latest edits after repeated failure.
+- Type checking, production frontend and packaged macOS debug builds pass.
+  Native Rust behavior is unchanged.
+- Browser: created a separate test difficulty, opened it in two windows, saved
+  divergent titles, observed the stale-save recovery panel, and saved a recovery
+  copy. Both versions remained independently visible with eight circles each.
+  Search, Trash, reload, cancel-permanent-removal and restore worked. Reopening the
+  restored copy recovered all eight circles, three shared lines, the edited hold
+  endpoint and original recording/waveform. The dedicated verification tab
+  reported no warning/error logs. Permanent removal was verified in adapter tests;
+  the real-data UI check stopped at its cancellation control.
+- Packaged macOS app: existing drafts survived migration. Duplicated the authored
+  six-circle/three-line fixture, moved the duplicate to Trash, restored it and
+  reopened it with its original hold endpoint and recording/waveform intact.
+- Screenshot evidence: ignored `.tools/screenshots/editor-draft-recovery.png`,
+  `editor-recovery-conflict.png` and `editor-draft-recovery-native.png`.
+
+Damaged-record salvage, large-map performance, mapper/platform playtests and the
+remaining presentation work are still open. Recovery preserves competing versions;
+there is no automatic merge. All online community, competitive backend, deployment
+and public-release gates remain unfinished. The full goal stays active.
