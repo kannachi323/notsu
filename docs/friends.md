@@ -17,7 +17,7 @@ status is inferred from friendship or from an existing Auth session.
 
 The UI has Friends, Requests, Sent and Blocked views, explicit empty/error states,
 confirmation for removing/blocking, and Refresh/Load more controls. It refreshes
-on opening or explicit request; there is no live update subscription yet. Pending
+on opening, private realtime hints, reconnect/focus or explicit request. Pending
 network changes are not optimistically declared successful or automatically
 retried after an uncertain response. Client results are scoped to the current
 identity and list. None of this state or any bearer token is persisted locally.
@@ -77,9 +77,10 @@ refresh to see newly arriving rows or changes made while paging.
 These bounds are not the complete public abuse-control plan. Before deployment,
 add monitored per-IP/user controls for reads and other mutations, bot/signup
 controls, request-spam policy, reporting/moderation, and service-level load tests.
-Live updates, presence and private messages must consult blocking on every access
-and send, including races. Do not publish raw block-table deletion events: realtime
-privacy must be designed and tested explicitly before enabling subscriptions.
+Private messages and live invalidations now use the rules in [messages](messages.md),
+including blocking on access/send and race tests. Presence must retain these
+boundaries. Raw block-table deletion events are never published; live hints carry
+only the current account's opaque revision and authorized clients refetch.
 
 ## Verification
 
@@ -95,7 +96,8 @@ Manual browser checks exercised send, accept, cancel, block/unblock, empty lists
 and profile navigation against two local preview accounts. A browser request was
 accepted in the packaged macOS app and then visible in both clients. These are
 synthetic local identities; nothing was sent to an external person or hosted service.
-Windows/Linux, full realtime behavior and public-release operations remain unverified.
+Windows/Linux and public-release operations remain unverified. See the newer
+messaging evidence for private realtime and cross-client blocking checks.
 
 References reviewed September 29, 2026:
 

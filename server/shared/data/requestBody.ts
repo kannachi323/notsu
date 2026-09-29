@@ -1,7 +1,7 @@
 import { ApiError } from "../../errors";
 
 /** Count received bytes even when Content-Length is absent or incorrect. */
-export async function readJsonBody(request: Request): Promise<unknown> {
+export async function readJsonBody(request: Request, maxBytes = 4096): Promise<unknown> {
   const reader = request.body?.getReader();
   if (!reader) throw new ApiError(400, "invalid_request", "Send JSON details.");
   let timer: ReturnType<typeof setTimeout> | undefined;
@@ -12,7 +12,7 @@ export async function readJsonBody(request: Request): Promise<unknown> {
       const { done, value } = await reader.read();
       if (done) break;
       size += value.byteLength;
-      if (size > 4096) throw new ApiError(413, "request_too_large", "Request details exceed the request limit.");
+      if (size > maxBytes) throw new ApiError(413, "request_too_large", "Request details exceed the request limit.");
       chunks.push(value);
     }
     const bytes = new Uint8Array(size);

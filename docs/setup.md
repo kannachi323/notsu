@@ -63,7 +63,8 @@ router enables unsaved-draft navigation guards. `/#/account` loads the account
 screen separately and connects to configured online services. `/#/players` and
 `/#/players/:username` provide public player lookup; `/#/account/delete` is the
 password-confirmed deletion flow. `/#/friends` opens private friendship/request
-and block management. Unknown routes return to Home. The home feature owns a
+and block management. `/#/messages` and `/#/messages/:username` open the private
+inbox and conversations with accepted friends. Unknown routes return to Home. The home feature owns a
 small, non-persisted Zustand store for its music dropdown. Playback controls and
 the remaining future-feature buttons are presentational only.
 

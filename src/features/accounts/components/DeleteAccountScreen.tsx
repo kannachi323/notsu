@@ -24,9 +24,9 @@ export function DeleteAccountScreen() {
   return <div className="notsu-home account-screen"><HomeHeader /><main className="account-main account-narrow">
     <header className="account-heading"><Link to="/account">← Your account</Link><h1>{deleted ? "Account deleted" : "Delete your account"}</h1></header>
     <section className="account-panel">
-      {deleted ? <><p role="status">Your sign-in and public profile have been permanently deleted.</p><p className="account-muted">Your local maps, drafts, skins and records are still on this device.</p><Link className="account-guest" to="/browse">Continue as a guest →</Link></> :
+      {deleted ? <><p role="status">Your account, profile, connections and message history have been permanently deleted.</p><p className="account-muted">Your local maps, drafts, skins and records are still on this device.</p><Link className="account-guest" to="/browse">Continue as a guest →</Link></> :
         !identity ? <><p>Sign in to the account you want to delete.</p><Link className="account-guest" to="/account">Go to sign-in →</Link></> : <>
-          <h2>This is permanent</h2><p className="account-muted">This removes your notsu sign-in and public profile, and ends every account session. You cannot undo it.</p>
+          <h2>This is permanent</h2><p className="account-muted">This removes your notsu account, public profile, friendships, blocks and message history from both sides of each conversation. It ends every account session. You cannot undo it.</p>
           <p className="account-muted">Maps, drafts, skins and records saved locally remain on your device.</p>
           <p className="account-delete-identity">Deleting <strong>{identity.email}</strong></p>
           <form onSubmit={event => { event.preventDefault(); void remove(); }} aria-busy={busy}><fieldset disabled={busy}>

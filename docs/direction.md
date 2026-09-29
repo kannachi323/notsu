@@ -35,8 +35,8 @@ extra height. Smaller windows reflow and scroll instead of clipping controls.
 React Router and Zustand are the approved routing/UI-state baseline. Home is a
 separate feature and the existing Rhythm prototype remains available through Play.
 The dropdown, Play, local Editor, local Browse and Account routes are wired;
-Friends is connected to private request/friend/block lists; chat remains a
-placeholder. The account screen continues the dark
+Friends is connected to private request/friend/block lists; Chat opens private
+conversations with accepted friends. The account screen continues the dark
 cyan/violet palette with a static orb, clearly labeled forms and a text-only public
 profile preview. Public player pages share this visual language and show real
 public profile fields only, with exact-name lookup and explicit missing/error

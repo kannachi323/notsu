@@ -10,20 +10,25 @@ export function useConnections(list: ConnectionList) {
   const [loadedFor, setLoadedFor] = useState("");
   const currentScope = `${identity?.id ?? "guest"}:${list}`;
   const pending = useRef<AbortController | null>(null);
+  const loadedScope = useRef("");
   const load = useCallback(async (cursor: ConnectionCursor | null) => {
     pending.current?.abort();
     const controller = new AbortController(); pending.current = controller;
-    setLoadedFor(`${identity?.id ?? "guest"}:${list}`);
+    const scope = `${identity?.id ?? "guest"}:${list}`, changedScope = loadedScope.current !== scope;
+    loadedScope.current = scope; setLoadedFor(scope);
     if (!identity) { setItems([]); setNext(null); setError(""); setBusy(false); return; }
     setBusy(true); setError("");
-    if (!cursor) { setItems([]); setNext(null); }
+    if (!cursor && changedScope) { setItems([]); setNext(null); }
     try {
       const page = await listConnections(list, cursor, controller.signal);
       if (controller.signal.aborted) return;
       setItems(previous => cursor ? [...previous, ...page.items.filter(item => !previous.some(existing => existing.id === item.id))] : page.items);
       setNext(page.next);
     } catch (cause) {
-      if (!controller.signal.aborted) setError(cause instanceof Error ? cause.message : "Could not load connections.");
+      if (!controller.signal.aborted) {
+        setError(cause instanceof Error ? cause.message : "Could not load connections.");
+        if (!cursor) { setItems([]); setNext(null); }
+      }
     } finally { if (!controller.signal.aborted) setBusy(false); }
   }, [identity?.id, list]);
   useEffect(() => { void load(null); return () => pending.current?.abort(); }, [load]);

@@ -25,7 +25,7 @@ export function ConnectionActions({ target, connection, onChanged, onRefresh }: 
   return <div className="connection-actions" aria-busy={busy}>
     <p className="connection-state" role="status">{busy ? "Updating connection…" : labels[connection.state]}</p>
     {confirm ? <div className="connection-confirm"><p>{confirm === "block"
-      ? "Blocking ends your friendship, cancels pending requests and prevents new requests between you. Public profiles stay visible."
+      ? "Blocking ends your friendship, cancels pending requests and stops messages between you. Conversation history is hidden while you are not friends. Public profiles stay visible."
       : "Remove this friendship? You can send a new request later."}</p><div className="account-actions">
         {action(confirm === "block" ? "Block player" : "Remove friend", confirm)}<button disabled={busy} onClick={() => setConfirm(null)}>Cancel</button>
       </div></div> : <div className="account-actions">

@@ -9,6 +9,7 @@ const AccountScreen = lazy(() => import("../features/accounts/components/Account
 const PublicProfileScreen = lazy(() => import("../features/accounts/components/PublicProfileScreen").then(module => ({ default: module.PublicProfileScreen })));
 const DeleteAccountScreen = lazy(() => import("../features/accounts/components/DeleteAccountScreen").then(module => ({ default: module.DeleteAccountScreen })));
 const FriendsScreen = lazy(() => import("../features/friends/components/FriendsScreen").then(module => ({ default: module.FriendsScreen })));
+const MessagesScreen = lazy(() => import("../features/messages/components/MessagesScreen").then(module => ({ default: module.MessagesScreen })));
 
 const router = createHashRouter([
   { path: "/", element: <HomeScreen /> },
@@ -19,6 +20,7 @@ const router = createHashRouter([
   { path: "/account/delete", element: <Suspense fallback={<main className="app"><p role="status">Loading account…</p></main>}><DeleteAccountScreen /></Suspense> },
   { path: "/players/:username?", element: <Suspense fallback={<main className="app"><p role="status">Loading player…</p></main>}><PublicProfileScreen /></Suspense> },
   { path: "/friends", element: <Suspense fallback={<main className="app"><p role="status">Loading friends…</p></main>}><FriendsScreen /></Suspense> },
+  { path: "/messages/:username?", element: <Suspense fallback={<main className="app"><p role="status">Loading messages…</p></main>}><MessagesScreen /></Suspense> },
   { path: "*", element: <Navigate to="/" replace /> },
 ]);
 export function App() { return <RouterProvider router={router} />; }

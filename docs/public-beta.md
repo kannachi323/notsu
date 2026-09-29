@@ -81,7 +81,7 @@ do not change gameplay. Pause/resume must stop time and use a count-in.
 | Shared core | Multi-lane play, holds/shared hits, score/health/mods, deterministic replays and tests | In progress |
 | Presentation | Production assets/skins/sounds, tutorial, settings and results, visual/audio review | In progress |
 | Creator workflow | Import song -> author -> save/reopen -> export -> play without code | In progress |
-| Community | Deployed accounts/maps/friends/messages/moderation, authorization checks | In progress: local accounts, profiles, friends and blocking |
+| Community | Deployed accounts/maps/friends/messages/moderation, authorization checks | In progress: local accounts, profiles, friends, private messages and live updates |
 | Public beta | Verified rankings, reviewed starter maps, platform releases and operational gates | Pending |
 
 Required validation: timing boundaries, FPS/input/replay equivalence, overlapping
@@ -687,3 +687,60 @@ deployment, service load tests, signing, remaining platform/performance checks
 and external playtests also remain open. Local services are retained for ongoing
 development. This working local slice does not establish public readiness; the
 complete public-beta goal remains active.
+
+### September 29 private messages and realtime
+
+Implemented the Chat inbox and private text conversations between accepted friends,
+with unread counts, bounded history paging, guarded drafts and duplicate-safe send
+receipts. Blocking/removing a friendship hides history and prevents sends in either
+direction. A new accepted friendship restores retained history; deleting either
+account removes both sides. The deletion UI now explains that consequence.
+
+Added live updates for chat, friends lists and profile connection controls using
+private Supabase Realtime channels and an owner-only invalidation table. Only an
+opaque own-account revision is replicated, with INSERT/UPDATE publication events.
+Messages and raw relationship/block/delete records are never published. Each data
+refetch checks the current live session and database permissions. See [messaging
+behavior, privacy, limits and remaining work](messages.md).
+
+- `npm test`: 449 passing TypeScript tests across 59 files. New coverage includes
+  Unicode/content bounds, large decimal sequence cursors, immutable receipt
+  validation, stale identity responses, bounded history, reconnect range merging,
+  API privilege boundaries and subscription cleanup/account isolation.
+- `npm run test:db`: 163 passing pgTAP checks across four files. Added real database
+  checks for message/read/notification grants, accepted-friend access, idempotency,
+  rate limits, private unread markers, monotonic read positions, paging, blocking,
+  session revocation, cascade deletion and publication privacy.
+- `npm run test:online`: 33 real local integration scenarios pass. Messaging checks
+  include simultaneous duplicate sends, a 2,000-code-point Unicode round trip,
+  send/block races, private-topic denial, owner-only signal payloads, and ban and
+  revocation enforcement on already-connected sockets. The revoked-token check
+  uses a separate websocket retaining its old JWT; a later exact-revision positive
+  control confirms that event delivery is functioning. Disposable users, private
+  Worker files and subscriptions are cleaned up; the process exits successfully.
+- Browser/macOS app: exchanged messages in both directions without manual refresh,
+  observed unread clearing, and blocked in the desktop app while the browser had
+  that conversation open. Its history disappeared and sending became disabled.
+  Unblocking alone kept messaging unavailable; a new request and acceptance
+  restored the preview friendship. All identities/messages are local synthetic
+  fixtures, not external communications or playtester feedback.
+- Browser: checked unsent-draft navigation protection and a 60-message conversation
+  with earlier-page loading. Fixed the history scroll anchor and added a focusable
+  history region for keyboard scrolling. Removed those 60 disposable messages and
+  their test read markers afterward; retained the two cross-client preview messages.
+- At 1280×720 the composer remains visible. At 720×600 the columns stack, the
+  conversation/composer remain reachable by scrolling and no horizontal overflow
+  occurs. The viewport was reset. The browser session had no warning/error console
+  entries. Evidence: ignored `.tools/screenshots/messages-browser.png` and
+  `messages-native.png`; native interaction preceded the final compact-spacing
+  refinement, which was checked in the browser.
+- Frontend type checking/build, Worker type checking/dry-run and macOS debug
+  packaging pass. Chat loads separately at about 14.8 kB minified / 5.1 kB gzip;
+  the initial game chunk remains about 508 kB / 158 kB gzip with the existing size
+  warning. This is not a performance or latency benchmark.
+
+The local Realtime service is enabled and its data volume was preserved across
+restart. No production origin, secret, hosted deployment or public route was added.
+Presence, reporting/moderation, online maps/rankings, broader outage/reconnect stress,
+capacity testing, Windows/Linux verification, signing, operations and external
+playtests remain required. The full public-beta goal remains active.

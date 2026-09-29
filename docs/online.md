@@ -93,12 +93,14 @@ API use that check, so directly calling PostgREST does not bypass it. Client wri
 cannot change identity/timestamps or delete an account. `save_profile` is a
 security-invoker RPC with column-limited writes; it does not elevate callers.
 Hard deletion of an Auth user cascades their profile, sessions, friendships,
-blocks and request counter. Retention and deletion rules for future messages,
-reports, published maps and scores must be added with those features.
+blocks, request counters and both sides of its private message history/read
+positions. Retention and deletion rules for reports, published maps, scores and
+production backups must be finalized before release.
 
 Friends and blocking now use a separate migration and feature boundary; see
 [friends and authorization](friends.md). Protected feature endpoints share the
-account live-session middleware. Rankings, messages, presence, map publishing,
+account live-session middleware. [Private messages and live updates](messages.md)
+are implemented locally. Rankings, presence, map publishing,
 uploads and administrative endpoints remain unfinished. Add grants/RLS and
 adversarial tests in the same migration as each future feature.
 
@@ -142,8 +144,8 @@ drafts, skins, preferences and records are independent and remain on the device.
 Requires the installed Supabase CLI, Docker and the locked npm dependencies. The
 local project is `notsu-local`, separate from hosted projects and other local stacks.
 Ports: API 55321, PostgreSQL 55322, email test inbox 55324, Worker 8787. The compact
-stack enables Auth/PostgREST/database/email capture; storage, Realtime, Studio and
-analytics are disabled until needed. Local email stays in Mailpit.
+stack enables Auth/PostgREST/database/Realtime/email capture; storage, Studio and
+analytics remain disabled. Local email stays in Mailpit.
 
 ```sh
 supabase start

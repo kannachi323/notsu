@@ -5,6 +5,7 @@ import { ApiError } from "./errors";
 import { accounts } from "./features/accounts/routes";
 import { requireSession, type SessionEnv } from "./features/accounts/data/session";
 import { friends } from "./features/friends/routes";
+import { messages } from "./features/messages/routes";
 
 const app = new Hono<SessionEnv>();
 
@@ -32,6 +33,7 @@ app.use("/v1/*", async (c, next) => {
 app.use("/v1/me/*", requireSession);
 app.route("/v1", accounts);
 app.route("/v1", friends);
+app.route("/v1", messages);
 app.notFound((c) => c.json({ error: { code: "not_found", message: "This endpoint was not found." } }, 404));
 app.onError((error, c) => {
   if (error instanceof ApiError) return c.json({ error: { code: error.code, message: error.message } }, error.status);
