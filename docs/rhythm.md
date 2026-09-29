@@ -160,8 +160,13 @@ colors and Canvas values for notes, target, lane, and feedback, plus synthesized
 hit-sound envelopes. Note radii are constrained to 8–10 world units. Skins cannot
 change layout, chart coordinates, approach time, timing windows, input, or scoring.
 There are no downloaded packs, custom CSS/scripts, layout replacements, or imports.
-The approved sprite reference is retained in `assets/gameplay-reference.png`; it
-is not yet a production atlas. The renderer still uses its original Canvas art.
+The approved sprite reference is retained in `assets/gameplay-reference.png`.
+Midnight now uses the separately generated `gameplay-atlas-v1.png` with measured
+frame bounds and pivots in the adjacent JSON. The atlas is decoded before audio
+starts; incorrect dimensions or decode failure retain primitive drawing. High
+Contrast always uses its original Canvas art. Line/ribbon middle sections stretch
+while their caps retain their proportions. Timing coordinates stay independent
+of image frames. See the [asset notes](../src/features/rhythm/assets/README.md).
 
 The scoring session emits ordered judgement events with an increasing ID, optional
 note ID, action, grade, and chart timestamp. `drainJudgements()` delivers them once;

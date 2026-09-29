@@ -2,7 +2,8 @@ import { APPROACH_MS, lanePoseAt } from "../domain/chart";
 import { laneAnchor, WORLD_HEIGHT, WORLD_WIDTH } from "../domain/layout";
 import type { Runtime } from "../useRhythmGame";
 import { getSkin } from "./skins";
-import { orb, paintEffect, ribbon, ring } from "./orbs";
+import { orb, paintEffect, ribbon, target } from "./orbs";
+import { barSprite } from "./sprites";
 
 export function paintPlayfield(ctx: CanvasRenderingContext2D, width: number, height: number, state: Runtime) {
   ctx.clearRect(0, 0, width, height);
@@ -30,7 +31,8 @@ export function paintPlayfield(ctx: CanvasRenderingContext2D, width: number, hei
   for (const view of lanes) {
     local(view, () => {
       ctx.strokeStyle = skin.lane.color; ctx.lineWidth = skin.lane.width;
-      ctx.beginPath(); ctx.moveTo(-24, 0); ctx.lineTo(view.pose.length, 0);
+      ctx.beginPath();
+      if (!barSprite(ctx, skin, "lane", -24, view.pose.length, skin.lane.width)) { ctx.moveTo(-24, 0); ctx.lineTo(view.pose.length, 0); }
       ctx.moveTo(view.pose.length, -4); ctx.lineTo(view.pose.length, 4); ctx.stroke();
     });
     if (!state.settings.reducedMotion && !state.session.assists.freezeMotion && !preview) {
@@ -60,7 +62,7 @@ export function paintPlayfield(ctx: CanvasRenderingContext2D, width: number, hei
   });
   for (const view of lanes) local(view, () => {
     const holding = view.notes.some(({ note, head, tail }) => note.kind === "hold" && head && !tail);
-    ring(ctx, 0, 0, skin.target.radius, holding ? skin.note.hold : skin.target.color, skin.target.width);
+    target(ctx, skin, !!holding);
   });
   // Successful effects retain their judgement-time world positions.
   for (const effect of state.feedback.effects) if (!effect.failed) paintEffect(ctx, effect, time, skin);

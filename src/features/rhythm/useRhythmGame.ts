@@ -16,6 +16,7 @@ import type { Replay } from "./domain/replay";
 import { DEFAULT_MODS, HIT_WINDOW_MS } from "./domain/rules";
 import type { Mods } from "./domain/rules";
 import { PauseCheckpoint } from "./domain/pause";
+import { loadGameplayAtlas } from "./data/gameplayAtlas";
 
 export type Phase = "setup" | "starting" | "countdown" | "playing" | "paused" | "rearming" | "resuming" | "results";
 export type Runtime = {
@@ -242,7 +243,7 @@ export function useRhythmGame() {
       const clock = audio();
       const buffer = selectedMode === "song" ? loaded.current : clock.makeStudy(selected);
       if (!buffer) throw new Error("Choose your audio file first, or try the timing study.");
-      const hash = await chartFingerprint(selected);
+      const [hash] = await Promise.all([chartFingerprint(selected), loadGameplayAtlas()]);
       if (!mounted.current || token !== generation.current) return;
       fingerprint.current = hash;
       runtime.current.playback = replay ? new ReplayPlayer(selected, replay, hash) : undefined;

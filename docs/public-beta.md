@@ -79,7 +79,7 @@ do not change gameplay. Pause/resume must stop time and use a count-in.
 | Milestone | Required exit evidence | Current state |
 | --- | --- | --- |
 | Shared core | Multi-lane play, holds/shared hits, score/health/mods, deterministic replays and tests | In progress |
-| Presentation | Production assets/skins/sounds, tutorial, settings and results, visual/audio review | Pending |
+| Presentation | Production assets/skins/sounds, tutorial, settings and results, visual/audio review | In progress |
 | Creator workflow | Import song -> author -> save/reopen -> export -> play without code | Pending |
 | Community | Deployed accounts/maps/friends/messages/moderation, authorization checks | Pending |
 | Public beta | Verified rankings, reviewed starter maps, platform releases and operational gates | Pending |
@@ -151,6 +151,28 @@ Real input/audio and complete held-key resume on physical keyboards still need
 platform validation. Browser automation above is functional evidence, not musical
 playtesting or a hardware latency/performance measurement. Native builds and all
 online services remain unverified/unimplemented. No public release has been deployed.
+
+### September 29 runtime artwork follow-up
+
+Generated a separate twelve-sprite cyan/violet atlas with the built-in imagegen
+tool and saved its prompt, original PNG and measured frame/pivot metadata in
+`src/features/rhythm/assets/`. Midnight now draws atlas notes, targets, warnings,
+lines, ribbons and expanding hit rings. High Contrast keeps its primitive art.
+Image decode/dimension failure uses the existing drawing fallback. Sprite pivots
+align with logical note positions, and cap proportions survive line stretching.
+
+- `npm test`: 148 passing tests across 17 files, including PNG/metadata dimensions,
+  frame/pivot bounds, concurrent loading, invalid art fallback and cap geometry.
+- `npm run build`: production bundle and type checking passed.
+- Browser: inspected real shared holds, release endpoints, target highlighting and
+  moving geometry on the dark stage. Autoplay still completed with 1,000,000
+  points and 48 Perfect judgments, with no console warnings/errors during the run.
+  Evidence is in ignored
+  `.tools/screenshots/atlas-geometry.png`.
+
+This starts the presentation milestone. User-imported texture/sound/theme skin
+packs, calibration workflow, broader sound/UI polish and cross-platform asset
+review remain required; this atlas does not complete that milestone.
 
 Mobile, automatic mapping, extra note types, public chat, multiplayer and arbitrary
 HUD/interface skinning are out of scope. No release gate may be silently dropped.

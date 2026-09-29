@@ -15,6 +15,7 @@ export function Playfield({ runtime }: { runtime: RefObject<Runtime> }) {
       const ratio = Math.min(devicePixelRatio || 1, 2);
       node.width = Math.round(width * ratio); node.height = Math.round(height * ratio);
       context.setTransform(ratio, 0, 0, ratio, 0, 0);
+      context.imageSmoothingEnabled = true; context.imageSmoothingQuality = "high";
     };
     const observer = new ResizeObserver(resize);
     observer.observe(node); resize();
