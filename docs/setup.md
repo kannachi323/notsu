@@ -59,7 +59,8 @@ React Router's `createHashRouter` keeps routes inside the packaged document, avo
 server fallback requirements. `/#/` opens the notsu home screen; `/#/rhythm` opens
 the existing prototype; `/#/editor` opens the local creator workflow, and
 `/#/browse` opens the local map library. The data
-router enables unsaved-draft navigation guards. Unknown routes return to Home. The home feature owns a
+router enables unsaved-draft navigation guards. `/#/account` loads the account
+screen separately and connects to configured online services. Unknown routes return to Home. The home feature owns a
 small, non-persisted Zustand store for its music dropdown. Playback controls and
 the remaining future-feature buttons are presentational only.
 
@@ -74,7 +75,8 @@ use local storage; imported skin archives and editor drafts/original recordings
 and map packages use separate IndexedDB databases. Local map results/replays use
 a separate bounded record database; editor/study replays remain in memory. Publishing/storage/backend
 services in the public-beta plan have not been deployed. A separately tested local
-Supabase profile API is implemented; no account screen connects the game to it yet.
+Supabase profile API and account screen are implemented and exercised locally;
+see [account setup](online.md) for browser and native configuration.
 The Rhythm preference key retains its legacy `osu-base` prefix for compatibility
 with earlier browser sessions; new native app identity storage is separate.
 

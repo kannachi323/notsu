@@ -81,7 +81,7 @@ do not change gameplay. Pause/resume must stop time and use a count-in.
 | Shared core | Multi-lane play, holds/shared hits, score/health/mods, deterministic replays and tests | In progress |
 | Presentation | Production assets/skins/sounds, tutorial, settings and results, visual/audio review | In progress |
 | Creator workflow | Import song -> author -> save/reopen -> export -> play without code | In progress |
-| Community | Deployed accounts/maps/friends/messages/moderation, authorization checks | In progress: local identity/profile backend |
+| Community | Deployed accounts/maps/friends/messages/moderation, authorization checks | In progress: local accounts and profiles |
 | Public beta | Verified rankings, reviewed starter maps, platform releases and operational gates | Pending |
 
 Required validation: timing boundaries, FPS/input/replay equivalence, overlapping
@@ -531,3 +531,55 @@ screens/recovery/deletion, friends/messages/presence/moderation, online maps and
 rankings, direct-data abuse controls, deployment and every remaining platform,
 performance, operational and public-release gate remain required. The complete
 goal remains active; local backend tests do not establish production readiness.
+
+### September 29 account screens and email recovery
+
+Added the Account route and connected the header profile control to it. Configured
+builds support sign-up, email codes, sign-in, username/name/bio editing, sign-out
+and password recovery. The route lazily loads its Auth SDK; the app-owned client
+retains its session across navigation but stores no credentials in persistent
+browser/native storage. Sign-in explains that reloading/closing ends the local
+session. Unconfigured builds retain guest play and explain that accounts are not
+available. Code-only email templates support the browser hash router and desktop
+without token-bearing redirects.
+
+Added safe configuration validation before frontend bundling, field/error states,
+resend cooldowns, plain-text profile previews, unsaved-edit guards, identity-bound
+profile loading/saving, and retry after network failures. A separate native local
+CSP overlay permits only the loopback Auth/API services; production native CSP and
+capabilities have not been broadened. See [account setup and limits](online.md).
+
+- `npm test`: 391 passing tests across 49 files. New coverage includes public-key
+  configuration, credentials/OTP bounds, memory-only SDK options, local sign-out,
+  recovery across refresh/account changes, failed sign-out, stale profile loads,
+  newer-save ordering, cross-account responses and malformed service data.
+- `npm run test:email`: seven real local email/Auth integration scenarios passed:
+  confirmation templates, invalid/one-use codes, refresh, recovery event/password
+  update, and rejection of the old password while the new password signs in. Only
+  disposable local accounts and captured Mailpit messages were used and removed.
+- Browser UI: registered a local test account, rejected a bad code, verified its
+  email, created a profile, exercised unsaved navigation/sign-out guards, and
+  retained sign-in across Browse/Account navigation. Reload required sign-in again.
+  Recovery delivered a code, opened the new-password form, and cancellation signed
+  out cleanly. Password replacement itself was exercised by the real Auth integration
+  test; no completed browser/native password-form submission is claimed.
+- Browser UI: intentionally stopped the local Worker, observed a recoverable
+  profile error, restarted it and successfully retried. The final fresh verification
+  tab had no warning/error console entries. At 720×600, the header reflowed and the
+  document had no horizontal overflow; content remained vertically scrollable.
+- Packaged macOS debug app: signed in to the same local account, loaded its saved
+  profile, updated its bio and observed that update in the browser. Quitting and
+  relaunching returned to sign-in. This does not validate Windows/Linux or every
+  native Auth/recovery case.
+- Frontend and native debug builds pass. The account chunk is about 233 kB minified
+  / 61 kB gzip; the initial game chunk is about 506 kB / 157 kB gzip and retains its
+  existing 500 kB warning. The API type check also passes. An intentionally invalid
+  privileged-key configuration was rejected before bundling without echoing its value.
+- Screenshot evidence: ignored `.tools/screenshots/account-profile-browser.png`
+  and `account-profile-native.png`.
+
+Local Auth/API services remain running for continued development; no hosted
+service, public account or production deployment was created. Account deletion,
+public player pages/moderation, remaining account settings and cross-platform
+coverage, friends/messages/presence, online maps/rankings and all broader release
+gates remain unfinished. The complete public-beta goal stays active.

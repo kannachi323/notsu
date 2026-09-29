@@ -14,7 +14,8 @@
     "api:check": "tsc --noEmit -p server/tsconfig.json",
     "api:build": "npm run api:check && wrangler deploy --dry-run --outdir .tools/online/worker-build",
     "test:db": "supabase test db",
-    "test:online": "node scripts/test-online.mjs"
+    "test:online": "node scripts/test-online.mjs",
+    "test:email": "node scripts/test-email-auth.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "2.117.2",

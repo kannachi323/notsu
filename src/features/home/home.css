@@ -57,7 +57,7 @@
 .notsu-home .notsu-profile { display: flex; align-items: center; gap: 12px; padding: 0 10px; min-height: 48px; border: 1px solid transparent; border-radius: 9px; background: transparent; text-align: left; }
 .notsu-profile > svg { width: 32px; height: 32px; }
 .notsu-profile > span { display: grid; }
-.notsu-profile strong { font-size: 18px; font-weight: 600; }
+.notsu-profile strong { font-size: 18px; font-weight: 600; max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .notsu-profile span > span { color: var(--home-muted); font-size: 16px; }
 .notsu-main { display: flex; flex: 1; flex-direction: column; min-width: 0; }
 .notsu-destinations {

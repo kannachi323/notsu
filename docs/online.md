@@ -1,19 +1,22 @@
 # Online foundation
 
-The full account/community release is still in progress. This slice implements a
-Hono API and real Supabase profile storage, exercised together locally. The game
-does not yet expose sign-in or connect to a hosted account service. Existing
-guest/offline gameplay, maps and records continue independently.
+The full account/community release is still in progress. The account screen at
+`/#/account` implements sign-up, email verification, sign-in, recovery, profile
+editing and sign-out against real Supabase Auth and the Hono profile API. Services
+are configured at build time; an unconfigured build explains that online accounts
+are unavailable. No hosted account service has been deployed. Existing guest/offline
+gameplay, maps and records continue independently.
 
 ## Identity and session decision
 
 Use Supabase email/password authentication with email confirmation. The initial
-client session will live **only in memory** in both browsers and the Tauri webview:
+client session lives **only in memory** in both browsers and the Tauri webview:
 `persistSession: false`, `detectSessionInUrl: false`, refresh while the app is open.
 Passwords are never saved. Reloading the page or closing the app requires another
 sign-in; switching game routes must retain the single app-owned client. This is an
-explicit UX tradeoff, and the sign-in screen must explain it. No account UI/client
-session lifecycle has been implemented yet.
+explicit UX tradeoff explained on the sign-in screen. A single lazily initialized
+SDK client owns credentials; the small account UI store contains identity/profile
+state only. The account route and SDK are loaded separately from the initial game.
 
 Do not persist access/refresh tokens in localStorage, IndexedDB, ordinary desktop
 files, logs or URLs. This avoids an unreviewed persistent secret store, but memory
@@ -23,13 +26,20 @@ session would need a separate design and platform tests: a same-site HttpOnly
 browser session service and native OS credential storage. Do not silently switch
 Supabase persistence on to implement “remember me”.
 
-Confirmation/recovery must use a user-entered email code with the correct Supabase
-OTP type, so the hash router and desktop launch protocol never carry raw session
-tokens. These flows, expired-code retry, password changes, account deletion,
-network recovery and sign-out UI still need implementation. A local-only sign-out
-must explicitly use `scope: 'local'`; “sign out everywhere” is a separate action.
-Native CSP currently remains offline-only and must gain exact approved service
-origins when actual account screens are connected.
+Confirmation/recovery use user-entered email codes with the matching Supabase OTP
+type. The committed email templates include codes and no authentication links, so
+the hash router and desktop launch protocol never carry raw session tokens. The
+forms handle invalid codes, resend cooldowns, matching passwords and generic
+recovery responses. A verified recovery session opens the new-password form;
+cancelling signs out. The Sign out action explicitly uses `scope: 'local'`.
+
+Profile editing displays errors/retry and guards unsaved changes on navigation,
+sign-out and browser unload. Pending loads cannot overwrite a newer save or another
+account's profile. A profile-service outage retains account identity and offers
+retry; local play remains accessible. Native close/unload behavior and long-running
+network/refresh stress tests still need broader platform coverage. Account deletion,
+public player-profile screens, profile moderation, optional persistent sessions,
+and additional account controls remain unfinished.
 
 ## Implemented API
 
@@ -51,7 +61,7 @@ newlines. Control characters are rejected. Request bodies are bounded to 4 KiB o
 actual UTF-8 bytes and five seconds. Service fetches have five-second deadlines.
 Unknown profile fields, including owner IDs, roles, ratings and timestamps, are
 rejected. Username uniqueness is atomic; conflicts return 409. Bios are plain text,
-never HTML. The future profile UI must render them as text.
+never HTML. The profile UI renders them as text.
 
 Protected routes accept only bearer tokens, validate identity against Supabase
 Auth, and then check a live verified account/session in PostgreSQL. Cookies,
@@ -97,6 +107,7 @@ supabase start
 supabase migration up --local
 npm run test:db
 npm run test:online
+npm run test:email
 npm test
 npm run api:build
 ```
@@ -111,6 +122,12 @@ Supabase project or Cloudflare account is touched. Do not pass hosted credential
 to these local fixtures. The tests require the local stack to be running; they do
 not silently skip when it is absent.
 
+`test:email` creates a disposable local account, reads only its captured Mailpit
+messages, verifies and reuses an email code, refreshes the session, completes a
+password reset and checks old/new password behavior. It removes its Auth identity
+and captured messages. It refuses non-local service URLs and never delivers email
+outside Mailpit.
+
 For interactive API development, copy `.dev.vars.example` to `.dev.vars` and set
 only the local publishable/anon key from `supabase status`, then run
 `npm run api:dev`. `.dev.vars` is ignored. `supabase stop` stops this project's
@@ -118,14 +135,34 @@ containers while preserving its database volume. `api:build` performs type check
 and a Worker dry run only; it does not publish. The Worker configuration has no
 public routes and disables workers.dev/preview URLs.
 
+To connect the browser frontend, copy `.env.example` to ignored `.env.local` and set
+`VITE_SUPABASE_URL=http://127.0.0.1:55321`,
+`VITE_NOTSU_API_URL=http://127.0.0.1:8787`, and the local publishable key in
+`VITE_SUPABASE_PUBLISHABLE_KEY`. Restart Vite if it does not reload the environment.
+The Vite configuration validates these values before bundling and rejects
+secret/service-role keys, remote plain HTTP, embedded credentials and URL tokens.
+These public values are deliberately compiled into the app, not runtime secrets.
+
+The default native CSP stays offline-only until real deployment origins exist.
+Use the explicit local-only CSP overlay for native verification:
+
+```sh
+npm run tauri -- build --debug --bundles app --config src-tauri/tauri.local.conf.json
+```
+
+The overlay permits only the two loopback services, without filesystem, shell or
+other new native capabilities. It is a development configuration, not a production
+release setting. Hosted URLs/CSP/CORS, SMTP templates and recovery delivery must
+be configured and tested together before shipping.
+
 The Miniflare development dependency pins vulnerable Undici 7.29.0; package.json
 overrides it to patched 7.29.1. Recheck and remove that override when upstream
 adopts a patched version. The lockfile includes both client and server tooling.
 
 ## Gates before exposure to the public
 
-Finish account screens and their real browser/native flows; wire exact CSP/CORS
-origins, recovery templates and HTTPS service URLs. Establish staging/production,
+Finish the remaining account controls and cross-platform flows; wire exact hosted
+CSP/CORS origins, recovery templates and HTTPS service URLs. Establish staging/production,
 SMTP delivery, migrations/backups/restore/rollback, monitored failure handling,
 rate limits/anti-abuse, moderation and load tests. Direct Supabase access also needs
 an abuse-control strategy: limiting Worker traffic alone does not limit PostgREST.

@@ -34,8 +34,10 @@ extra height. Smaller windows reflow and scroll instead of clipping controls.
 
 React Router and Zustand are the approved routing/UI-state baseline. Home is a
 separate feature and the existing Rhythm prototype remains available through Play.
-The dropdown, Play, local Editor and local Browse routes are wired; social
-destinations remain placeholders. Keep keyboard access, visible focus, Escape dismissal, reduced-motion
+The dropdown, Play, local Editor, local Browse and Account routes are wired;
+chat and friends remain placeholders. The account screen continues the dark
+cyan/violet palette with a static orb, clearly labeled forms and a text-only public
+profile preview. Keep keyboard access, visible focus, Escape dismissal, reduced-motion
 support, and an unobtrusive unofficial-community-project attribution. Do not show
 fabricated live performance or playback metrics.
 
