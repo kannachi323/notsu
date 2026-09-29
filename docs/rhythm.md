@@ -163,8 +163,8 @@ Imported [skin packs](skins.md) can replace individual PNG sprites, WAV hit soun
 and theme colors. No custom CSS/scripts or interface replacements are accepted.
 Pack decoding happens before play with per-asset fallback and a local preview.
 IndexedDB retains the original pack; quota or unavailable storage permits
-session-only use with a notice. Export archive generation is tested, but saved
-downloads and native save behavior remain unverified.
+session-only use with a notice. Browser downloads and the macOS debug app's native
+Save/import/export loop are verified. Windows/Linux native release checks remain.
 The approved sprite reference is retained in `assets/gameplay-reference.png`.
 Midnight now uses the separately generated `gameplay-atlas-v1.png` with measured
 frame bounds and pivots in the adjacent JSON. The atlas is decoded before audio

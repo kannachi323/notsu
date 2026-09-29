@@ -12,8 +12,10 @@ Choose **Download starter** for a ZIP containing the original gameplay atlas,
 measured frames, two original PCM sound files, and an editable `skin.json`.
 Unzip, edit, then ZIP the contents with `skin.json` directly at the archive root.
 Rename the ZIP to `.notsuskin` if desired. **Export skin** requests a download of
-the selected imported pack's original bytes. Browser download handling and native
-save integration still require release validation; see the delivery contract.
+the selected imported pack's original bytes. Desktop builds instead show **Save
+starter** and a native Save dialog. Cancelling leaves your skin unchanged. A save
+is confirmed only after writing succeeds. Browser downloads and the macOS debug
+Save/import/export loop are verified; Windows/Linux native release checks remain.
 
 ## Manifest version 1
 

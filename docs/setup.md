@@ -5,11 +5,11 @@
 The app was initialized from the official `create-tauri-app` React/TypeScript
 template and adapted to this repository's feature-first structure. The unused
 greeting command, opener plugin, example assets, and native permissions were
-omitted. The native host uses Tauri 2 with no application IPC commands.
+omitted. The native host uses Tauri 2 with a single bounded skin-save IPC command.
 
 Frontend package versions and Rust dependencies are locked in `package-lock.json`
 and `src-tauri/Cargo.lock`. React, React DOM, React Router, and Zustand are the
-frontend runtime packages. Vitest is used for tests; no separate browser or DOM
+frontend runtime packages alongside the Tauri core API and ZIP codec. Vitest is used for tests; no separate browser or DOM
 test dependency is installed. The native application identifier is
 `dev.kannachi.notsu`; the product/window name is notsu and the package name is `notsu`.
 The identifier change creates a separate native app identity from earlier builds.
@@ -65,8 +65,8 @@ validation, multiple-lane movement interpolation, and replay recomputation. Web 
 per-note or per-frame data crosses the native bridge.
 
 Audio is selected through the browser's file chooser and decoded locally. There
-is no unrestricted filesystem plugin, network download, telemetry, or uploaded
-audio. Only preferences are currently stored in browser local storage. Replays are
+is no frontend filesystem permission, telemetry, or uploaded audio. Preferences
+use local storage; imported skin archives use IndexedDB. Replays are
 currently held in memory for the results screen. Publishing/storage/backend
 services in the public-beta plan have not been deployed.
 The Rhythm preference key retains its legacy `osu-base` prefix for compatibility
@@ -75,6 +75,15 @@ with earlier browser sessions; new native app identity storage is separate.
 The Rust process is a local desktop host, not a secret-holding remote backend.
 Add narrow commands or official plugins only when a concrete native feature needs
 them; validate inputs and grant the smallest necessary capability scope.
+
+Skin exports use a Rust-owned Save dialog and atomic file replacement. The main
+window can invoke only `save_skin_pack`, supplying a bounded binary archive and
+sanitized suggested name; it cannot supply a destination path. Dialog/filesystem
+plugin commands are not granted to the frontend. Tauri API 2.11.1 and dialog plugin
+2.7.0 are locked with the existing Tauri 2.11.6/Rust 1.88-compatible dependency set.
+The local macOS debug bundle (`npm run tauri -- build --debug --bundles app`) has
+passed save, cancel, import, re-export and Autoplay smoke checks. This is an unsigned
+development bundle; Windows/Linux native and production release checks remain.
 
 ## References
 

@@ -4,8 +4,10 @@
 .skin-preview canvas { display: block; width: 100%; height: auto; aspect-ratio: 42 / 11; }
 .skin-preview figcaption { padding: 8px 12px; font-size: 16px; color: var(--muted); text-align: center; }
 .skin-actions { display: flex; flex-wrap: wrap; gap: 8px; }
-.skin-actions button { min-height: 44px; padding: 8px 14px; font-size: 16px; border-radius: 10px; background: var(--surface); color: var(--text); border: 1px solid var(--border); }
-.skin-actions button:hover:not(:disabled) { border-color: var(--accent); }
+.skin-actions button, .skin-actions a { min-height: 44px; padding: 8px 14px; font-size: 16px; border-radius: 10px; background: var(--surface); color: var(--text); border: 1px solid var(--border); }
+.skin-actions a { display: inline-flex; align-items: center; box-sizing: border-box; text-decoration: none; }
+.skin-management-actions { margin-top: 8px; }
+.skin-actions button:hover:not(:disabled), .skin-actions a:hover { border-color: var(--accent); }
 .skin-import { display: block; margin: 24px 0 8px; }
 .skin-manager input[type=file] { width: 100%; min-width: 0; font-size: 16px; }
 .skin-manager p { font-size: 16px; overflow-wrap: anywhere; margin: 12px 0; }

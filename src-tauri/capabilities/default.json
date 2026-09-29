@@ -1,7 +1,11 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
-  "description": "Main window; no filesystem, shell, or network plugins.",
-  "windows": ["main"],
-  "permissions": []
+  "description": "Main window can export a bounded skin pack to a location chosen in a native Save dialog. No frontend filesystem or shell access.",
+  "windows": [
+    "main"
+  ],
+  "permissions": [
+    "allow-save-skin-pack"
+  ]
 }

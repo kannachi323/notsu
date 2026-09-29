@@ -219,10 +219,31 @@ skin data cannot change timing or scoring. See [skin format](skins.md).
   occurred during this verification window. Screenshots are in ignored
   `.tools/screenshots/skin-settings.png` and `skin-gameplay-results.png`.
 
-Open verification: starter/export controls reached the download-request state,
+Initial verification: starter/export controls reached the download-request state,
 but the in-app browser did not report a saved download. No downloaded-file result
 is claimed. Archive creation is tested; browser download handling, native save
 integration, actual platform WebView asset/audio behavior and broader skin
 readability/listening review still need completion. Presentation remains in
 progress. Editor/library, online community, competitive backend and public release
 are still pending; the long-term goal remains active.
+
+### September 29 native and browser export follow-up
+
+Implemented a bounded native Save command using a Rust-owned dialog and atomic
+replacement. Cancellation preserves the selected skin; failed writes clean up
+staging files. Browser exports use persistent download links with Blob URL cleanup.
+
+- Packaged macOS debug app: saved a starter pack, re-imported it, cancelled export,
+  and saved a second export. The saved/re-exported archives were byte-identical.
+  The imported pack completed Moving together Autoplay with 1,000,000 points,
+  100% accuracy and 48 Perfect judgments.
+- Zen (Firefox-based browser): the real Download starter control saved a 703,816
+  byte archive. Its four unpacked files matched the native starter assets exactly.
+  The in-app browser's download event remains unavailable; no result is inferred
+  from that event alone.
+- Native UI evidence: ignored `.tools/screenshots/native-skin-export.png`.
+  Frontend save/cancel/error/bounds and capability tests pass. Native tests cover
+  name/size validation, exact replacement and failure cleanup.
+
+This closes the earlier local save gap. Cross-platform native validation, signing,
+human sound/readability testing and the remaining presentation work are still open.

@@ -3,7 +3,7 @@ import { builtinSkins } from "../domain/builtins";
 import type { SoundName } from "../domain/manifest";
 import { getSkin } from "../data/registry";
 import type { SkinRecord } from "../data/registry";
-import { downloadSkin, starterSkin } from "../data/exportPack";
+import { SkinExport } from "./SkinExport";
 import { importSkin, initializeSkins, prepareSkin, removeSkin, restoreSkin, useSkinCatalog } from "../useSkinCatalog";
 import { HitSounds } from "../../rhythm/data/hitSounds";
 import { SkinPreview } from "./SkinPreview";
@@ -73,10 +73,9 @@ export function SkinManager({ skinId, volume, select }: { skinId: string; volume
         });
       }} />
     <p id="skin-import-help">Choose a .notsuskin pack up to 16 MB. Artwork, sounds, and colors can change; hit timing stays the same.</p>
-    <div className="skin-actions">
-      <button type="button" disabled={busy} onClick={() => void action(async () => { downloadSkin(await starterSkin(), "my-first-skin"); setStatus("Starter download requested. Unzip it to edit the artwork, sounds, and skin.json, then zip its contents to import."); })}>Download starter</button>
+    <SkinExport record={installed} busy={busy} action={action} notify={setStatus} />
+    <div className="skin-actions skin-management-actions">
       {installed && <>
-        <button type="button" disabled={busy} onClick={() => { downloadSkin(installed.archive, installed.manifest.name); setStatus("Skin download requested."); }}>Export skin</button>
         <button type="button" disabled={busy} onClick={() => void action(async () => {
           const record = await removeSkin(installed.id);
           if (mounted.current) { setRemoved(record); selectRef.current("midnight"); setStatus("Skin removed. You can undo this."); }

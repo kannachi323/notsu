@@ -13,9 +13,3 @@ export async function starterSkin(): Promise<Uint8Array> {
   return archiveJob<Uint8Array>({ action: "pack", files: { "skin.json": new TextEncoder().encode(JSON.stringify(manifest, null, 2)),
     "atlas.png": new Uint8Array(await response.arrayBuffer()), "tap.wav": toneWav(base.sounds.tap), "release.wav": toneWav(base.sounds.release) } });
 }
-export function downloadSkin(bytes: Uint8Array, name: string) {
-  const url = URL.createObjectURL(new Blob([new Uint8Array(bytes)], { type: "application/zip" }));
-  const link = document.createElement("a"); link.href = url; link.download = `${name.replace(/[^a-zA-Z0-9_-]+/g, "-").slice(0, 64) || "skin"}.notsuskin`;
-  document.body.append(link); link.click(); link.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 30000);
-}
