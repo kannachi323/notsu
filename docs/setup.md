@@ -13,6 +13,8 @@ frontend runtime packages alongside the Tauri core API and ZIP codec. Vitest is 
 test dependency is installed. The native application identifier is
 `dev.kannachi.notsu`; the product/window name is notsu and the package name is `notsu`.
 The identifier change creates a separate native app identity from earlier builds.
+The online foundation adds Hono/Supabase and Wrangler under `server/`; these are
+not imported by the game bundle. See [local online setup](online.md).
 
 ## Prerequisites
 
@@ -71,7 +73,8 @@ is no frontend filesystem permission, telemetry, or uploaded audio. Preferences
 use local storage; imported skin archives and editor drafts/original recordings
 and map packages use separate IndexedDB databases. Local map results/replays use
 a separate bounded record database; editor/study replays remain in memory. Publishing/storage/backend
-services in the public-beta plan have not been deployed.
+services in the public-beta plan have not been deployed. A separately tested local
+Supabase profile API is implemented; no account screen connects the game to it yet.
 The Rhythm preference key retains its legacy `osu-base` prefix for compatibility
 with earlier browser sessions; new native app identity storage is separate.
 

@@ -1,0 +1,2 @@
+# Local publishable/anon key from `supabase status`. Never use a service-role key.
+SUPABASE_PUBLISHABLE_KEY=

@@ -81,7 +81,7 @@ do not change gameplay. Pause/resume must stop time and use a count-in.
 | Shared core | Multi-lane play, holds/shared hits, score/health/mods, deterministic replays and tests | In progress |
 | Presentation | Production assets/skins/sounds, tutorial, settings and results, visual/audio review | In progress |
 | Creator workflow | Import song -> author -> save/reopen -> export -> play without code | In progress |
-| Community | Deployed accounts/maps/friends/messages/moderation, authorization checks | Pending |
+| Community | Deployed accounts/maps/friends/messages/moderation, authorization checks | In progress: local identity/profile backend |
 | Public beta | Verified rankings, reviewed starter maps, platform releases and operational gates | Pending |
 
 Required validation: timing boundaries, FPS/input/replay equivalence, overlapping
@@ -488,3 +488,46 @@ large-library pressure/performance checks and the other platform/human playtests
 remain open. There is no account sync, online score submission or human-input
 attestation. Community, ranking services, deployment, signing and public-release
 gates remain unfinished. The full public-beta goal stays active.
+
+### September 29 local account/profile backend
+
+Implemented the first online foundation with Hono on Workers and a local Supabase
+Auth/PostgREST/PostgreSQL stack. The API verifies bearer identities, exposes public
+profiles and atomically creates/updates the caller's own profile. Column grants and
+RLS enforce ownership even through direct database API requests. Live session,
+email verification, anonymous-account, ban and deletion checks prevent stale JWTs
+or editable metadata from authorizing profile writes. No privileged key enters
+the Worker or game. Profile request bytes/time, service timeouts, exact origins,
+no-store responses and sanitized errors are bounded explicitly.
+
+Recorded the initial browser/native memory-only session decision and remaining
+account UI/recovery/persistence gates in [online implementation](online.md). There
+is no sign-in screen, hosted service or community UI connection yet. The existing
+game bundle and native permissions are unchanged.
+
+- `npm test`: 359 passing tests across 45 files, including profile validation,
+  identity propagation, denied origins, unverified/revoked accounts, malformed
+  requests, stream timeouts and byte limits independent of Content-Length.
+- `npm run test:db`: 40 passing pgTAP checks against the actual local PostgreSQL
+  17/Supabase schema. Checks include cross-account reads/writes, column grants,
+  forged owners/timestamps, duplicate names, unverified/banned/anonymous/deleted
+  accounts, mismatched/expired/revoked sessions and deletion cascade. Test fixtures
+  roll back.
+- `npm run test:online`: 12 passing integration scenarios through actual local
+  workerd, Auth and PostgREST, including password sign-in, unverified-email denial,
+  public/private data separation, simultaneous username claims, forged JWT denial,
+  direct-data access isolation and immediate sign-out/ban enforcement. Test users
+  were removed and the temporary Worker stopped afterward.
+- Frontend type checking/build and Worker type checking/dry-run build pass. The
+  pre-existing approximately 505 kB frontend chunk warning remains; the API adds
+  no bytes to that game bundle. Native code/UI were unchanged and not retested.
+- `npm audit`: zero reported vulnerabilities after overriding Miniflare's Undici
+  7.29.0 with patched 7.29.1. Hono 4.13.11, Supabase JS 2.117.2 and Wrangler 4.143.0
+  are locked. Local verification used installed Supabase CLI 2.75.0; no global
+  toolchain upgrade or hosted provisioning occurred.
+
+The local stack was stopped with its volume retained after verification. Account
+screens/recovery/deletion, friends/messages/presence/moderation, online maps and
+rankings, direct-data abuse controls, deployment and every remaining platform,
+performance, operational and public-release gate remain required. The complete
+goal remains active; local backend tests do not establish production readiness.
