@@ -40,7 +40,7 @@ it("keeps a broken hold at the target and gives successful releases their own so
     const last = feedback.effects.at(-1)!;
     expect(last.anchor).toEqual(laneAnchor(lanePoseAt(chart.lanes[0],releaseTime))); expect(last.reducedMotion).toBe(true);
     if (releaseTime === 1600) { expect(last.failed).toMatchObject({head:0,held:true}); expect(play).toHaveBeenCalledTimes(2); }
-    else { expect(last.failed).toBeUndefined(); expect(play).toHaveBeenLastCalledWith(skin.sounds.release); }
+    else { expect(last.failed).toBeUndefined(); expect(play).toHaveBeenLastCalledWith(skin.sounds.release, "release"); }
   }
 });
 it("caps effects and clears all per-attempt history for retry", () => {

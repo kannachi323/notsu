@@ -16,7 +16,7 @@ import type { Replay } from "./domain/replay";
 import { DEFAULT_MODS, HIT_WINDOW_MS } from "./domain/rules";
 import type { Mods } from "./domain/rules";
 import { PauseCheckpoint } from "./domain/pause";
-import { loadGameplayAtlas } from "./data/gameplayAtlas";
+import { initializeSkins, prepareSkin } from "../skins/useSkinCatalog";
 
 export type Phase = "setup" | "starting" | "countdown" | "playing" | "paused" | "rearming" | "resuming" | "results";
 export type Runtime = {
@@ -62,7 +62,7 @@ export function useRhythmGame() {
   const consumeFeedback = () => {
     const current = runtime.current;
     current.feedback.consume(current.session, getSkin(current.settings.skinId), current.settings.reducedMotion,
-      tone => current.audio?.hits.play(tone, current.settings.hitVolume));
+      (tone, kind) => current.audio?.hits.play(tone, current.settings.hitVolume, kind));
   };
   const pause = () => {
     const current = runtime.current;
@@ -123,6 +123,7 @@ export function useRhythmGame() {
 
   useEffect(() => {
     mounted.current = true;
+    void initializeSkins();
     let frameId: number;
     let lastPublish = 0;
     const tick = (now: number) => {
@@ -243,8 +244,9 @@ export function useRhythmGame() {
       const clock = audio();
       const buffer = selectedMode === "song" ? loaded.current : clock.makeStudy(selected);
       if (!buffer) throw new Error("Choose your audio file first, or try the timing study.");
-      const [hash] = await Promise.all([chartFingerprint(selected), loadGameplayAtlas()]);
+      const [hash, assets] = await Promise.all([chartFingerprint(selected), prepareSkin(settings.skinId)]);
       if (!mounted.current || token !== generation.current) return;
+      clock.hits.setSamples(assets?.sounds ?? {});
       fingerprint.current = hash;
       runtime.current.playback = replay ? new ReplayPlayer(selected, replay, hash) : undefined;
       runtime.current.session = runtime.current.playback?.session ?? new RhythmSession(selected, mods, { freezeMotion: settings.freezeMotion });

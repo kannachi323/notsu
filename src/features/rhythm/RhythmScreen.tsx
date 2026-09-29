@@ -6,17 +6,19 @@ import { Results } from "./components/Results";
 import { Setup } from "./components/Setup";
 import { getSkin, skinVariables } from "./components/skins";
 import { PausePanel, keyLabel } from "./components/PausePanel";
+import { useSkinCatalog } from "../skins/useSkinCatalog";
 
 const seconds = (ms: number) => `${Math.floor(Math.max(0, ms) / 60_000)}:${String(Math.floor(Math.max(0, ms) / 1000) % 60).padStart(2, "0")}`;
 
 export function RhythmScreen() {
   const game = useRhythmGame();
+  const skinRevision = useSkinCatalog(state => state.revision);
   const { view, chart } = game;
   useLayoutEffect(() => {
     for (const [name, value] of Object.entries(skinVariables(getSkin(game.settings.skinId)))) {
       document.documentElement.style.setProperty(name, value);
     }
-  }, [game.settings.skinId]);
+  }, [game.settings.skinId, skinRevision]);
   const playing = ["countdown", "playing", "paused", "rearming", "resuming"].includes(view.phase);
   const retry = () => void game.retry();
   const feedback = view.feedback && view.timeMs - view.feedback.atMs < 550 ? view.feedback : null;

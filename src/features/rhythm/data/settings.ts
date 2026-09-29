@@ -1,4 +1,4 @@
-import { getSkin } from "../components/skins";
+import { isSkinId } from "../../skins/domain/manifest";
 
 export type Settings = { offsetMs: number; volume: number; hitVolume: number; skinId: string; reducedMotion: boolean; freezeMotion: boolean };
 const key = "osu-base.rhythm.settings.v1";
@@ -13,7 +13,7 @@ export function loadSettings(): Settings {
       reducedMotion: typeof raw?.reducedMotion === "boolean" ? raw.reducedMotion : defaults.reducedMotion,
       freezeMotion: raw?.freezeMotion === true,
       hitVolume: typeof raw?.hitVolume === "number" && Number.isFinite(raw.hitVolume) ? Math.max(0, Math.min(1, raw.hitVolume)) : .15,
-      skinId: getSkin(raw?.skinId).id,
+      skinId: isSkinId(raw?.skinId) ? raw.skinId : "midnight",
     };
   } catch { return defaults; }
 }

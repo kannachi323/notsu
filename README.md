@@ -68,10 +68,12 @@ Use `npm.cmd` when forwarding flags in PowerShell to avoid wrapper argument loss
 - Escape or focus loss pauses the attempt. **Resume** preserves the position and
   score and gives a three-second count-in; re-grab active hold keys before
   continuing. Resumed runs are practice. **Retry** starts a fresh attempt.
-- Open **Settings** from the Rhythm menu to choose Midnight or High Contrast, adjust music
-  and hit-sound volumes separately, and set timing offset or reduced motion. Reduced motion
-  keeps hit highlights static while preserving authored line motion. Only preferences are saved
-  locally; audio and results are not persisted.
+- Open **Settings** from the Rhythm menu to choose a built-in skin or import a
+  [skin pack](docs/skins.md) with PNG artwork, WAV sounds, and theme colors. Preview
+  sounds, retain packs locally, and undo removal. Adjust music and hit sound
+  volumes separately, timing offset, or reduced motion. Reduced motion keeps hit
+  highlights static while preserving authored line motion. Preferences and skin
+  packs are saved locally; song audio and results are not persisted.
 - **Freeze line movement** is a separate practice assist in Settings. It preserves
   each line's opening pose without changing note timing, and excludes the run
   from rankings. Replays retain both movement assistance and resumed status.
@@ -93,6 +95,10 @@ src/
       components/            Menus, results, and Canvas renderer
       domain/                Pure scoring, Chart v2, timing, geometry, and replay rules
       data/                  Authored charts, audio, and local preference adapters
+    skins/                   Appearance contracts, pack import/storage, and previews
+      domain/                Manifest validation and built-in palettes
+      data/                  Bounded ZIP/PNG/WAV handling and IndexedDB storage
+      components/            Skin picker, preview, and pack controls
     trivia/                  Preserved future feature boundary
   shared/                    Only genuinely shared responsibilities
 src-tauri/
@@ -101,7 +107,7 @@ docs/                        Setup, direction, and feature notes
 ```
 
 React Router provides hash-based routes for the desktop WebView: `/` is Home and
-`/rhythm` preserves the prototype. Zustand owns the home music dropdown state.
+`/rhythm` preserves the prototype. Zustand owns the home music dropdown and skin catalog state.
 React and React DOM render the UI; Vite, TypeScript, Vitest, and the Tauri CLI are
 development tools. The playfield uses Canvas 2D and Web Audio directly.
 

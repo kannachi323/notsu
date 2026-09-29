@@ -191,3 +191,38 @@ Read the upstream implementations without introducing their dependencies:
 Upstream timing/difficulty rules differ by mode. The scoring/rating formulas above
 are original notsu starting specifications, not claims of compatibility or a
 validated universal skill measurement.
+
+### September 29 imported skin packs follow-up
+
+Implemented versioned local `.notsuskin` ZIP imports with strict appearance-only
+manifests, measured PNG frame bounds, PCM WAV decoding, theme contrast checks,
+per-asset fallbacks and bounded worker processing. Added preview controls,
+IndexedDB persistence, duplicate-pack handling, removal/Undo, session-only use on
+storage failure, and original starter-pack/export archive generation. Custom
+sprites and preloaded sounds now feed the same gameplay renderer/feedback path;
+skin data cannot change timing or scoring. See [skin format](skins.md).
+
+- `npm test`: 208 passing tests in 25 files. New coverage includes traversal and
+  unsupported fields, compressed size lies, CRC failures, archive budgets, frame
+  geometry, invalid/empty PNGs, PCM normalization, blocked/quota-failed storage,
+  corrupted saved packs, catalog limits, worker timeout/cleanup, and mixed
+  custom/synthesized audio voices. The complete starter pack round-trips with all
+  twelve sprites and both hit sounds.
+- `npm run build`: type checking and production frontend/worker bundles passed.
+- In-app browser: imported an actual PNG/WAV pack, restored it after reload,
+  removed/restored it using Undo, rejected a timing-rule injection while retaining
+  the selection, and showed independent missing-image/malformed-WAV fallbacks.
+  The sound preview controls ran without console errors; listening quality still
+  requires human review.
+- In-app browser: the imported pack completed **Moving together** Autoplay with
+  1,000,000 points and 48 Perfect judgments; no warning/error console entries
+  occurred during this verification window. Screenshots are in ignored
+  `.tools/screenshots/skin-settings.png` and `skin-gameplay-results.png`.
+
+Open verification: starter/export controls reached the download-request state,
+but the in-app browser did not report a saved download. No downloaded-file result
+is claimed. Archive creation is tested; browser download handling, native save
+integration, actual platform WebView asset/audio behavior and broader skin
+readability/listening review still need completion. Presentation remains in
+progress. Editor/library, online community, competitive backend and public release
+are still pending; the long-term goal remains active.

@@ -2,6 +2,7 @@ import { APPROACH_MS, lanePoseAt } from "../domain/chart";
 import { laneAnchor } from "../domain/layout";
 import type { JudgementEvent, RhythmSession } from "../domain/session";
 import type { Skin, Tone } from "./skins";
+import type { SoundName } from "../../skins/domain/manifest";
 
 export const MAX_EFFECTS = 32;
 export interface HitEffect {
@@ -19,7 +20,7 @@ export class HitFeedback {
   private missedNotes = new Set<string>();
   private revision = 0;
 
-  consume(session: RhythmSession, skin: Skin, reducedMotion: boolean, play: (tone: Tone) => void) {
+  consume(session: RhythmSession, skin: Skin, reducedMotion: boolean, play: (tone: Tone, kind: SoundName) => void) {
     if (session.revision !== this.revision) { this.clear(); this.revision = session.revision; }
     for (const event of session.drainJudgements()) {
       if (event.id <= this.lastEventId) continue;
@@ -44,7 +45,10 @@ export class HitFeedback {
         this.effects.push(effect);
         if (this.effects.length > MAX_EFFECTS) this.effects.shift();
       }
-      if (event.grade !== "Miss" && event.grade !== "Extra") play(event.action === "release" ? skin.sounds.release : skin.sounds.tap);
+      if (event.grade !== "Miss" && event.grade !== "Extra") {
+        const kind = event.action === "release" ? "release" : "tap";
+        play(skin.sounds[kind], kind);
+      }
     }
   }
 

@@ -44,3 +44,7 @@ it("keeps frozen-line assistance distinct from reduced effects and requires a bo
   system('{"reducedMotion":false,"freezeMotion":true}');
   expect(loadSettings()).toMatchObject({ reducedMotion: false, freezeMotion: true });
 });
+it("retains a custom pack identity before asynchronous storage is initialized", () => {
+  const skinId = "skin:" + "d".repeat(64); system(JSON.stringify({ skinId }));
+  expect(loadSettings().skinId).toBe(skinId);
+});

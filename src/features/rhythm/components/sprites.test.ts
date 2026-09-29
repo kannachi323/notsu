@@ -33,3 +33,17 @@ it("uses primitive fallbacks if art is missing or the high-contrast skin is sele
   expect(sprite(ctx as unknown as CanvasRenderingContext2D, getSkin("high-contrast"), "tap", 0, 0, 18)).toBe(false);
   expect(ctx.drawImage).not.toHaveBeenCalled();
 });
+it("draws imported art with the same logical diameter and falls back per sprite", async () => {
+  const { cacheSkinAssets, forgetSkin } = await import("../../skins/data/registry");
+  const id = "skin:" + "e".repeat(64), customImage = { custom: true } as unknown as HTMLImageElement;
+  image.value = {} as HTMLImageElement;
+  const frame = { x: 0, y: 0, width: 100, height: 100, pivotX: 50, pivotY: 50, bodyWidth: 100, bodyHeight: 100 };
+  cacheSkinAssets(id, { sprites: { tap: { image: customImage, frame } }, sounds: {}, warnings: [] });
+  try {
+    const skin = { ...getSkin("midnight"), id }, ctx = context();
+    sprite(ctx as unknown as CanvasRenderingContext2D, skin, "tap", 10, 20, 18);
+    expect(ctx.drawImage).toHaveBeenCalledWith(customImage, 0, 0, 100, 100, 1, 11, 18, 18);
+    sprite(ctx as unknown as CanvasRenderingContext2D, skin, "holdHead", 10, 20, 18);
+    expect(ctx.drawImage.mock.lastCall?.[0]).toBe(image.value);
+  } finally { forgetSkin(id); }
+});

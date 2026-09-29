@@ -132,7 +132,7 @@ counts. Miss timestamps are authored deadlines, not the frame that noticed them.
 If a timestamped input arrives after a speculative frame miss, the pure engine
 reconciles its input history and emits only changed feedback. This does not replace
 real hardware/input latency testing. No Rust IPC calls are made during gameplay. A local file selection is
-required again after an application restart; only preferences are persisted.
+required again after an application restart; preferences and skin packs are persisted.
 
 ## Replay boundary
 
@@ -154,17 +154,22 @@ authorization to publish a ranked score. Guest/offline play remains unranked.
 
 ## Skins and feedback
 
-`components/skins.ts` defines the typed appearance contract and built-in Midnight
-and High Contrast dark presets. It supplies CSS custom properties for all app
+`features/skins/domain/` defines the typed appearance contract and built-in Midnight
+and High Contrast dark presets; Rhythm imports them through its skin helpers. It supplies CSS custom properties for all app
 colors and Canvas values for notes, target, lane, and feedback, plus synthesized
 hit-sound envelopes. Note radii are constrained to 8–10 world units. Skins cannot
 change layout, chart coordinates, approach time, timing windows, input, or scoring.
-There are no downloaded packs, custom CSS/scripts, layout replacements, or imports.
+Imported [skin packs](skins.md) can replace individual PNG sprites, WAV hit sounds
+and theme colors. No custom CSS/scripts or interface replacements are accepted.
+Pack decoding happens before play with per-asset fallback and a local preview.
+IndexedDB retains the original pack; quota or unavailable storage permits
+session-only use with a notice. Export archive generation is tested, but saved
+downloads and native save behavior remain unverified.
 The approved sprite reference is retained in `assets/gameplay-reference.png`.
 Midnight now uses the separately generated `gameplay-atlas-v1.png` with measured
 frame bounds and pivots in the adjacent JSON. The atlas is decoded before audio
-starts; incorrect dimensions or decode failure retain primitive drawing. High
-Contrast always uses its original Canvas art. Line/ribbon middle sections stretch
+starts; incorrect dimensions or decode failure retain primitive drawing. The built-in High
+Contrast uses its original Canvas art. Line/ribbon middle sections stretch
 while their caps retain their proportions. Timing coordinates stay independent
 of image frames. See the [asset notes](../src/features/rhythm/assets/README.md).
 
@@ -183,8 +188,9 @@ at 32 and sound voices at eight; oldest entries are removed when full. Pause,
 retry, exit, completion, and disposal clear feedback and stop sound voices.
 
 Music volume and hit sound volume are independent. Hit sounds default to 15%; zero
-mutes them. Only successful presses/releases synthesize short sounds, with no
-continuous hold or failure audio. The existing preference storage key is retained:
+mutes them. Only successful presses/releases play short sounds, using preloaded custom
+PCM samples when present and synthesis otherwise. There is no continuous hold
+or failure audio. The existing preference storage key is retained:
 older preferences receive the new defaults, and unknown skin IDs fall back to
 Midnight. The local audio file is never persisted.
 
