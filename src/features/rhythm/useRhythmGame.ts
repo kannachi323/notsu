@@ -34,7 +34,7 @@ export type Runtime = {
 };
 type View = { phase: Phase; timeMs: number; summary: Summary; feedback: Feedback | null; countdown: number };
 
-export type LocalLevel = { chart: Chart; buffer: AudioBuffer; editor?: boolean; recordSource?: RecordSource; savedReplay?: Replay };
+export type LocalLevel = { chart: Chart; buffer: AudioBuffer; editor?: boolean; recordSource?: RecordSource; savedReplay?: Replay; autoStart?: boolean; initialMods?: Mods };
 export function useRhythmGame(level?: LocalLevel) {
   const initialChart = level?.chart ?? songChart;
   const [settings, setSettings] = useState(loadSettings);

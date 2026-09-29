@@ -1,10 +1,19 @@
 # Map packages and local library
 
-Home's **Browse** opens the local collection. Import a `.notsumap` file, search by
-song/artist/mapper/difficulty, filter favorites, select a difficulty, and play it
-with the same audio-clock engine used by the editor. Normal play, No Fail,
+Home's **Play** opens song selection; **Browse maps** presents the same local
+collection as an artwork grid. Search by song/artist/mapper/difficulty, filter
+favorites, sort the collection, preview the recording, select a difficulty, and
+play it with the same audio-clock engine used by the editor. Normal play, No Fail,
 Autoplay and persistent local replays are available. Every local attempt is
 unranked. Online collection and ranking features remain pending.
+
+Three [starter packs](starter-maps.md) ship with the app, each containing its own
+music and two difficulties. No separate recording or account is needed. Importing
+a `.notsumap` likewise supplies the full recording and charts; importing an MP3/WAV
+on its own is an editor action, not a requirement to play someone else's map.
+The included packs remain available when local storage fails. Favoriting one saves
+its pack and preference locally. Bundled entries cannot be removed from the app;
+imported revisions retain the existing removal/undo flow.
 
 ## Portable format
 
@@ -63,7 +72,7 @@ but have separate size limits and extensions.
 
 ## Local records and replays
 
-Finished Browse attempts save their result and replay in the separate
+Finished song-selection attempts save their result and replay in the separate
 `notsu-records` IndexedDB database. **Personal best** uses completed Standard runs
 without No Fail, Autoplay, frozen lines or resume assistance. Compare score first,
 then maximum combo, then accuracy. Exact ties share performance; the earliest
@@ -76,8 +85,8 @@ zero first best under the current health rules.
 the replay, and opens playback through the real engine. The saved result and its
 input stream are recomputed in a worker before saving and before replay loading.
 Playback creates no new attempt; **Watch again** repeats playback rather than
-silently switching to live input. Editor playtests and built-in studies do not
-enter this local map history.
+silently switching to live input. Bundled map attempts enter this history as well;
+editor playtests and legacy internal studies do not.
 
 Results show saving, success, personal-best improvement/tie, or failure with a
 retry action. Writes use a stable attempt ID and one transaction for result/replay

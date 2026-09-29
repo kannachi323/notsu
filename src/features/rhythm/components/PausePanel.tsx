@@ -2,9 +2,9 @@ import { useEffect, useRef } from "react";
 
 export const keyLabel = (code: string) => code.replace(/^Key|^Digit/, "").replace(/^Numpad/, "Numpad ");
 
-export function PausePanel({ rearming, requiredKeys, canResume, error, resume, cancel, retry, exit }: {
+export function PausePanel({ rearming, requiredKeys, canResume, error, resume, cancel, retry, exit, exitLabel = "Home" }: {
   rearming: boolean; requiredKeys: readonly string[]; canResume: boolean; error: string;
-  resume: () => void; cancel: () => void; retry: () => void; exit: () => void;
+  resume: () => void; cancel: () => void; retry: () => void; exit: () => void; exitLabel?: string;
 }) {
   const panel = useRef<HTMLElement>(null);
   useEffect(() => { panel.current?.querySelector<HTMLButtonElement>("button")?.focus(); }, [rearming]);
@@ -25,7 +25,7 @@ export function PausePanel({ rearming, requiredKeys, canResume, error, resume, c
     <div className="actions">
       {rearming ? <button className="primary" onClick={cancel}>Cancel</button> : canResume && <button className="primary" onClick={resume}>Resume</button>}
       <button className={canResume ? "quiet" : "primary"} onClick={retry}>Retry</button>
-      <button className="quiet" onClick={exit}>Home</button>
+      <button className="quiet" onClick={exit}>{exitLabel}</button>
     </div>
   </section></div>;
 }

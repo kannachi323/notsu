@@ -1,6 +1,6 @@
 import { createHashRouter, Navigate, RouterProvider } from "react-router";
 import { HomeScreen } from "../features/home/components/HomeScreen";
-import { RhythmScreen } from "../features/rhythm/RhythmScreen";
+import { PreferencesScreen } from "../features/rhythm/components/PreferencesScreen";
 import { EditorScreen } from "../features/editor/components/EditorScreen";
 import { MapBrowser } from "../features/maps/components/MapBrowser";
 import { lazy, Suspense } from "react";
@@ -18,9 +18,11 @@ const ReviewScreen = lazy(() => import("../features/moderation/components/Review
 
 const router = createHashRouter([
   { path: "/", element: <HomeScreen /> },
-  { path: "/rhythm", element: <RhythmScreen /> },
+  { path: "/rhythm", element: <MapBrowser key="select" view="select" /> },
+  { path: "/settings", element: <PreferencesScreen /> },
+  { path: "/how-to-play", element: <PreferencesScreen help /> },
   { path: "/editor", element: <EditorScreen /> },
-  { path: "/browse", element: <MapBrowser /> },
+  { path: "/browse", element: <MapBrowser key="browse" view="browse" /> },
   { path: "/account", element: <Suspense fallback={<main className="app"><p role="status">Loading account…</p></main>}><AccountScreen /></Suspense> },
   { path: "/account/delete", element: <Suspense fallback={<main className="app"><p role="status">Loading account…</p></main>}><DeleteAccountScreen /></Suspense> },
   { path: "/players/:username?", element: <Suspense fallback={<main className="app"><p role="status">Loading player…</p></main>}><PublicProfileScreen /></Suspense> },

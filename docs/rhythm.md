@@ -1,4 +1,9 @@
-# Rhythm prototype
+# Rhythm gameplay
+
+The public Play route now uses [song selection and complete map packs](maps.md),
+including three bundled songs. The original standalone study selector is internal
+legacy code; players do not need to locate an MP3 to play a map. The engine rules
+and technical study notes below remain relevant.
 
 ## Menu
 

@@ -57,8 +57,9 @@ smoke build; signing and installer distribution have not been configured.
 
 React Router's `createHashRouter` keeps routes inside the packaged document, avoiding
 server fallback requirements. `/#/` opens the notsu home screen; `/#/rhythm` opens
-the existing prototype; `/#/editor` opens the local creator workflow, and
-`/#/browse` opens the local map library. The data
+song selection and starts the selected difficulty directly; `/#/editor` opens the
+local creator workflow; `/#/browse` opens the map grid. `/#/settings` and
+`/#/how-to-play` expose preferences and instructions. The data
 router enables unsaved-draft navigation guards. `/#/account` loads the account
 screen separately and connects to configured online services. `/#/players` and
 `/#/players/:username` provide public player lookup; `/#/account/delete` is the
@@ -70,17 +71,18 @@ bounded heartbeat across routes. `/#/report/:target/:message?` creates a private
 profile/message report; `/#/reports` lists the caller's receipts. Authorized staff
 use `/#/moderation` and `/#/moderation/:id`. These routes are loaded separately;
 see [reporting and review setup](moderation.md), including the private role and
-database retention job. Unknown routes return to Home. The home feature owns a
-small, non-persisted Zustand store for its music dropdown. Playback controls and
-the remaining future-feature buttons are presentational only.
+database retention job. Unknown routes return to Home. The old prototype menu and
+music-dropdown components remain internal legacy code, with no public route.
+The song-selector Preview button plays the selected package's actual recording.
 
 React owns setup, settings, HUD, and results. Canvas draws each animation frame
 without React state updates per frame. Pure TypeScript owns scoring, chart
 validation, multiple-lane movement interpolation, and replay recomputation. Web Audio owns the timing clock. No
 per-note or per-frame data crosses the native bridge.
 
-Audio is selected through the browser's file chooser and decoded locally. There
-is no frontend filesystem permission, telemetry, or uploaded audio. Preferences
+Gameplay decodes the recording contained in a bundled or imported `.notsumap`.
+Only authoring a new map needs a song selected through the editor's file chooser.
+There is no frontend filesystem permission, telemetry, or uploaded audio. Preferences
 use local storage; imported skin archives and editor drafts/original recordings
 and map packages use separate IndexedDB databases. Local map results/replays use
 a separate bounded record database; editor/study replays remain in memory. Publishing/storage/backend

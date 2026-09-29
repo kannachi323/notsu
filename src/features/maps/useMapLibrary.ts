@@ -7,8 +7,10 @@ import { favoriteMap, listMaps, readMap, removeMap, restoreMap, storeMap } from 
 import type { MapSummary, StoredMap } from "./data/storage";
 import { loadLocalReplay } from "../records/data/service";
 import type { LocalLevel } from "../rhythm/useRhythmGame";
+import { starterFile, starterMaps, withStarterMaps } from "./data/starters";
+import { DEFAULT_MODS, type Mods } from "../rhythm/domain/rules";
 
-export function useMapLibrary() {
+export function useMapLibrary(initialRevision?: string) {
   const [maps, setMaps] = useState<MapSummary[]>([]), [selected, setSelected] = useState<(LoadedMap & { bytes: Uint8Array; saved: boolean })>();
   const [difficultyId, setDifficultyId] = useState(""), [playing, setPlaying] = useState<LocalLevel>();
   const [busy, setBusy] = useState(false), [error, setError] = useState(""), [notice, setNotice] = useState("");
@@ -17,10 +19,24 @@ export function useMapLibrary() {
   const message = (cause: unknown) => cause instanceof Error ? cause.message : "The map could not be loaded.";
   async function refresh() {
     const catalog = await listMaps();
-    if (mounted.current) { setMaps(catalog.maps); if (catalog.unreadable) setNotice(`${catalog.unreadable} saved map entries could not be read. Import their original packages to recover them.`); }
+    const maps = withStarterMaps(catalog.maps);
+    if (mounted.current) { setMaps(maps); if (catalog.unreadable) setNotice(`${catalog.unreadable} saved map entries could not be read. Import their original packages to recover them.`); }
+    return maps;
   }
   useEffect(() => {
-    mounted.current = true; void refresh().catch(cause => { if (mounted.current) setError(message(cause)); });
+    mounted.current = true;
+    void run(async () => {
+      let rows: MapSummary[];
+      try { rows = await refresh(); }
+      catch {
+        rows = starterMaps;
+        if (mounted.current) {
+          setMaps(rows);
+          setNotice("Local storage is unavailable. Included maps are still playable; imported packs will last for this session.");
+        }
+      }
+      await load(initialRevision ?? rows[0]?.revision);
+    });
     return () => { mounted.current = false; void decoder.current?.close(); decoder.current = null; };
   }, []);
   async function run(operation: () => Promise<void>) {
@@ -34,12 +50,22 @@ export function useMapLibrary() {
     if (!mounted.current) return;
     setSelected({ ...loaded, bytes, saved }); setDifficultyId(loaded.set.difficulties.find(d => d.chart.notes.length)?.chart.id ?? loaded.set.difficulties[0].chart.id);
   }
-  const open = (revision: string) => run(async () => {
-    const row = await readMap(revision), bytes = new Uint8Array(await row.archive.arrayBuffer());
+  async function load(revision?: string) {
+    if (!revision || !mounted.current) return;
+    const bundled = starterFile(revision);
+    let bytes: Uint8Array;
+    if (bundled) {
+      const response = await fetch(`${import.meta.env.BASE_URL}maps/${bundled}`, { credentials: "omit", signal: AbortSignal.timeout(15000) });
+      if (!response.ok) throw new Error("The included map could not load. Please retry.");
+      bytes = new Uint8Array(await response.arrayBuffer());
+    } else {
+      const row = await readMap(revision); bytes = new Uint8Array(await row.archive.arrayBuffer());
+    }
     const loaded = await mapJob<LoadedMap>({ action: "unpack", bytes });
     if (loaded.revision !== revision) throw new Error("The saved package no longer matches this revision. Import the original package again.");
-    select(loaded, bytes, true);
-  });
+    select(loaded, bytes, !bundled);
+  }
+  const open = (revision: string) => run(() => load(revision));
   const importFile = (file: File) => run(async () => {
     if (!/\.notsumap$/i.test(file.name) || file.size < 22 || file.size > MAX_MAP_BYTES) throw new Error("Choose a .notsumap package up to 128 MB.");
     const bytes = new Uint8Array(await file.arrayBuffer()), loaded = await mapJob<LoadedMap>({ action: "unpack", bytes });
@@ -48,7 +74,7 @@ export function useMapLibrary() {
     catch (cause) { saved = false; if (mounted.current) setNotice(`Available for this session only. ${message(cause)} Keep the original package to import it again.`); }
     select(loaded, bytes, saved);
   });
-  const play = (recordId?: string) => run(async () => {
+  const play = (recordId?: string, mods: Mods = { ...DEFAULT_MODS }) => run(async () => {
     const difficulty = selected?.set.difficulties.find(d => d.chart.id === difficultyId);
     if (!selected || !difficulty?.chart.notes.length) throw new Error("This difficulty needs at least one circle before it can be played.");
     const context = decoder.current ??= new AudioContext();
@@ -58,9 +84,12 @@ export function useMapLibrary() {
     }
     const recordSource = { revision: selected.revision, setId: selected.set.id, difficulty: difficulty.name };
     const savedReplay = recordId ? await loadLocalReplay(recordId, difficulty.chart, recordSource) : undefined;
-    if (mounted.current) setPlaying({ chart: difficulty.chart, buffer: song.buffer, recordSource, savedReplay });
+    if (mounted.current) setPlaying({ chart: difficulty.chart, buffer: song.buffer, recordSource, savedReplay, autoStart: true, initialMods: mods });
   });
-  const favorite = (row: MapSummary) => run(async () => { await favoriteMap(row.revision, !row.favorite); await refresh(); });
+  const favorite = (row: MapSummary) => run(async () => {
+    if (starterFile(row.revision) && selected?.revision === row.revision) await storeMap(selected, selected.bytes);
+    await favoriteMap(row.revision, !row.favorite); await refresh();
+  });
   const remove = () => run(async () => {
     if (!selected?.saved) return;
     const row = await removeMap(selected.revision);

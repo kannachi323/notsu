@@ -36,8 +36,10 @@
   Follow docs/public-beta.md and preserve the separate Trivia placeholders.
 - Do not install toolchains or dependencies, compile, or run builds/tests in this
   environment unless the user explicitly requests it.
-- Preserve the Moku-iOS design reference notes in `docs/direction.md`. Confirm
-  current references before substantial UI work; do not copy official osu! UI.
+- Preserve the historical Moku-iOS design reference notes in `docs/direction.md`.
+  The current user-approved direction emulates modern osu!lazer layouts and
+  interactions with original notsu branding and assets. Confirm current references
+  before substantial UI work.
 - Trivia remains a planned casual feature of the broader companion. Preserve its
   feature boundary; do not create a general game framework.
 - Accounts use Supabase email/password authentication, with no social OAuth in
