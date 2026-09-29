@@ -1,10 +1,12 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
-import { readConfig, type Bindings } from "./config";
+import { readConfig } from "./config";
 import { ApiError } from "./errors";
 import { accounts } from "./features/accounts/routes";
+import { requireSession, type SessionEnv } from "./features/accounts/data/session";
+import { friends } from "./features/friends/routes";
 
-const app = new Hono<{ Bindings: Bindings }>();
+const app = new Hono<SessionEnv>();
 
 app.use("*", async (c, next) => {
   c.header("Cache-Control", "private, no-store");
@@ -27,7 +29,9 @@ app.use("/v1/*", async (c, next) => {
   return cors({ origin: config.origins, allowMethods: ["GET", "PUT", "DELETE", "OPTIONS"],
     allowHeaders: ["Authorization", "Content-Type"], exposeHeaders: ["X-Request-Id"], maxAge: 600 })(c, next);
 });
+app.use("/v1/me/*", requireSession);
 app.route("/v1", accounts);
+app.route("/v1", friends);
 app.notFound((c) => c.json({ error: { code: "not_found", message: "This endpoint was not found." } }, 404));
 app.onError((error, c) => {
   if (error instanceof ApiError) return c.json({ error: { code: error.code, message: error.message } }, error.status);

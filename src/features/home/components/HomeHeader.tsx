@@ -17,7 +17,7 @@ export function HomeHeader() {
     <div className="notsu-social" role="group" aria-label="Player and social">
       <Link className="notsu-profile" to="/account" title="Your account" aria-label="Your account"><Icon name="profile" /><span><strong>{profile?.username || (signedIn ? "Player" : "Guest")}</strong><span>{signedIn ? "Signed in" : "Sign in"}</span></span></Link>
       <button className="notsu-icon-button" type="button" aria-label="Chat" title="Chat — coming soon" aria-disabled="true"><Icon name="chat" /></button>
-      <button className="notsu-icon-button" type="button" aria-label="Friends" title="Friends — coming soon" aria-disabled="true"><Icon name="friends" /></button>
+      <Link className="notsu-icon-button" to="/friends" aria-label="Friends" title="Friends"><Icon name="friends" /></Link>
     </div>
   </header>;
 }

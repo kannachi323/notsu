@@ -21,7 +21,7 @@ export function authError(error: AuthError): AccountError {
     user_already_exists: "Check your email, or try signing in if you already have an account.",
     email_address_invalid: "Enter a valid email address.",
   };
-  return new AccountError(messages[code] ?? "The account service could not complete this request. Check your connection and try again.", code);
+  return new AccountError(Object.hasOwn(messages, code) ? messages[code] : "The account service could not complete this request. Check your connection and try again.", code);
 }
 
 export const configuration = onlineConfig(import.meta.env);

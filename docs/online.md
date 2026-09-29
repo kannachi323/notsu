@@ -92,12 +92,15 @@ anonymous status, soft deletion, ban and session expiry. Both RLS writes and the
 API use that check, so directly calling PostgREST does not bypass it. Client writes
 cannot change identity/timestamps or delete an account. `save_profile` is a
 security-invoker RPC with column-limited writes; it does not elevate callers.
-Hard deletion of an Auth user cascades their profile and sessions. Retention and
-deletion rules for future community data must be added with those features.
+Hard deletion of an Auth user cascades their profile, sessions, friendships,
+blocks and request counter. Retention and deletion rules for future messages,
+reports, published maps and scores must be added with those features.
 
-No rankings, messages, friends, presence, map publishing, uploads or administrative
-endpoints have been exposed in this slice. Add grants/RLS and adversarial tests in
-the same migration as each future feature.
+Friends and blocking now use a separate migration and feature boundary; see
+[friends and authorization](friends.md). Protected feature endpoints share the
+account live-session middleware. Rankings, messages, presence, map publishing,
+uploads and administrative endpoints remain unfinished. Add grants/RLS and
+adversarial tests in the same migration as each future feature.
 
 ## Permanent account deletion
 

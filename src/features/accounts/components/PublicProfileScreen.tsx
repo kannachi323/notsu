@@ -6,6 +6,7 @@ import { AccountError } from "../data/auth";
 import { loadPublicProfile } from "../data/publicProfiles";
 import { parseUsername, type Profile } from "../domain/profile";
 import "../accounts.css";
+import { ProfileConnection } from "../../friends/components/ProfileConnection";
 
 export function PublicProfileScreen() {
   const { username } = useParams();
@@ -53,6 +54,7 @@ function PlayerPage({ username }: { username?: string }) {
           </div></div>
         {profile.bio && <div className="player-about"><h3>About</h3><p className="account-bio">{profile.bio}</p></div>}
         {identity?.id === profile.id && <Link className="account-guest" to="/account">Edit your profile →</Link>}
+        <ProfileConnection key={`${identity?.id ?? "guest"}:${profile.id}`} target={profile.id} />
       </article> : <p className="player-status account-muted">Enter a username to open their public profile.</p>}
   </main><footer className="notsu-footer">Unofficial community project · Not affiliated with ppy</footer></div>;
 }

@@ -1,15 +1,13 @@
 import { Hono } from "hono";
-import type { SupabaseClient } from "@supabase/supabase-js";
 import { parseProfileInput, parseUsername } from "../../../src/features/accounts/domain/profile";
-import type { Bindings } from "../../config";
 import { readConfig } from "../../config";
 import { ApiError } from "../../errors";
-import { databaseError, profileColumns, requestClient, requireAccount, toProfile } from "./data/supabase";
-import { readAccountBody } from "./data/accountBody";
+import { databaseError, profileColumns, requestClient, toProfile } from "./data/supabase";
+import { readJsonBody } from "../../shared/data/requestBody";
+import type { SessionEnv } from "./data/session";
 import { deleteAuthenticatedAccount, requireRecentPassword } from "./data/deleteAccount";
 
-type AccountEnv = { Bindings: Bindings; Variables: { db: SupabaseClient; userId: string } };
-export const accounts = new Hono<AccountEnv>();
+export const accounts = new Hono<SessionEnv>();
 
 accounts.get("/profiles/:username", async (c) => {
   let username: string;
@@ -21,19 +19,6 @@ accounts.get("/profiles/:username", async (c) => {
   if (error) throw databaseError(error.code);
   if (!data) throw new ApiError(404, "profile_not_found", "This profile was not found.");
   return c.json({ profile: toProfile(data) });
-});
-
-accounts.use("/me/*", async (c, next) => {
-  const header = c.req.header("Authorization") ?? "";
-  if (header.length > 8192 || !/^Bearer [A-Za-z0-9._-]+$/i.test(header)) {
-    throw new ApiError(401, "sign_in_required", "Sign in to continue.");
-  }
-  const token = header.slice(7);
-  const { url, key } = readConfig(c.env);
-  const client = requestClient(url, key, token);
-  c.set("userId", await requireAccount(client, token));
-  c.set("db", client);
-  await next();
 });
 
 accounts.get("/me/profile", async (c) => {
@@ -48,7 +33,7 @@ accounts.put("/me/profile", async (c) => {
     throw new ApiError(415, "json_required", "Send profile details as JSON.");
   }
   let input;
-  try { input = parseProfileInput(await readAccountBody(c.req.raw)); }
+  try { input = parseProfileInput(await readJsonBody(c.req.raw)); }
   catch (error) {
     if (error instanceof ApiError) throw error;
     throw new ApiError(400, "invalid_profile", error instanceof SyntaxError
@@ -66,7 +51,7 @@ accounts.delete("/me/account", async (c) => {
   if (c.req.header("Content-Type")?.split(";")[0].trim().toLowerCase() !== "application/json") {
     throw new ApiError(415, "json_required", "Send confirmation as JSON.");
   }
-  const input = await readAccountBody(c.req.raw);
+  const input = await readJsonBody(c.req.raw);
   if (!input || typeof input !== "object" || Array.isArray(input) ||
       Object.keys(input).length !== 1 || !("confirmation" in input) || input.confirmation !== "DELETE") {
     throw new ApiError(400, "confirmation_required", "Type DELETE to confirm permanent account deletion.");

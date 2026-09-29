@@ -46,7 +46,7 @@ select is((select bio from public.profiles where username = 'player_one'), '', '
 select throws_ok($$delete from public.profiles where username = 'player_two'$$, '42501', null, 'raw profile deletion is not account deletion');
 
 set local role anon;
-select is((select count(*) from public.profiles), 2::bigint, 'guests can read public profiles');
+select is((select count(*) from public.profiles where id in ('11111111-1111-4111-8111-111111111111','22222222-2222-4222-8222-222222222222')), 2::bigint, 'guests can read public profiles');
 select throws_ok($$select * from auth.users$$, '42501', null, 'guests cannot read private account records');
 select throws_ok($$select public.save_profile('guest_name', 'Guest', '')$$, '42501', null, 'guests cannot call writes');
 

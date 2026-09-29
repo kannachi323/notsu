@@ -1,9 +1,9 @@
-import { ApiError } from "../../../errors";
+import { ApiError } from "../../errors";
 
 /** Count received bytes even when Content-Length is absent or incorrect. */
-export async function readAccountBody(request: Request): Promise<unknown> {
+export async function readJsonBody(request: Request): Promise<unknown> {
   const reader = request.body?.getReader();
-  if (!reader) throw new ApiError(400, "invalid_request", "Send account details.");
+  if (!reader) throw new ApiError(400, "invalid_request", "Send JSON details.");
   let timer: ReturnType<typeof setTimeout> | undefined;
   const read = async () => {
     const chunks: Uint8Array[] = [];
@@ -12,14 +12,14 @@ export async function readAccountBody(request: Request): Promise<unknown> {
       const { done, value } = await reader.read();
       if (done) break;
       size += value.byteLength;
-      if (size > 4096) throw new ApiError(413, "request_too_large", "Account details exceed the request limit.");
+      if (size > 4096) throw new ApiError(413, "request_too_large", "Request details exceed the request limit.");
       chunks.push(value);
     }
     const bytes = new Uint8Array(size);
     let offset = 0;
     for (const chunk of chunks) { bytes.set(chunk, offset); offset += chunk.byteLength; }
     try { return JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(bytes)); }
-    catch { throw new ApiError(400, "invalid_request", "Send valid account details."); }
+    catch { throw new ApiError(400, "invalid_request", "Send valid JSON details."); }
   };
   try {
     return await Promise.race([read(), new Promise<never>((_, reject) => {

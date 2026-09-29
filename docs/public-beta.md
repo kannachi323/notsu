@@ -81,7 +81,7 @@ do not change gameplay. Pause/resume must stop time and use a count-in.
 | Shared core | Multi-lane play, holds/shared hits, score/health/mods, deterministic replays and tests | In progress |
 | Presentation | Production assets/skins/sounds, tutorial, settings and results, visual/audio review | In progress |
 | Creator workflow | Import song -> author -> save/reopen -> export -> play without code | In progress |
-| Community | Deployed accounts/maps/friends/messages/moderation, authorization checks | In progress: local accounts and profiles |
+| Community | Deployed accounts/maps/friends/messages/moderation, authorization checks | In progress: local accounts, profiles, friends and blocking |
 | Public beta | Verified rankings, reviewed starter maps, platform releases and operational gates | Pending |
 
 Required validation: timing boundaries, FPS/input/replay equivalence, overlapping
@@ -637,3 +637,53 @@ added. Friends, private messaging, presence, blocking/reporting/moderation,
 rankings and online map publishing are still required. Finalize deletion retention
 for those records and backups before release. Complete operational, performance,
 platform and public-playtest gates in the full plan. The goal remains active.
+
+### September 29 friends and blocking
+
+Connected the Friends route and public profile controls to real local community
+data. Verified players can send, accept, decline and cancel requests, remove
+friends, and block/unblock. The four private lists include loading, empty, error,
+refresh and cursor-pagination states. Blocking atomically clears a friendship or
+request and prevents requests in either direction; unblocking never restores one.
+Public profiles remain public. No live presence or messages are implied.
+
+Added canonical relationship pairs, generation IDs for stale-action protection,
+private block ownership, live-session RLS, narrow database RPCs and shared API
+authentication. Ordered participant locks serialize crossed requests, acceptance,
+blocking and capacity checks. Database-enforced limits bound requests, friends
+and blocks. Account deletion cascades these records. See the full behavior and
+remaining abuse-control requirements in [friends and blocking](friends.md).
+
+- `npm test`: 431 passing TypeScript tests across 55 files. Added request/response
+  validation, identity isolation across delayed responses, pagination precision,
+  private JWT propagation, bounded input and sanitized error-code mapping.
+- `npm run test:db`: 113 passing pgTAP checks across three files. Real PostgreSQL
+  coverage includes grants/RLS, recipient-only acceptance, stale generations,
+  revoked/banned/unverified identities, all capacity limits, timestamp cursor ties,
+  private block lists and deletion cascades. Transactional fixtures roll back and
+  preserve the local preview accounts.
+- `npm run test:online`: 26 real local workerd/Auth/PostgREST scenarios pass.
+  Added crossed-send, repeated block/accept and block/send concurrency checks,
+  direct-data restrictions, stale accept/unblock protection and deletion cleanup.
+  Disposable integration users and temporary privileged Worker files are removed
+  afterward. No hosted service or external player was contacted.
+- Browser UI: accepted an incoming request, cancelled a sent request, blocked and
+  unblocked a player, checked empty/private lists and navigated player profiles.
+  Sent a new request in the browser and accepted it in the packaged macOS app;
+  both clients then showed the accepted friendship. The three synthetic preview
+  identities and their two accepted friendships remain available locally.
+- A fresh browser session had no warning/error console entries. At 720×600,
+  friend rows reflowed without horizontal overflow; the viewport was then reset.
+  Screenshot evidence: ignored `.tools/screenshots/friends-browser.png` and
+  `friends-native.png`. Interactive decline/remove, long-list paging and outage
+  cases remain part of broader UI coverage; database/API checks cover the rules.
+- Frontend type checking/build, Worker type checking/dry-run and final macOS debug
+  packaging pass. The initial game chunk is about 507 kB minified / 158 kB gzip
+  and retains its existing 500 kB warning. Friends loads as a separate screen.
+
+Lists refresh on opening or explicit request; realtime updates, presence and
+private messaging remain required. Reporting/moderation, online maps, rankings,
+deployment, service load tests, signing, remaining platform/performance checks
+and external playtests also remain open. Local services are retained for ongoing
+development. This working local slice does not establish public readiness; the
+complete public-beta goal remains active.

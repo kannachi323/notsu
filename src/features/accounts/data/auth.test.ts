@@ -52,6 +52,7 @@ describe("in-memory Auth lifecycle", () => {
   it("does not display raw authentication service details", async () => {
     const { authError } = await import("./auth");
     expect(authError({ code: "unknown", message: "secret private details" } as AuthError).message).not.toContain("private details");
+    for (const code of ["constructor", "__proto__"]) expect(authError({ code } as AuthError).message).toContain("could not complete");
   });
   it("forgets a deleted identity without another server request and replaces its client", async () => {
     const auth = await import("./auth"), { useAccountStore } = await import("../accountStore");

@@ -1,0 +1,19 @@
+.friends-heading { display: flex; align-items: center; justify-content: space-between; gap: 24px; flex-wrap: wrap; }
+.friends-heading > .account-guest { margin: 0; }.friends-tabs { display: flex; gap: 8px; flex-wrap: wrap; padding-bottom: 22px; border-bottom: 1px solid #293940; }
+.account-screen .friends-tabs button { background: transparent; border-color: transparent; color: #a7bac1; min-width: 110px; }
+.account-screen .friends-tabs button[aria-pressed="true"] { color: #d6f4fc; background: #173341; border-color: #477485; }
+.friends-list-heading { display: flex; justify-content: space-between; align-items: center; margin: 24px 0 18px; gap: 20px; }
+.friends-list-heading h2 { margin: 0; font-size: 22px; font-weight: 550; }.friends-list-heading button { background: transparent; }
+.friends-empty { text-align: center; padding: 42px 28px; }.friends-empty h2, .friends-empty h3 { font-size: 26px; font-weight: 550; margin-bottom: 12px; }
+.friends-empty p { max-width: 510px; margin: 0 auto; line-height: 1.7; color: #a7bac1; }
+.friends-empty-orbits { position: relative; width: 116px; height: 72px; margin: 0 auto 24px; }.friends-empty-orbits i { position: absolute; border-radius: 50%; border: 1px solid #66869d; width: 64px; height: 64px; left: 0; }
+.friends-empty-orbits i:nth-child(2) { left: 42px; border-color: #9878c5; }.friends-empty-orbits i:nth-child(3) { left: 49px; top: 27px; width: 12px; height: 12px; background: #9adceb; border: 0; }
+.friends-list { list-style: none; padding: 0; margin: 0 0 24px; display: grid; gap: 14px; }
+.friends-list > li { display: flex; align-items: start; justify-content: space-between; gap: 24px; padding: 24px; border: 1px solid #2d3c47; border-radius: 12px; background: #101a21; }
+.friend-identity { display: flex; align-items: center; gap: 16px; min-width: 0; }.friend-identity > span:last-child { display: grid; gap: 6px; min-width: 0; }.friend-identity strong { color: #eaf3fa; font-size: 20px; font-weight: 550; overflow-wrap: anywhere; }.friend-identity > span > span { color: #9bcedb; font-size: 16px; overflow-wrap: anywhere; }
+.friend-initial { display: grid; place-items: center; flex-shrink: 0; width: 48px; height: 48px; background: radial-gradient(circle at 30% 20%, #71bbd0, #264c66); border: 1px solid #739cae; border-radius: 50%; font-size: 22px; color: #e8f7ff; }
+.connection-actions { min-width: 0; }.friends-list .connection-actions { max-width: 440px; }.connection-state { margin: 0 0 12px; font-size: 15px; color: #a5c3cf; }
+.account-screen .connection-block { color: #d1acb9; background: transparent; }.connection-confirm { padding: 16px; background: #1e202d; border: 1px solid #51465e; border-radius: 8px; font-size: 16px; line-height: 1.6; }.connection-confirm p { margin-top: 0; }
+.profile-connection { margin-top: 26px; padding-top: 22px; border-top: 1px solid #2d3c47; }.connection-sign-in { margin: 26px 0 0; color: #a7bac1; font-size: 16px; }.connection-sign-in a, .friends-main .account-notice a { color: #afe3f1; text-decoration: underline; }
+@media (max-width: 760px) { .friends-list > li { flex-direction: column; }.friends-list .connection-actions { max-width: none; width: 100%; }.friends-tabs { gap: 4px; }.account-screen .friends-tabs button { min-width: 0; flex: 1; padding: 12px 10px; } }
+.friends-main { padding-top: 24px; }.friends-main .account-heading { margin-bottom: 22px; }.friends-main .account-heading > a { padding: 4px 0; margin-bottom: 10px; }.friends-main .account-heading h1 { font-size: 34px; }

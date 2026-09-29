@@ -1,5 +1,6 @@
 // Real local Auth + PostgREST + PostgreSQL + workerd. No hosted URL override.
 import assert from "node:assert/strict";
+import { checkFriends } from "./check-friends.mjs";
 import { execFileSync, spawn } from "node:child_process";
 import { createWriteStream, mkdirSync, mkdtempSync, writeFileSync, rmSync } from "node:fs";
 import { randomUUID } from "node:crypto";
@@ -130,6 +131,7 @@ try {
     const results = await Promise.all([request("/v1/me/profile", a.token, shared), request("/v1/me/profile", b.token, shared)]);
     assert.deepEqual(results.map((r) => r.status).sort(), [200, 409]);
   });
+  await checkFriends({ check, request, createAccount, admin, a, b, suffix });
   await check("sign-out revokes API writes and direct database writes", async () => {
     assert.equal((await a.client.auth.signOut({ scope: "local" })).error, null);
     const result = await request("/v1/me/profile", a.token, profileA);
@@ -137,12 +139,16 @@ try {
     const stale = createClient(status.API_URL, key, { ...options, global: { headers: { Authorization: `Bearer ${a.token}` } } });
     const write = await stale.rpc("save_profile", { p_username: profileA.username, p_display_name: "Stale", p_bio: "" });
     assert.equal(write.error?.code, "42501");
+    assert.ok([401,403].includes((await request("/v1/me/connections", a.token)).status));
+    assert.deepEqual((await stale.from("friendships").select("*")).data, []);
   });
   await check("bans take effect for an existing authenticated session", async () => {
     assert.equal((await admin.auth.admin.updateUserById(b.id, { ban_duration: "1h" })).error, null);
     assert.ok([401, 403].includes((await request("/v1/me/profile", b.token, profileB)).status));
     const write = await b.client.rpc("save_profile", { p_username: profileB.username, p_display_name: "Banned", p_bio: "" });
     assert.equal(write.error?.code, "42501");
+    assert.ok([401,403].includes((await request("/v1/me/connections", b.token)).status));
+    assert.deepEqual((await b.client.from("friendships").select("*")).data, []);
   });
   const c = await createAccount("delete-account");
   const profileC = { username: `del_${suffix}`, displayName: "Disposable player", bio: "Local deletion check" };
