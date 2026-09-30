@@ -6,6 +6,7 @@
   "workers_dev": false,
   "preview_urls": false,
   "dev": { "ip": "127.0.0.1", "port": 8787 },
+  "r2_buckets": [{ "binding": "MAP_MEDIA", "bucket_name": "notsu-map-media" }],
   "vars": {
     "SUPABASE_URL": "http://127.0.0.1:55321",
     "ALLOWED_ORIGINS": "http://127.0.0.1:1420,http://localhost:1420,tauri://localhost,http://tauri.localhost"

@@ -32,8 +32,12 @@ export async function packMap(source: MapSet, audio: Uint8Array): Promise<{ byte
   files["map.json"] = encode({ ...set, difficulties }); files[audioPath(set)] = audio;
   return { bytes: packZip(files, policy), revision: await mapRevision(set) };
 }
-export async function unpackMap(bytes: Uint8Array): Promise<LoadedMap> {
-  const files = unpackZip(bytes, policy), raw = mapObject(decode(files["map.json"]));
+export async function unpackMap(bytes: Uint8Array, limits?: { maxBytes: number; maxChartBytes: number }): Promise<LoadedMap> {
+  if (limits && (!Number.isSafeInteger(limits.maxBytes) || limits.maxBytes < 22 || limits.maxBytes > MAX_MAP_BYTES ||
+    !Number.isSafeInteger(limits.maxChartBytes) || limits.maxChartBytes < 1 || limits.maxChartBytes > 4 * 1024 * 1024)) throw new Error("Invalid package limits.");
+  const bounded = limits ? { ...policy, maxArchive: limits.maxBytes, maxExpanded: limits.maxBytes,
+    limitFor: (name: string) => Math.min(policy.limitFor(name), name.startsWith("charts/") ? limits.maxChartBytes : limits.maxBytes) } : policy;
+  const files = unpackZip(bytes, bounded), raw = mapObject(decode(files["map.json"]));
   if (!Array.isArray(raw.difficulties) || !raw.difficulties.length || raw.difficulties.length > 16) throw new Error("Invalid difficulty list.");
   const used = new Set(["map.json"]);
   const difficulties = raw.difficulties.map(value => {

@@ -1,6 +1,7 @@
 import { ApiError } from "../../../errors";
 import { readConfig, type Bindings } from "../../../config";
 import { requestClient } from "./supabase";
+import { serviceKey } from "../../../shared/data/serviceKey";
 
 /** Only call AFTER requireAccount has verified this exact token with Auth and the live session. */
 export function requireRecentPassword(verifiedToken: string, userId: string, nowSeconds = Date.now() / 1000) {
@@ -18,14 +19,8 @@ export function requireRecentPassword(verifiedToken: string, userId: string, now
 }
 
 function adminKey(env: Bindings) {
-  const key = env.SUPABASE_SECRET_KEY;
-  let privileged = typeof key === "string" && /^sb_secret_[A-Za-z0-9_-]+$/.test(key);
-  if (!privileged && typeof key === "string" && key.split(".").length === 3) {
-    try { privileged = JSON.parse(atob(key.split(".")[1].replace(/-/g, "+").replace(/_/g, "/"))).role === "service_role"; }
-    catch { /* Local legacy keys must explicitly be service_role. */ }
-  }
-  if (!privileged || !key) throw new ApiError(503, "deletion_unavailable", "Account deletion is temporarily unavailable. Please try later.");
-  return key;
+  try { return serviceKey(env); }
+  catch { throw new ApiError(503, "deletion_unavailable", "Account deletion is temporarily unavailable. Please try later."); }
 }
 
 /** No caller-selected ID or general admin client escapes this narrow adapter. */
