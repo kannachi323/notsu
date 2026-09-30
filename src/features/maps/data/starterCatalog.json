@@ -1,0 +1,86 @@
+[
+  {
+    "revision": "8e57ede36cd354c7ad49fe15e819570bcd577b7497b5e06e91afabeb31fb3388",
+    "setId": "orbit-signal",
+    "title": "Orbit Signal",
+    "artist": "notsu sound lab",
+    "author": "notsu",
+    "importedAt": 0,
+    "favorite": false,
+    "difficulties": [
+      {
+        "id": "orbit-signal-1",
+        "name": "First light",
+        "author": "notsu",
+        "notes": 24,
+        "lanes": 4,
+        "durationMs": 32000
+      },
+      {
+        "id": "orbit-signal-2",
+        "name": "Orbit",
+        "author": "notsu",
+        "notes": 44,
+        "lanes": 4,
+        "durationMs": 32000
+      }
+    ],
+    "file": "orbit-signal.notsumap"
+  },
+  {
+    "revision": "dcd83ac83136572c2d6651eda0ec988cbea8cd60dfcc4cc5b7e3380e298ea3e3",
+    "setId": "violet-hours",
+    "title": "Violet Hours",
+    "artist": "notsu sound lab",
+    "author": "notsu",
+    "importedAt": 0,
+    "favorite": false,
+    "difficulties": [
+      {
+        "id": "violet-hours-1",
+        "name": "Pulse",
+        "author": "notsu",
+        "notes": 39,
+        "lanes": 1,
+        "durationMs": 26666.666666666668
+      },
+      {
+        "id": "violet-hours-2",
+        "name": "Afterglow",
+        "author": "notsu",
+        "notes": 73,
+        "lanes": 1,
+        "durationMs": 26666.666666666668
+      }
+    ],
+    "file": "violet-hours.notsumap"
+  },
+  {
+    "revision": "ce0fccdc057f97077e69e20ebb2b595d64e8f0e6d1f0506d2d2ce19b984904ae",
+    "setId": "first-contact",
+    "title": "First Contact",
+    "artist": "notsu sound lab",
+    "author": "notsu",
+    "importedAt": 0,
+    "favorite": false,
+    "difficulties": [
+      {
+        "id": "first-contact-1",
+        "name": "Introduction",
+        "author": "notsu",
+        "notes": 14,
+        "lanes": 1,
+        "durationMs": 10000
+      },
+      {
+        "id": "first-contact-2",
+        "name": "Lift off",
+        "author": "notsu",
+        "notes": 28,
+        "lanes": 1,
+        "durationMs": 10000
+      }
+    ],
+    "file": "first-contact.notsumap"
+  }
+]

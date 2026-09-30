@@ -1,0 +1,210 @@
+import { useEffect, useRef, useState } from "react";
+import { EditorTransport, defaultPlayback } from "./data/EditorTransport";
+import type { EditorPlayback } from "./data/EditorTransport";
+import { loadSettings } from "../rhythm/data/settings";
+import { createDocument, readDocument, restoreDocument } from "./domain/document";
+import type { EditorDocument } from "./domain/document";
+import { EditorHistory } from "./domain/history";
+import type { EditorCommand } from "./domain/commands";
+import { decodeSong, importSong } from "../../shared/audio/song";
+import type { ImportedSong } from "../../shared/audio/song";
+import { createDraft, createDrafts, listDrafts, readDraft, readSetDrafts } from "./data/storage";
+import type { DraftSummary } from "./data/storage";
+import { recoveryCopy, difficultyCopy } from "./domain/copies";
+import { listTrash, trashDraft, restoreDraft, purgeDraft } from "./data/trash";
+import type { TrashedDraft } from "./data/trash";
+import { DraftWriter } from "./data/DraftWriter";
+import { mapSetDrafts } from "./data/mapSet";
+import { mapJob } from "../maps/data/packageClient";
+import { MAX_MAP_BYTES } from "../maps/data/package";
+import type { LoadedMap } from "../maps/data/package";
+
+type Workspace = { document: EditorDocument; song: ImportedSong; history: EditorHistory; writer: DraftWriter | null };
+export function useEditor() {
+  const [workspace, setWorkspace] = useState<Workspace | null>(null);
+  const [drafts, setDrafts] = useState<DraftSummary[]>([]), [trash, setTrash] = useState<TrashedDraft[]>([]);
+  const [notice, setNotice] = useState("");
+  const [busy, setBusy] = useState(false), [error, setError] = useState(""), [saveStatus, setSaveStatus] = useState("");
+  const [timeMs, setTimeMs] = useState(0), [playing, setPlaying] = useState(false);
+  const [remaining, setRemaining] = useState(0), [playback, setPlayback] = useState<EditorPlayback>(() => ({ ...defaultPlayback, musicVolume: loadSettings().volume }));
+  const audioRef = useRef<EditorTransport | null>(null), active = useRef<Workspace | null>(null);
+  const mounted = useRef(true), generation = useRef(0), playingRef = useRef(false);
+  const clock = () => audioRef.current ??= new EditorTransport(error => {
+    playingRef.current = false;
+    if (mounted.current) { setPlaying(false); setRemaining(0); setError(error); }
+  });
+  const refresh = () => Promise.all([listDrafts(), listTrash()]).then(([rows, removed]) => { if (mounted.current) { setDrafts(rows); setTrash(removed); } }).catch(cause => { if (mounted.current) setError(message(cause)); });
+  const stop = () => {
+    // Capture the actual stopped clock, including the final song boundary between UI frames.
+    if (playingRef.current && audioRef.current?.running && active.current) {
+      setTimeMs(Math.min(active.current.document.chart.durationMs, audioRef.current.sample().timeMs));
+    }
+    generation.current++; audioRef.current?.stop(); playingRef.current = false; setPlaying(false); setRemaining(0);
+  };
+  const configurePlayback = (next: EditorPlayback) => {
+    if (next.countInBeats !== playback.countInBeats) stop();
+    try { audioRef.current?.configure(next); setPlayback(next); } catch (cause) { setError(message(cause)); }
+  };
+  async function flush() {
+    const current = active.current;
+    if (!current?.writer) return;
+    try { await current.writer.flush(); if (mounted.current && active.current === current) setSaveStatus("Saved on this device"); }
+    catch (cause) { if (mounted.current && active.current === current) { setSaveStatus("Changes not saved"); setError(message(cause)); } throw cause; }
+  }
+  useEffect(() => {
+    mounted.current = true; void refresh();
+    let frame = 0, last = 0;
+    const tick = (now: number) => {
+      if (playingRef.current && audioRef.current?.running && active.current) {
+        const { timeMs: time, remaining } = audioRef.current.sample();
+        if (audioRef.current.context.state !== "running" || time >= active.current.document.chart.durationMs) stop();
+        if (now - last > 30) { setTimeMs(Math.min(time, active.current.document.chart.durationMs)); setRemaining(remaining); last = now; }
+      }
+      frame = requestAnimationFrame(tick);
+    }; frame = requestAnimationFrame(tick);
+    const hidden = () => { if (document.hidden) stop(); };
+    const leaving = (event: BeforeUnloadEvent) => { if (active.current && (!active.current.writer || active.current.writer.dirty)) { event.preventDefault(); event.returnValue = ""; } };
+    document.addEventListener("visibilitychange", hidden); window.addEventListener("beforeunload", leaving);
+    return () => {
+      mounted.current = false; generation.current++; cancelAnimationFrame(frame); playingRef.current = false;
+      audioRef.current?.dispose(); audioRef.current = null;
+      void active.current?.writer?.flush().catch(() => {});
+      document.removeEventListener("visibilitychange", hidden); window.removeEventListener("beforeunload", leaving);
+    };
+  }, []);
+  useEffect(() => {
+    if (!workspace?.writer?.dirty) return;
+    const timer = setTimeout(() => { void flush().catch(() => {}); }, 400); return () => clearTimeout(timer);
+  }, [workspace]);
+  async function open(fileOrId: File | string, restored?: EditorDocument) {
+    if (busy) return;
+    stop(); const token = ++generation.current; setBusy(true); setError("");
+    try {
+      let song: ImportedSong, doc: EditorDocument, writer: DraftWriter | null;
+      if (typeof fileOrId === "string") {
+        const { row, blob } = await readDraft(fileOrId); doc = row.document;
+        if (!mounted.current || token !== generation.current) return;
+        song = await decodeSong(await blob.arrayBuffer(), doc.song.fileName, clock().context, doc.song.sha256);
+        if (Math.abs(song.reference.durationMs - doc.song.durationMs) > 25) throw new Error("The recording duration no longer matches this draft.");
+        writer = new DraftWriter(row);
+      } else {
+        song = await importSong(fileOrId, clock().context, restored?.song.sha256);
+        const id = crypto.randomUUID();
+        doc = restored ? restoreDocument(id, restored, song.reference) : createDocument(id, song.reference, fileOrId.name.replace(/\.(mp3|wav)$/i, "").slice(0, 256));
+        try { writer = new DraftWriter(await createDraft(doc, song.bytes)); }
+        catch (cause) { writer = null; if (mounted.current) setError(`Session only: ${message(cause)} Keep this window open and back up your draft before leaving.`); }
+      }
+      if (!mounted.current || token !== generation.current) return;
+      const next = { document: doc, song, writer, history: new EditorHistory(doc) };
+      active.current = next; setWorkspace(next); setTimeMs(0); setSaveStatus(writer ? "Saved on this device" : "Session only · not saved");
+    } catch (cause) { if (mounted.current && token === generation.current) setError(message(cause)); }
+    finally { if (mounted.current) setBusy(false); }
+  }
+  function change(command: EditorCommand | "undo" | "redo") {
+    const current = active.current; if (!current || busy) return false;
+    stop(); setError("");
+    try {
+      const doc = command === "undo" ? current.history.undo() : command === "redo" ? current.history.redo() : current.history.apply(command);
+      if (JSON.stringify(doc) === JSON.stringify(current.document)) return true;
+      const next = { ...current, document: doc }; active.current = next; setWorkspace(next);
+      current.writer?.enqueue(doc); setSaveStatus(current.writer ? "Saving…" : "Session only · not saved");
+      return true;
+    } catch (cause) { setError(message(cause)); return false; }
+  }
+  function seek(time: number) { if (!Number.isFinite(time)) return; stop(); setTimeMs(Math.max(0, Math.min(active.current?.document.chart.durationMs ?? 0, time))); }
+  async function listen() {
+    if (playingRef.current) { stop(); return; }
+    const current = active.current; if (!current || busy) return;
+    const token = ++generation.current, from = timeMs >= current.document.chart.durationMs ? 0 : timeMs;
+    playingRef.current = true; setPlaying(true); setRemaining(playback.countInBeats); setError("");
+    try {
+      if (!await clock().start(current.song.buffer, current.document.chart, from, playback) || token !== generation.current || !mounted.current) return;
+      setTimeMs(from);
+    } catch (cause) { if (token === generation.current && mounted.current) { stop(); setError(message(cause)); } }
+  }
+  async function close(discard = false) {
+    if (busy) return;
+    stop();
+    if (!discard) {
+      try { await flush(); } catch { return; }
+      if (!active.current?.writer) { setError("This draft has not been saved. Back up your draft before leaving this session."); return; }
+    }
+    active.current = null; setWorkspace(null); setError(""); await refresh();
+  }
+  async function duplicate() {
+    const current = active.current; if (!current || busy) return;
+    stop(); setBusy(true); setError("");
+    try {
+      if (!current.writer) throw new Error("Save or export this draft before creating another difficulty.");
+      await flush();
+      if (!mounted.current) return;
+      const doc = difficultyCopy(current.document, crypto.randomUUID(), await readSetDrafts(current.document.setId));
+      const row = await createDraft(doc, current.song.bytes);
+      if (!mounted.current) return;
+      const next = { document: doc, song: current.song, history: new EditorHistory(doc), writer: new DraftWriter(row) };
+      active.current = next; setWorkspace(next); setTimeMs(0); setSaveStatus("Saved on this device");
+    } catch (cause) { if (mounted.current) setError(message(cause)); }
+    finally { if (mounted.current) setBusy(false); }
+  }
+  async function recover(copy: boolean) {
+    const current = active.current; if (!current || busy) return;
+    stop(); setBusy(true); setError("");
+    try {
+      if (copy) {
+        // Let a pending write settle before changing workspaces. A conflict is expected here.
+        await current.writer?.flush().catch(() => {});
+        const doc = recoveryCopy(current.document, crypto.randomUUID());
+        const row = await createDraft(doc, current.song.bytes);
+        if (!mounted.current) return;
+        const next = { ...current, document: doc, history: new EditorHistory(doc), writer: new DraftWriter(row) };
+        active.current = next; setWorkspace(next); setSaveStatus("Recovery copy saved · original preserved");
+      } else {
+        if (current.writer) await current.writer.retry();
+        else {
+          const row = await createDraft(current.document, current.song.bytes);
+          if (!mounted.current) return;
+          const next = { ...current, writer: new DraftWriter(row) }; active.current = next; setWorkspace(next);
+        }
+        if (mounted.current) setSaveStatus("Saved on this device");
+      }
+    } catch (cause) { if (mounted.current) { setError(message(cause)); setSaveStatus("Changes not saved"); } }
+    finally { if (mounted.current) setBusy(false); }
+  }
+  async function manageDraft(action: "trash" | "restore" | "purge", draft: DraftSummary | TrashedDraft) {
+    if (busy || active.current) return;
+    setBusy(true); setError(""); setNotice("");
+    try {
+      if (action === "trash") {
+        if (!draft.version) throw new Error("This draft needs recovery before it can be moved.");
+        await trashDraft(draft.id, draft.version);
+      } else {
+        if (!("token" in draft)) return;
+        await (action === "restore" ? restoreDraft : purgeDraft)(draft.id, draft.token);
+      }
+      if (mounted.current) setNotice(`${draft.difficulty || draft.title} ${action === "trash" ? "moved to Trash. You can restore it there." : action === "restore" ? "restored to your drafts." : "permanently removed."}`);
+    } catch (cause) { if (mounted.current) setError(message(cause)); }
+    finally { await refresh(); if (mounted.current) setBusy(false); }
+  }
+  async function importPackage(file: File) {
+    if (busy || active.current) return;
+    setBusy(true); setError("");
+    try {
+      if (!/\.notsumap$/i.test(file.name) || file.size < 22 || file.size > MAX_MAP_BYTES) throw new Error("Choose a .notsumap package up to 128 MB.");
+      const loaded = await mapJob<LoadedMap>({ action: "unpack", bytes: new Uint8Array(await file.arrayBuffer()) });
+      if (!mounted.current) return;
+      const song = await decodeSong(new Uint8Array(loaded.audio).buffer, loaded.set.song.mime === "audio/mpeg" ? "audio.mp3" : "audio.wav", clock().context, loaded.set.song.sha256);
+      if (!mounted.current) return;
+      if (Math.abs(song.reference.durationMs - loaded.set.song.durationMs) > 25) throw new Error("The recording duration does not match the package.");
+      const documents = mapSetDrafts(loaded.set); // Keep published identities, timings and immutable source content intact.
+      const rows = await createDrafts(documents, song.bytes);
+      if (!mounted.current) return;
+      const doc = documents[0], next = { document: doc, song, history: new EditorHistory(doc), writer: new DraftWriter(rows[0]) };
+      active.current = next; setWorkspace(next); setTimeMs(0); setSaveStatus(`Imported ${documents.length} ${documents.length === 1 ? "difficulty" : "difficulties"} · saved on this device`);
+    } catch (cause) { if (mounted.current) setError(message(cause)); }
+    finally { if (mounted.current) setBusy(false); }
+  }
+  return { workspace, drafts, trash, notice, refresh, manageDraft, recover, busy, error, saveStatus, timeMs, playing, remaining, playback, configurePlayback, open, change, seek, listen, stop, close, flush, setError,
+    duplicate, importPackage,
+    currentDocument: () => active.current && readDocument(active.current.document) };
+}
+function message(cause: unknown) { return cause instanceof Error ? cause.message : "Something went wrong. Please try again."; }

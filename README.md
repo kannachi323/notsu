@@ -1,24 +1,35 @@
 # notsu
 
-An unofficial desktop companion for osu!. This community project is not affiliated
-with or endorsed by ppy. Windows is the initial target.
+An independent rhythm game built around moving lines and timed circles. This
+unofficial community project is not affiliated with or endorsed by ppy.
 
-The home screen brings together Play, Browse, Editor, a music dropdown, and
-player/social controls in a dark, cyan-accented shell. **Play** opens the existing
-**Rhythm** prototype: a single moving lane with timed taps, hold releases, and
-music-synchronized movement. Browse, Editor, profile, chat, friends, and update
-actions are UI placeholders. The music card opens and closes; playback is not
-connected. No song audio or artwork is bundled.
+**Play** opens song selection with searchable song cards, multiple difficulties,
+practice modifiers, audio previews and local records. **Browse maps** shows the
+collection as an artwork grid. Three starter packs include original music and two
+difficulties each, ready to play without a separate audio file. Imported
+`.notsumap` packs also contain the full recording and charts.
+
+Gameplay combines independent moving lines, taps, holds and shared hits with
+health, accuracy, combo scoring and replays. **Create** opens the manual editor
+with local song import, line choreography, autosave and engine playtests. Settings
+include skins, volume, timing calibration and motion preferences. Account,
+profile, friends, private messaging and reporting screens connect to configured
+online services; those services are exercised locally and are not publicly hosted.
+The [public-beta plan](docs/public-beta.md) targets desktop browsers, Windows,
+macOS and Linux. This is development work in progress, not a public-ready release.
+The macOS debug app has passed local smoke checks. Production platform releases,
+online services and public deployment still require implementation and verification.
 
 Trivia remains a separate planned feature; its placeholders are preserved.
 
 ## Run
 
-Requires Node.js 22.12+ (or a newer supported LTS), npm, Rust, the Windows C++
-build tools, and WebView2. See [setup](docs/setup.md) for the native prerequisites.
+Browser development requires Node.js 22.12+ (or a newer supported LTS) and npm.
+Desktop development additionally requires Rust and the target platform's native
+tools. See [setup](docs/setup.md) for prerequisites.
 
 ```sh
-npm install
+npm ci
 npm run tauri dev
 ```
 
@@ -33,34 +44,41 @@ npm.cmd run tauri -- build --debug --no-bundle
 The native executable is written to `src-tauri/target/debug/notsu.exe`.
 Use `npm.cmd` when forwarding flags in PowerShell to avoid wrapper argument loss.
 
-## Play the prototype
+## Play a map
 
-- Open **Play** from the notsu home screen, then **Play** in the Rhythm menu,
-  and select **Timing study** for ten seconds
-  of original synthesized practice.
-- Select **Two-hand rhythm drill** for a slower, 144 BPM practice of dotted
-  rhythms, triplets, sixteenth rolls, and holds with independent taps. Try
-  alternating F/J; all normal gameplay keys remain interchangeable.
-- For **Mou Ii Kai?**, select your own `audio.mp3` from the 88-second cut in
-  beatmap set 807850. The app verifies the exact recording locally. The chart
-  covers 0:35.401–1:15.401; no music or artwork is included in this repository.
-  The challenge arrangement adds short two-hand rolls and syncopated patterns,
-  with recovery gaps between the fast passages.
-- Press any letter, number, punctuation key, or Space when an orb's centre crosses
-  the target ring.
-- For a hold ribbon, press its solid head and release its hollow endpoint with the same key. Use
-  other keys for taps during the hold. Key repeats and shortcut combinations
-  are ignored. Missing notes or pressing extra keys breaks combo and lowers accuracy.
-- Escape or focus loss stops the attempt. Retry starts from a fresh countdown;
-  mid-run resume is deliberately not supported in this prototype.
-- Open **Settings** from the Rhythm menu to choose Midnight or High Contrast, adjust music
-  and hit-sound volumes separately, and set timing offset or reduced motion. Reduced motion
-  keeps the lane stationary and hit highlights static. Only preferences are saved
-  locally; audio and results are not persisted.
+- Open **Play**, select a song and difficulty, then press **Play**. **Orbit Signal**,
+  **Violet Hours** and **First Contact** already include their music. Use **Import
+  pack** to add another `.notsumap`; no separate MP3 upload is needed.
+- Press any letter, number, punctuation key or Space when a circle reaches its
+  moving target. Shared circles at one timestamp take one press.
+- For a hold ribbon, press its solid head and release its hollow endpoint with the
+  same key. Use other keys for taps during a hold. Key repeats and shortcuts are
+  ignored. Misses and extra presses break combo, lower accuracy and cost health.
+  Zero health ends the run. Score weights combo continuity at 70% and accuracy at 30%.
+- Use **No Fail** to practice or **Autoplay** to watch. Both are unranked. Local
+  results and replays save on this device and appear beside the selected difficulty.
+  **Preview** plays up to fifteen seconds of the packaged recording.
+- Escape or focus loss pauses. Resume preserves position and score with a
+  three-second count-in; re-grab active hold keys before continuing. Resumed runs
+  count as practice. Retry starts fresh; Song selection returns to your chosen map.
+- Open **Settings** to choose a built-in skin or import a [skin pack](docs/skins.md)
+  with artwork, sounds and colors. Adjust music/hit volumes, timing offset and
+  reduced motion. **Freeze line movement** is a separate unranked practice assist.
 
-The song chart is an original beat-grid study, not an imported gameplay pattern
-or a finished transcription. Its rhythm and choreography need musical playtesting.
-See [Rhythm design and testing](docs/rhythm.md).
+The included tracks are short original synth arrangements. Human musical and
+readability playtesting remains necessary before a public release. See
+[included maps](docs/starter-maps.md) and [gameplay rules](docs/rhythm.md).
+
+## Create a local map
+
+Open **Create**, choose an MP3/WAV song, select lines, and place taps or holds on
+the beat grid. Add geometric patterns and timed movement, then use **Playtest**
+to play the actual chart. Drafts and original recordings are saved on this device;
+Undo/Redo and backups help recover edits. Create additional difficulties, then
+prepare a `.notsumap` package containing the song and charts. Save it, add it to
+**Browse**, or import it into the editor on another device. Publishing and
+advanced authoring tools remain in progress. See [editor usage and limits](docs/editor.md)
+and [map packages and local browsing](docs/maps.md).
 
 ## Structure
 
@@ -69,12 +87,24 @@ src/
   main.tsx                   Standard frontend entry point
   app/                       Composition and global styles
   features/
-    home/                    Home layout, music dropdown, and Zustand UI store
-      components/            Header, activity cards, and original SVG artwork
+    home/                    Home, shared navigation, and original background artwork
+      components/            Header, activity menu, and original SVG identity
     rhythm/                  Feature screen, hook, and presentation state
       components/            Menus, results, and Canvas renderer
-      domain/                Pure TypeScript scoring, input rules, chart geometry
+      domain/                Pure scoring, Chart v2, timing, geometry, and replay rules
       data/                  Authored charts, audio, and local preference adapters
+    skins/                   Appearance contracts, pack import/storage, and previews
+      domain/                Manifest validation and built-in palettes
+      data/                  Bounded ZIP/PNG/WAV handling and IndexedDB storage
+      components/            Skin picker, preview, and pack controls
+    editor/                  Local song authoring and engine playtests
+      domain/                Draft validation, edit commands, geometry and history
+      data/                  Transactional autosave and map-package conversion
+      components/            Timeline, line/note tools, metadata and recovery
+    maps/                    Local map collection and portable packages
+      domain/                Map-set and difficulty contracts
+      data/                  Archive validation, revisions and local storage
+      components/            Search, selection, export and play entry
     trivia/                  Preserved future feature boundary
   shared/                    Only genuinely shared responsibilities
 src-tauri/
@@ -83,7 +113,9 @@ docs/                        Setup, direction, and feature notes
 ```
 
 React Router provides hash-based routes for the desktop WebView: `/` is Home and
-`/rhythm` preserves the prototype. Zustand owns the home music dropdown state.
+`/rhythm` opens song selection, `/editor` opens local authoring, and `/browse`
+opens the map grid. `/settings` and `/how-to-play` provide preferences and help.
+Zustand owns feature-specific shared UI state such as the skin catalog.
 React and React DOM render the UI; Vite, TypeScript, Vitest, and the Tauri CLI are
 development tools. The playfield uses Canvas 2D and Web Audio directly.
 
@@ -92,6 +124,6 @@ colocate tests, and avoid duplicate rules in Rust. Keep semantic controls,
 keyboard navigation, visible focus, and reduced-motion support. Commit both
 `package-lock.json` and `src-tauri/Cargo.lock`.
 
-Account connection and other companion capabilities are future work. Resolve
-supported desktop OAuth and secret handling before implementing authentication.
-Never embed production client secrets in frontend assets or Rust binaries.
+Accounts use verified email/password sign-in and backend access policies. Online
+map publishing, competitive rankings and public hosting remain pending. Never embed
+privileged service keys in frontend assets or Rust binaries.

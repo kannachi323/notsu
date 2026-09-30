@@ -1,17 +1,17 @@
 import type { Settings } from "../data/settings";
-import { skins } from "./skins";
+import { SkinManager } from "../../skins/components/SkinManager";
 
 export function SettingsPanel({ settings, updateSettings }: { settings: Settings; updateSettings: (settings: Settings) => void }) {
   return <div className="settings-panel">
     <section className="settings-section" aria-labelledby="appearance-title">
       <h2 id="appearance-title">Appearance</h2>
-      <label htmlFor="skin">Skin</label>
-      <select id="skin" value={settings.skinId} onChange={event => updateSettings({ ...settings, skinId: event.target.value })}>
-        {skins.map(skin => <option key={skin.id} value={skin.id}>{skin.name}</option>)}
-      </select>
+      <SkinManager skinId={settings.skinId} volume={settings.hitVolume} select={skinId => updateSettings({ ...settings, skinId })} />
       <label className="motion-choice"><input type="checkbox" checked={settings.reducedMotion} aria-describedby="motion-help"
         onChange={event => updateSettings({ ...settings, reducedMotion: event.target.checked })} /><span>Reduced motion</span></label>
-      <p id="motion-help">Keep the line stationary and use static hit effects.</p>
+      <p id="motion-help">Use static hit effects and hide movement hints. The authored line movement stays part of gameplay.</p>
+      <label className="motion-choice"><input type="checkbox" checked={settings.freezeMotion} aria-describedby="freeze-help"
+        onChange={event => updateSettings({ ...settings, freezeMotion: event.target.checked })} /><span>Freeze line movement</span></label>
+      <p id="freeze-help">Keep each line in its opening position. This practice assist does not qualify for rankings.</p>
     </section>
     <section className="settings-section" aria-labelledby="audio-title">
       <h2 id="audio-title">Audio and timing</h2>

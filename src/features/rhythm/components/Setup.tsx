@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { Settings } from "../data/settings";
 import type { ChartMode } from "../data/charts";
+import type { Mods } from "../domain/rules";
 import { MenuHome } from "./MenuHome";
 import type { MenuPage } from "./MenuHome";
 import { ChartSelect } from "./ChartSelect";
@@ -14,7 +15,7 @@ interface Props {
   loading: boolean;
   error: string;
   chooseFile: (file: File | undefined) => void;
-  start: (mode?: ChartMode) => void;
+  start: (mode?: ChartMode, mods?: Mods) => void;
 }
 
 const titles = { play: "Play", settings: "Settings", help: "How to play" };
@@ -44,7 +45,7 @@ export function Setup(props: Props) {
         <button className="back-button" onClick={() => setPage("home")}><span aria-hidden="true">←</span> Home</button>
         <h1 id="menu-title" ref={heading} tabIndex={-1}>{titles[page]}</h1>
       </header>
-      {page === "play" && <ChartSelect fileName={props.fileName} loading={props.loading} error={props.error} chooseFile={props.chooseFile} start={props.start} />}
+      {page === "play" && <ChartSelect fileName={props.fileName} loading={props.loading} error={props.error} chooseFile={props.chooseFile} start={props.start} freezeMotion={props.settings.freezeMotion} />}
       {page === "settings" && <SettingsPanel settings={props.settings} updateSettings={props.updateSettings} />}
       {page === "help" && <HowToPlay />}
     </section>}

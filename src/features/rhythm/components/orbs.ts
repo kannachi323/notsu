@@ -1,14 +1,20 @@
 import type { HitEffect } from "./feedback";
 import { noteRadius } from "./skins";
 import type { Skin } from "./skins";
+import { barSprite, sprite } from "./sprites";
 
 export function ring(ctx: CanvasRenderingContext2D, x: number, y: number, radius: number, color: string, width: number) {
   ctx.beginPath(); ctx.arc(x, y, radius, 0, Math.PI * 2);
   ctx.strokeStyle = color; ctx.lineWidth = width; ctx.stroke();
 }
 
-export function orb(ctx: CanvasRenderingContext2D, x: number, color: string, skin: Skin, hollow = false) {
+export function orb(ctx: CanvasRenderingContext2D, x: number, color: string, skin: Skin, hollow = false, missed = false) {
   const radius = noteRadius(skin);
+  if (hollow) {
+    ctx.fillStyle = skin.ui.background;
+    ctx.beginPath(); ctx.arc(x, 0, radius - skin.note.rim, 0, Math.PI * 2); ctx.fill();
+  }
+  if (sprite(ctx, skin, hollow ? "holdTail" : missed ? "miss" : color === skin.note.hold ? "holdHead" : "tap", x, 0, radius * 2)) return;
   if (!hollow) {
     const shade = ctx.createRadialGradient(x - radius * .35, -radius * .4, 0, x, 0, radius * 1.15);
     shade.addColorStop(0, skin.note.highlight); shade.addColorStop(.32, color); shade.addColorStop(1, skin.note.shade);
@@ -28,8 +34,15 @@ export function orb(ctx: CanvasRenderingContext2D, x: number, color: string, ski
 
 export function ribbon(ctx: CanvasRenderingContext2D, head: number, tail: number, skin: Skin) {
   ctx.save(); ctx.globalAlpha *= skin.lane.ribbonOpacity;
+  if (barSprite(ctx, skin, "ribbon", head, tail, skin.lane.ribbonWidth)) { ctx.restore(); return; }
   ctx.strokeStyle = skin.note.hold; ctx.lineWidth = skin.lane.ribbonWidth; ctx.lineCap = "round";
   ctx.beginPath(); ctx.moveTo(head, 0); ctx.lineTo(tail, 0); ctx.stroke(); ctx.restore();
+}
+
+export function target(ctx: CanvasRenderingContext2D, skin: Skin, holding: boolean) {
+  if (!sprite(ctx, skin, holding ? "targetHold" : "target", 0, 0, skin.target.radius * 2)) {
+    ring(ctx, 0, 0, skin.target.radius, holding ? skin.note.hold : skin.target.color, skin.target.width);
+  }
 }
 
 export function paintEffect(ctx: CanvasRenderingContext2D, effect: HitEffect, time: number, skin: Skin) {
@@ -44,9 +57,9 @@ export function paintEffect(ctx: CanvasRenderingContext2D, effect: HitEffect, ti
     if (tail !== undefined) {
       ribbon(ctx, head, tail, skin); orb(ctx, tail, skin.note.hold, skin, true);
     }
-    orb(ctx, head, tail === undefined ? skin.note.tap : skin.note.hold, skin);
+    orb(ctx, head, tail === undefined ? skin.note.tap : skin.note.hold, skin, false, true);
   } else if (event.grade === "Extra") {
-    ring(ctx, 0, 0, skin.target.radius + 4, skin.effects.warning, 2);
+    if (!sprite(ctx, skin, "warning", 0, 0, (skin.target.radius + 4) * 2)) ring(ctx, 0, 0, skin.target.radius + 4, skin.effects.warning, 2);
     ctx.fillStyle = skin.effects.warning; ctx.font = "bold 16px system-ui";
     ctx.textAlign = "center"; ctx.fillText("!", 0, -skin.target.radius - 9);
   } else if (event.grade !== "Miss") {
@@ -54,7 +67,9 @@ export function paintEffect(ctx: CanvasRenderingContext2D, effect: HitEffect, ti
     const release = event.action === "release";
     const press = event.action === "press";
     const growth = effect.reducedMotion ? 0 : progress * skin.effects.expansion * (release ? 1.2 : press ? .35 : 1);
-    ring(ctx, 0, 0, skin.target.radius + growth, color, release ? 3 : 2);
+    if (!sprite(ctx, skin, event.action === "tap" ? "hitTap" : "hitHold", 0, 0, (skin.target.radius + growth) * 2)) {
+      ring(ctx, 0, 0, skin.target.radius + growth, color, release ? 3 : 2);
+    }
     if (!effect.reducedMotion && !press) {
       const count = Math.max(0, Math.min(4, skin.effects.sparks));
       for (let i = 0; i < count; i++) {

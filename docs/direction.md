@@ -2,10 +2,11 @@
 
 ## Scope
 
-notsu is an unofficial desktop companion for osu!, releasing on Windows first.
-Other desktop platforms are deferred.
-It should be useful while osu! is closed. Rhythm is now the first implemented
-prototype; the remaining companion capabilities are still planned.
+notsu is an independent rhythm game and unofficial community project. The accepted
+September 29 public beta targets desktop browsers, Windows, macOS and Linux.
+Each target still needs its own release validation. The full accepted scope and
+release gates are tracked in [public-beta delivery](public-beta.md). The earlier
+companion and Trivia research below remains historical context.
 
 The selected stack is Tauri 2 with React, TypeScript, HTML/CSS, and Vite. Keep
 ordinary application logic in TypeScript and add Rust native integration as
@@ -15,10 +16,48 @@ determine this application's dependencies.
 
 Trivia remains a planned casual feature. Preserve its fixture-based, deterministic
 daily design and its separate boundary. Rhythm is implemented independently; do
-not create a general game framework. The requested home-screen destinations are
-UI placeholders until their individual features are approved.
+not create a general game framework. Home links to song selection, local authoring,
+map browsing and the implemented account/community routes.
 
-## Current home-screen direction
+## Current direction: September 29 song selection and gameplay redesign
+
+The user requested a closer emulation of osu!'s playing, song selection and map
+browsing screens. This supersedes the earlier outlined-card home and separate
+prototype menu below. The default reference is modern osu!lazer, with original
+notsu identity, artwork, music and moving-line mechanics.
+
+Research reviewed the [game repository](https://github.com/ppy/osu),
+[framework repository](https://github.com/ppy/osu-framework),
+[interface documentation](https://osu.ppy.sh/wiki/en/Client/Interface), and
+[map archive format](https://osu.ppy.sh/wiki/en/Client/File_formats/osz_(file_format)).
+The wiki interface page describes the classic client. For current visual context,
+the July 2026 [community lazer interface guide](https://osu.ppy.sh/community/forums/topics/2221264)
+was reviewed, including its song-selection screenshot. It is a community guide,
+not an official developer design specification. No source or official art was copied.
+
+The implemented direction uses:
+
+- A static illustrated backdrop, compact navigation, a prominent Play action and
+  quieter Browse/Create choices on Home.
+- Song information, real local results and pack tools on the left; searchable,
+  stacked song cards and expanded keyboard-accessible difficulties on the right.
+  A persistent bottom bar owns practice modifiers, Random, Preview and Play.
+- An artwork grid for Browse, with actual library entries and clear Included/Local
+  labels. Do not invent online counts, star ratings or ranked status.
+- A dimmed playfield background and HUD at its edges: score/accuracy top-right,
+  health top-left, combo bottom-left and progress at the bottom. Authored lines and
+  cyan/violet circles remain the focus. Pause and results retain real engine state.
+- Complete `.notsumap` packs as the public playback entry. Three original starter
+  packs include recordings and difficulties. Selecting a map never asks the player
+  to find a separate MP3. Local recording import belongs to the editor.
+
+Artwork is `src/features/home/assets/orbital-night.png`, created with the built-in
+image generator; its prompt is saved alongside it. It is shared interface art,
+not a map-cover extension to the package format. Keep the background static,
+visible focus, keyboard controls, reduced motion, and clear unofficial attribution.
+At small widths song cards flow above details and the play bar stays available.
+
+## Historical home-screen direction (superseded)
 
 The approved September 26, 2026 reference is the user-supplied notsu mockup with
 a nearly black background, subtle outlined surfaces, cyan orb-and-line artwork,
@@ -33,33 +72,42 @@ extra height. Smaller windows reflow and scroll instead of clipping controls.
 
 React Router and Zustand are the approved routing/UI-state baseline. Home is a
 separate feature and the existing Rhythm prototype remains available through Play.
-Only the dropdown and existing Play route are wired; other destinations are
-placeholders. Keep keyboard access, visible focus, Escape dismissal, reduced-motion
+The dropdown, Play, local Editor, local Browse and Account routes are wired;
+Friends is connected to private request/friend/block lists; Chat opens private
+conversations with accepted friends. The account screen continues the dark
+cyan/violet palette with a static orb, clearly labeled forms and a text-only public
+profile preview. Public player pages share this visual language and show real
+public profile fields only, with exact-name lookup and explicit missing/error
+states. Account deletion has a separate confirmation screen. Keep keyboard access, visible focus, Escape dismissal, reduced-motion
 support, and an unobtrusive unofficial-community-project attribution. Do not show
 fabricated live performance or playback metrics.
 
-## Current Rhythm direction
+## Retained gameplay art and mechanics
 
 The user approved a minimal dark blue-gray stage, shaded cyan tap orbs, violet hold
 ribbons, and a hollow target ring. Short local hit effects are allowed; avoid
 background particle fields, bloom, drum imagery, or colour-to-key matching.
-A single line moves and rotates smoothly to authored
-musical beats. Every movement has a scheduled start, destination, and arrival.
+Independent straight lines move, rotate and change length to authored musical
+beats, forming polygons and other geometric arrangements. Shared circles at one
+timestamp take one press. Lines do not transfer notes at intersections. Every
+movement has a scheduled start, destination, and arrival.
 The same musical phrase can reuse the same movement vocabulary.
 
-The retained prototype menu is a simple rhythm-game screen, inspired by the clarity
+The earlier prototype menu was a simple rhythm-game screen, inspired by the clarity
 of osu! and other rhythm-game menus without copying their branding or artwork.
 Use the game's own orb-and-line motif, a large wordmark, and only Play, Settings,
-and How to play in the Rhythm menu. Put chart selection and local audio loading behind Play,
+and How to play in the Rhythm menu. It put chart selection and local audio loading behind Play,
 and preferences on their own screen. No slogans, promotional copy, prototype
-badges, or decorative uppercase labels. Menu body text is 18px; ancillary labels
-and gameplay text are at least 16px. Preserve both skin palettes, visible keyboard
+badges, or decorative uppercase labels. Its menu body text was 18px; ancillary labels
+and gameplay text were at least 16px. These prototype-menu rules are historical;
+the current public flow and layout are specified above. Preserve both skin palettes, visible keyboard
 focus, native radio-keyboard selection, and Escape/back navigation. Keep the home
 art static, including with reduced motion. Do not add speculative menu destinations.
 
 This supersedes the old black-and-sage palette below, which is retained as
-historical reference only. The generated mockups were planning references, not
-shipped assets. See [Rhythm](rhythm.md) for mechanics, limitations, and verification.
+historical reference only. The approved September 29 cyan/violet sprite sheet is preserved as
+`src/features/rhythm/assets/gameplay-reference.png`. It is a style reference, not
+a production atlas; exact bounds, anchors and clean exports are still required. See [Rhythm](rhythm.md) for mechanics, limitations, and verification.
 
 ## Historical supplied design reference
 
@@ -81,6 +129,11 @@ The source is `Moku/Shared/Theme/NavigationStyle.swift`,
 These previous notes are not the current Rhythm specification. Retain the lessons
 about hierarchy and restraint, but do not reintroduce the superseded palette.
 Confirm current references before unrelated substantial UI work.
+
+The local editor follows the current dark cyan/violet direction, with line tools,
+the shared gameplay stage, a waveform/beat timeline and note controls. It is an
+initial functional authoring slice; see [editor status](editor.md). Keep the
+historical references below intact.
 
 ## Initial osu! data research
 
@@ -104,7 +157,7 @@ Use a bundled snapshot first. Proposed challenge identity: UTC date + algorithm
 version + dataset fingerprint. Store the generated questions and each answer
 immediately. UTC gives everyone the same rollover; explain that in the eventual UI.
 
-## Future integration boundaries
+## Historical companion integration research
 
 - Official API: evaluate player profiles, beatmaps, and scores against documented
   routes and scopes. The documented authorization-code exchange requires a client
@@ -116,7 +169,9 @@ immediately. UTC gives everyone the same rollover; explain that in the eventual 
   supported integration mechanisms, reliability, authentication, licensing/terms,
   and which functionality notsu owns versus delegates.
 
-None of these integrations is implemented or required for the initial Trivia slice.
+None of these integrations is implemented or required by the accepted public beta.
+The current account plan is notsu-owned email/password authentication through
+Supabase; it does not connect external game accounts or use social OAuth.
 
 ## Identity and assets
 

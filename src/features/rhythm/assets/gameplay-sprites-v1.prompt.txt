@@ -1,0 +1,61 @@
+Use case: stylized-concept
+Asset type: first gameplay sprite-sheet art study for notsu, an original rhythm game with multiple moving lines and beat-timed circles.
+Primary request: Create ONE polished transparent PNG sprite sheet, square 1536 x 1536 pixels, with precisely six columns and six rows of separate assets, 36 cells total. Each invisible cell is 256 x 256 pixels. Place each asset exactly at its cell center, leaving generous empty transparent gutters. No drawn grid and no labels. This is a game asset atlas, not a poster or gameplay screenshot.
+
+Art direction: minimal precise 2D game art, smooth antialiased contours, softly shaded spherical cyan tap notes with a small upper-left highlight, violet hold notes and ribbons, hollow off-white target rings, understated blue-gray mechanical linework. Use current palette: cyan #86dcf4, violet #bdabff, off-white #eef3fb, linework #566176 with small #8793a9 accents, sphere shadows #26344f, restrained miss accent #ed9b9b. Clean readable silhouettes and quiet gradients confined INSIDE the spheres. Crisp rings and lines, no bloom, no outer glow, no backgrounds, no text, no numbers, no lettering, no watermarks, no brands. Intended for a dark blue-gray stage. All actual empty space must have genuine alpha transparency, including hollow shapes; do not paint a checkerboard or a dark backdrop.
+
+Layout: exactly the following row-major order, left to right:
+ROW 1 — primary note and target sprites:
+1. Solid cyan tap orb, radius 28 pixels, thin cyan rim, spherical shading and one small upper-left highlight.
+2. Solid violet hold-start orb, same size and shading.
+3. Hollow violet hold-release endpoint, radius 28 pixels, ring only, genuinely transparent center.
+4. Idle hollow off-white target ring, radius 46 pixels, thin 4-pixel stroke.
+5. Active hollow violet target ring, radius 46 pixels, 5-pixel stroke.
+6. Missed/dim tap orb, same radius as cyan tap, desaturated blue-gray with reduced visual emphasis.
+
+ROW 2 — modular building blocks:
+1. Straight horizontal neutral blue-gray lane segment, 176 pixels long, 4-pixel stroke, flat ends, no notes.
+2. Straight horizontal cyan active lane segment, same geometry.
+3. Violet horizontal hold ribbon strip, 176 pixels long, 14 pixels thick, flat ends, no endpoints.
+4. Neutral lane endcap, a centered vertical 22-pixel tick with a short horizontal stem extending to its right.
+5. Small neutral pivot joint, a tiny hollow ring with a quiet center pin; deliberately distinct from large scoring target.
+6. Next-position cue, a small pale blue-gray plus sign, 24 pixels across.
+
+ROW 3 — modular line junctions, all neutral blue-gray, no notes and no target circles:
+1. A two-arm 60-degree vertex.
+2. A two-arm 90-degree vertex.
+3. A two-arm 120-degree vertex.
+4. A T junction.
+5. A clean X crossing.
+6. A six-spoke radial hub.
+Each has equal line thickness and fits within a 176-pixel circle, with a small unobtrusive joint at the center. These are clean geometry components, not decorative stars.
+
+ROW 4 — formation studies made from the same neutral lines:
+1. Equilateral triangle.
+2. Axis-aligned square.
+3. Diamond.
+4. Regular hexagon.
+5. Bowtie made of two triangles meeting at their center.
+6. Six-spoke radial arrangement.
+Each formation fits within 176 x 176 pixels and carries exactly ONE small hollow off-white scoring target located on a vertex or outer endpoint, plus exactly THREE smaller solid cyan notes spaced evenly along ONE incoming straight edge or spoke toward that target. Notes should visibly belong to their line, not float as decorative particles. Use consistent proportions in this row. These are geometric arrangement previews for future beat-authored movement, not fully baked moving backgrounds.
+
+ROW 5 — cyan tap-hit animation, six successive frames:
+Six centered cyan hollow circular pulses expanding left to right, radii 46, 51, 56, 61, 66, 71 pixels. Opacity falls gradually across frames. Each has at most four tiny discrete cyan spark dots symmetrically positioned just outside the ring at the diagonal directions, moving slightly outward across the sequence. Fine strokes, restrained effect, no glow. Same center in every cell.
+
+ROW 6 — hold/release and warning feedback:
+1. A simple violet hollow hold-press pulse, radius 46, no sparks.
+2. Violet release pulse frame 1, radius 46, four tiny violet sparks.
+3. Violet release pulse frame 2, radius 58, four tiny violet sparks farther out, slightly lower opacity.
+4. Violet release pulse frame 3, radius 70, four tiny violet sparks farther out, lower opacity.
+5. Small faint desaturated cyan orb ghost for miss-fade, same radius 28 as the tap orb, no particles.
+6. Hollow muted coral warning ring, radius 50, no symbol or text.
+
+Constraints: preserve all 36 cells and this exact ordering; never merge cells. Keep every asset fully inside its own cell. No labels or frame borders. No unrelated interface buttons, musical instruments, characters, scenery, particle fields, official rhythm-game artwork, osu! logos, or lettering. Consistent sprite scale and stroke weight within each asset family. Output true transparent RGBA PNG.
+
+Refinement prompt (built-in imagegen edit of the initial result):
+Use case: precise-object-edit
+Edit target: the supplied notsu gameplay sprite sheet.
+Clean up this sprite sheet for a restrained minimal rhythm game. The essential edit is to remove ALL the ragged cyan/magenta/white fringe, stray speckles, glow, bloom, extra offset outlines, and textured noise. Render smooth clean alpha edges around every sprite. Every gap between sprites and every empty shape interior must be completely transparent, with no residual pixels. No checkerboard.
+Preserve all 36 asset identities, the six-column six-row ordering, the palette, note shapes, and the six geometric formations. Keep the small upper-left highlights on the spherical notes. Simplify rings and line segments to single clean solid strokes, rather than metallic double bevels. Keep only the four intentional small spark dots on the pulse frames. No glow or shadows outside any shape. Do not add or remove cells.
+Use precisely uniform six-by-six cells on a square canvas, each asset centered within its cell with empty gutters. The effects must have the same center from frame to frame. Keep full visibility of all 36 sprites. No titles, text, grid, border, UI, logos, backgrounds, or labels.
+The neutral geometry should be #566176, tap sprites and pulses #86dcf4, holds and release pulses #bdabff, targets #eef3fb, last warning ring #ed9b9b. Preserve the current cyan/violet spherical shading inside solid notes only. Alpha transparency is essential.

@@ -1,0 +1,127 @@
+{
+  "version": 1,
+  "imageWidth": 1448,
+  "imageHeight": 1086,
+  "sprites": {
+    "tap": {
+      "x": 58,
+      "y": 86,
+      "width": 263,
+      "height": 259,
+      "pivotX": 133.0,
+      "pivotY": 129.0,
+      "bodyWidth": 256,
+      "bodyHeight": 254
+    },
+    "holdHead": {
+      "x": 411,
+      "y": 86,
+      "width": 265,
+      "height": 259,
+      "pivotX": 133.0,
+      "pivotY": 129.0,
+      "bodyWidth": 256,
+      "bodyHeight": 254
+    },
+    "holdTail": {
+      "x": 770,
+      "y": 82,
+      "width": 267,
+      "height": 265,
+      "pivotX": 133.5,
+      "pivotY": 133.0,
+      "bodyWidth": 261,
+      "bodyHeight": 260
+    },
+    "miss": {
+      "x": 1125,
+      "y": 86,
+      "width": 263,
+      "height": 259,
+      "pivotX": 132.0,
+      "pivotY": 129.0,
+      "bodyWidth": 256,
+      "bodyHeight": 254
+    },
+    "target": {
+      "x": 49,
+      "y": 412,
+      "width": 281,
+      "height": 277,
+      "pivotX": 141.5,
+      "pivotY": 138.5,
+      "bodyWidth": 273,
+      "bodyHeight": 271
+    },
+    "targetTap": {
+      "x": 405,
+      "y": 412,
+      "width": 282,
+      "height": 278,
+      "pivotX": 142.5,
+      "pivotY": 138.5,
+      "bodyWidth": 275,
+      "bodyHeight": 271
+    },
+    "targetHold": {
+      "x": 759,
+      "y": 412,
+      "width": 284,
+      "height": 277,
+      "pivotX": 142.5,
+      "pivotY": 138.5,
+      "bodyWidth": 275,
+      "bodyHeight": 273
+    },
+    "warning": {
+      "x": 1118,
+      "y": 412,
+      "width": 281,
+      "height": 279,
+      "pivotX": 139.5,
+      "pivotY": 139.0,
+      "bodyWidth": 275,
+      "bodyHeight": 272
+    },
+    "lane": {
+      "x": 47,
+      "y": 859,
+      "width": 309,
+      "height": 46,
+      "pivotX": 155.0,
+      "pivotY": 22.0,
+      "bodyWidth": 304,
+      "bodyHeight": 38
+    },
+    "ribbon": {
+      "x": 395,
+      "y": 856,
+      "width": 315,
+      "height": 52,
+      "pivotX": 158.5,
+      "pivotY": 26.5,
+      "bodyWidth": 307,
+      "bodyHeight": 47
+    },
+    "hitTap": {
+      "x": 767,
+      "y": 745,
+      "width": 277,
+      "height": 270,
+      "pivotX": 138.5,
+      "pivotY": 135.0,
+      "bodyWidth": 269,
+      "bodyHeight": 264
+    },
+    "hitHold": {
+      "x": 1119,
+      "y": 745,
+      "width": 276,
+      "height": 270,
+      "pivotX": 138.0,
+      "pivotY": 135.0,
+      "bodyWidth": 268,
+      "bodyHeight": 264
+    }
+  }
+}
