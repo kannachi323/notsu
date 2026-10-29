@@ -1,10 +1,19 @@
 # Map packages and local library
 
-Home's **Browse** opens the local collection. Import a `.notsumap` file, search by
-song/artist/mapper/difficulty, filter favorites, select a difficulty, and play it
-with the same audio-clock engine used by the editor. Normal play, No Fail,
+Home's **Play** opens song selection; **Browse maps** presents the same local
+collection as an artwork grid. Search by song/artist/mapper/difficulty, filter
+favorites, sort the collection, preview the recording, select a difficulty, and
+play it with the same audio-clock engine used by the editor. Normal play, No Fail,
 Autoplay and persistent local replays are available. Every local attempt is
 unranked. Online collection and ranking features remain pending.
+
+Three [starter packs](starter-maps.md) ship with the app, each containing its own
+music and two difficulties. No separate recording or account is needed. Importing
+a `.notsumap` likewise supplies the full recording and charts; importing an MP3/WAV
+on its own is an editor action, not a requirement to play someone else's map.
+The included packs remain available when local storage fails. Favoriting one saves
+its pack and preference locally. Bundled entries cannot be removed from the app;
+imported revisions retain the existing removal/undo flow.
 
 ## Portable format
 
@@ -63,7 +72,7 @@ but have separate size limits and extensions.
 
 ## Local records and replays
 
-Finished Browse attempts save their result and replay in the separate
+Finished song-selection attempts save their result and replay in the separate
 `notsu-records` IndexedDB database. **Personal best** uses completed Standard runs
 without No Fail, Autoplay, frozen lines or resume assistance. Compare score first,
 then maximum combo, then accuracy. Exact ties share performance; the earliest
@@ -76,8 +85,8 @@ zero first best under the current health rules.
 the replay, and opens playback through the real engine. The saved result and its
 input stream are recomputed in a worker before saving and before replay loading.
 Playback creates no new attempt; **Watch again** repeats playback rather than
-silently switching to live input. Editor playtests and built-in studies do not
-enter this local map history.
+silently switching to live input. Bundled map attempts enter this history as well;
+editor playtests and legacy internal studies do not.
 
 Results show saving, success, personal-best improvement/tie, or failure with a
 retry action. Writes use a stable attempt ID and one transaction for result/replay
@@ -93,10 +102,61 @@ Trash. Removing a best recomputes the best from remaining Standard attempts.
 Removing a map package leaves its records intact; reimport the same revision to
 access them. These are device-local records, with no account sync or online rating.
 
+## Online discovery and publication (October 4 source implementation)
+
+`/#/browse?source=online` opens the public catalog, with bounded search and cursor
+pagination. Downloads stream at most 16 MB, check the archive SHA-256 and exact
+logical map revision, then validate in a worker before local import. Online packs
+use a 256 KB per-chart bound. No account token is sent for public catalog/media
+reads. Unconfigured or malformed online configuration leaves local play available.
+
+`/#/publish?map=<revision>` selects a local pack. Verified email/password accounts
+with a public profile can publish after explicitly confirming distribution rights
+for the map, music and every included asset. Publishing shares the complete pack
+publicly as an **unranked community map**. The same account/revision keeps its
+upload ID across retries. The server validates the actual archive, rechecks the
+live session at completion, and never trusts client metadata or rank claims.
+Publishing an existing revision preserves its withdrawal/moderation state.
+
+Your publications can be refreshed, withdrawn or restored. Visibility changes
+send the last known version; stale conflicting actions return `map_changed`/409.
+Withdrawing stops new catalog reads and downloads. Previously downloaded copies
+remain playable. Staff moderation cannot be bypassed by republishing or restoring.
+There is currently a narrow staff API, but map-review screens and map reports
+remain release work.
+
+Apply `20261004000900_map_media_retention.sql` before running the updated Worker.
+New reservations allocate a server-generated media generation that survives
+active retries and changes after expiry, even if a client reuses its upload ID.
+Published media is immutable. Older published objects remain readable through
+the legacy path. The Worker entry is `server/worker.ts`, with Hono routes still
+composed in `server/app.ts`. An hourly Cloudflare trigger scans up to 500 objects
+per invocation, retaining its inventory cursor in PostgreSQL. Objects older than
+two days are deleted only after a successful reference check. Withdrawn and
+moderated packs retain their bytes; deleted-account and abandoned-upload objects
+are eventually removed. Failed checks/deletes do not advance the cursor.
+References: [R2 Worker API](https://developers.cloudflare.com/r2/api/workers/workers-api-reference/)
+and [scheduled handlers](https://developers.cloudflare.com/workers/runtime-apis/handlers/scheduled/).
+These are deployment configuration changes, not a deployed service or automation.
+
+If IndexedDB fails, validated imports remain available across route changes in
+the current app session, with a visible warning. This temporary cache caps at 20
+revisions/256 MB of archives and clears when the app closes or reloads. Export
+packages before leaving the session; temporary favorites are not saved to disk.
+
+Added source coverage for exact-download integrity, streaming limits, public reads,
+lost-response retries, account changes, catalog cursors, stale visibility conflicts,
+retention failure behavior and storage-generation lifecycle. No tests, builds,
+migrations or browser/native smoke checks were run on October 4. The previous
+integration checkpoint reported HTTP 500 on a stale visibility request; its saved
+Worker log shows a proxy **Network connection lost** error. The 409 error mapping
+has regression coverage in source, but the original live integration must still
+be rerun; source inspection does not establish its cause or resolution.
+
 ## Remaining work
 
-Online search/download/publishing, review/moderation, ratings, ranked attempt
-tickets, cloud replay storage and account sync are not implemented here. Larger
+Online deployment/integration verification, map-review/reporting UI, ratings,
+ranked attempt tickets, cloud replay storage and account sync remain incomplete. Larger
 real libraries need performance/storage-pressure testing and a device-wide record
 manager for unavailable maps and damaged entries. Record portability/backup also
 remains open; browser data clearing removes local results and replays. Production platform

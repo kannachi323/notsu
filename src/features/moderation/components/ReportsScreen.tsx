@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router";
 import { useAccountStore } from "../../accounts/accountStore";
 import { loadReports } from "../data/reports";
 import type { ReportPage } from "../domain/reports";
 import { reasonLabels } from "../domain/reports";
 import type { ConnectionCursor } from "../../friends/domain/connections";
 import { ModerationLayout } from "./ModerationLayout";
+import { Avatar, Badge, Button, ButtonLink, EmptyState, Icon, List, ListItem, Loading, Notice, Tabs } from "../../../shared/components";
 export function ReportsScreen({ review = false }: { review?: boolean }) {
   const id = useAccountStore(state => state.identity?.id);
   return <ReportList key={`${id}:${review}`} id={id} review={review}/>;
@@ -23,14 +23,25 @@ function ReportList({ id, review }: { id?: string; review: boolean }) {
       .finally(() => { if (!controller.signal.aborted) setBusy(false); });
     return () => controller.abort();
   }, [id, review, queue, cursor, revision]);
-  return <ModerationLayout title={review ? "Report review" : "Your reports"}>
-    {!id ? <section className="account-panel"><p>Sign in to view reports.</p><Link to="/account">Go to sign-in →</Link></section> : <>
-      <p className="account-muted">{review ? "Private review queue. Reports involving your own account are excluded. Decisions require a reason and are recorded." : "Only you and authorized reviewers can access your reports. A report does not automatically penalize another player."}</p>
-      <div className="account-actions">{review && <><button aria-pressed={queue === "open"} onClick={() => { setQueue("open"); setCursor(null); setPage({ items: [], next: null }); setRevision(value => value + 1); }}>Open</button><button aria-pressed={queue === "reviewed"} onClick={() => { setQueue("reviewed"); setCursor(null); setPage({ items: [], next: null }); setRevision(value => value + 1); }}>Reviewed</button></>}<button disabled={busy} onClick={refresh}>Refresh</button></div>
-      {error && <p className="account-error" role="alert">{error}</p>}
-      <ul className="report-list">{page.items.map(item => <li key={item.id}><div><strong>{item.targetName}</strong><p>{item.kind === "message" ? "Message" : "Profile"} · {reasonLabels[item.reason]}</p><time dateTime={item.createdAt}>{new Date(item.createdAt).toLocaleString()}</time></div><div><span className="report-status">{item.status === "open" ? "Awaiting review" : item.status === "dismissed" ? "Reviewed · closed" : "Reviewed · action taken"}</span>{review && <Link className="account-guest" to={`/moderation/${item.id}`}>Review →</Link>}</div></li>)}</ul>
-      {busy && <p role="status">Loading reports…</p>}{!busy && !error && !page.items.length && <section className="account-panel"><h2>{review ? "This queue is clear" : "No reports yet"}</h2><p>{review ? "Reports will appear here when submitted." : "Report a concern from a player profile or a received message."}</p></section>}
-      {page.next && <button disabled={busy} onClick={() => setCursor(page.next)}>Load more</button>}
+  const select = (next: "open" | "reviewed") => { setQueue(next); setCursor(null); setPage({ items: [], next: null }); setRevision(value => value + 1); };
+  const statusLabel = { open: "Awaiting review", dismissed: "Reviewed · closed" } as Record<string, string>;
+  return <ModerationLayout title={review ? "Report review" : "Your reports"}
+    description={review ? "Private review queue. Reports involving your own account are excluded. Decisions require a reason and are recorded." : "Only you and authorized reviewers can access your reports. A report does not automatically penalize another player."}
+    actions={id && <Button variant="ghost" icon={<Icon name="refresh" />} disabled={busy} onClick={refresh}>Refresh</Button>}>
+    {!id ? <EmptyState title="Sign in to view reports" action={<ButtonLink variant="primary" to="/account">Go to sign-in</ButtonLink>} /> : <>
+      {review && <Tabs label="Review queue" items={[{ value: "open", label: "Open" }, { value: "reviewed", label: "Reviewed" }]} value={queue} onChange={select} />}
+      {error && <Notice tone="danger" role="alert">{error}</Notice>}
+      {page.items.length > 0 && <List label={review ? "Review queue" : "Your reports"}>{page.items.map(item => <ListItem key={item.id}
+        leading={<Avatar name={item.targetName} />}
+        title={item.targetName}
+        subtitle={`${item.kind === "message" ? "Message" : "Profile"} · ${reasonLabels[item.reason]}`}
+        meta={<time className="ui-text-muted" dateTime={item.createdAt}>{new Date(item.createdAt).toLocaleString()}</time>}
+        actions={<><Badge tone={item.status === "open" ? "warning" : item.status === "dismissed" ? "neutral" : "violet"}>{statusLabel[item.status] ?? "Reviewed · action taken"}</Badge>
+          {review && <ButtonLink size="sm" to={`/moderation/${item.id}`}>Review</ButtonLink>}</>} />)}
+      </List>}
+      {busy && <Loading>Loading reports…</Loading>}
+      {!busy && !error && !page.items.length && <EmptyState title={review ? "This queue is clear" : "No reports yet"} description={review ? "Reports will appear here when submitted." : "Report a concern from a player profile or a received message."} />}
+      {page.next && <div><Button disabled={busy} onClick={() => setCursor(page.next)}>Load more</Button></div>}
     </>}
   </ModerationLayout>;
 }

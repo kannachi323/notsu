@@ -4,6 +4,7 @@ import type { LocalRecord } from "../domain/records";
 import { listRecords, RECORDS_CHANGED, removeRecord, restoreRecord } from "../data/storage";
 import type { RemovedRecord } from "../data/storage";
 import { RULES_VERSION } from "../../rhythm/domain/rules";
+import { Badge, Button, Icon, IconButton, Loading, Notice, SectionHeader } from "../../../shared/components";
 import "../records.css";
 
 type Props = { revision: string; chartId: string; busy: boolean; watch: (id: string) => void };
@@ -38,22 +39,24 @@ export function RecordPanel({ revision, chartId, busy, watch }: Props) {
   }
   const best = bestRecord(rows), disabled = busy || working;
   return <section className="record-panel" aria-label="Local records">
-    <div className="record-heading"><h3>Personal best</h3><button disabled={disabled || loading} onClick={() => void refresh()}>Refresh records</button></div>
-    <p className="record-help">Standard clears · this revision · local, unranked</p>
-    {best ? <div className="record-best"><strong>{best.summary.score.toLocaleString()} <span>points</span></strong><p>{best.summary.accuracy.toFixed(2)}% accuracy · {best.summary.maxCombo} combo</p>
-      <button disabled={disabled} onClick={() => watch(best.id)}>Watch best replay</button></div> : !loading && <p className="record-empty">Complete this difficulty without assists to set your first personal best.</p>}
-    {loading && <p role="status">Loading records…</p>}{error && <p className="record-error" role="alert">{error}</p>}
-    {!!unreadable && <p className="record-error">{unreadable} damaged records could not be displayed.</p>}
-    {removed && <div className="record-undo" role="status"><p>Removed the attempt from {new Date(removed.record.finishedAt).toLocaleString()}. Undo is available until you leave this view or remove another attempt.</p><button disabled={disabled} onClick={() => void undo()}>Undo record removal</button></div>}
+    <SectionHeader level={3} title="Personal best" description="Standard clears · this revision · local, unranked"
+      actions={<IconButton size="sm" label="Refresh records" icon={<Icon name="refresh" />} disabled={disabled || loading} onClick={() => void refresh()} />} />
+    {best ? <div className="record-best">
+      <div><strong>{best.summary.score.toLocaleString()}</strong><p>{best.summary.accuracy.toFixed(2)}% accuracy · {best.summary.maxCombo}× combo</p></div>
+      <Button size="sm" icon={<Icon name="play" />} disabled={disabled} onClick={() => watch(best.id)}>Watch replay</Button>
+    </div> : !loading && <p className="record-empty">Complete this difficulty without assists to set your first personal best.</p>}
+    {loading && <Loading>Loading records…</Loading>}{error && <Notice tone="danger" role="alert">{error}</Notice>}
+    {!!unreadable && <Notice tone="warning">{unreadable} damaged records could not be displayed.</Notice>}
+    {removed && <Notice role="status" actions={<Button size="sm" disabled={disabled} onClick={() => void undo()}>Undo record removal</Button>}>Removed the attempt from {new Date(removed.record.finishedAt).toLocaleString()}. Undo is available until you leave this view or remove another attempt.</Notice>}
     <details className="record-history"><summary>Recent attempts ({rows.length})</summary>
       <p className="record-help">Practice and failed runs stay in history. Replay playback does not create another attempt. Records remain when a map is removed; reimport the same package to watch them.</p>
       {!rows.length && !loading && <p className="record-empty">Your finished attempts will appear here.</p>}
       <ol>{rows.slice(0, limit).map(row => <li key={row.id} aria-label={`Attempt from ${new Date(row.finishedAt).toLocaleString()}`}>
-        <div className="record-attempt-heading"><strong>{row.summary.score.toLocaleString()}</strong><span>{row.summary.status === "failed" ? "Failed" : "Completed"}{row.id === best?.id ? " · Best" : ""}</span></div>
-        <p>{runDescription(row)}</p><p>{row.summary.accuracy.toFixed(2)}% · {row.summary.maxCombo} combo</p><time dateTime={new Date(row.finishedAt).toISOString()}>{new Date(row.finishedAt).toLocaleString()}</time>
-        <div className="record-actions"><button disabled={disabled} onClick={() => watch(row.id)}>Watch replay</button><button disabled={disabled} onClick={() => void remove(row.id)}>Remove attempt</button></div>
+        <div className="record-attempt-heading"><strong>{row.summary.score.toLocaleString()}</strong><Badge tone={row.summary.status === "failed" ? "danger" : row.id === best?.id ? "accent" : "neutral"}>{row.summary.status === "failed" ? "Failed" : "Completed"}{row.id === best?.id ? " · Best" : ""}</Badge></div>
+        <p>{runDescription(row)} · {row.summary.accuracy.toFixed(2)}% · {row.summary.maxCombo}× combo</p><time dateTime={new Date(row.finishedAt).toISOString()}>{new Date(row.finishedAt).toLocaleString()}</time>
+        <div className="ui-cluster"><Button size="sm" disabled={disabled} onClick={() => watch(row.id)}>Watch replay</Button><Button size="sm" variant="ghost" disabled={disabled} onClick={() => void remove(row.id)}>Remove attempt</Button></div>
       </li>)}</ol>
-      {rows.length > limit && <button onClick={() => setLimit(value => value + 10)}>Show more attempts</button>}
+      {rows.length > limit && <Button size="sm" variant="ghost" onClick={() => setLimit(value => value + 10)}>Show more attempts</Button>}
       <p className="record-help">Rules {RULES_VERSION} · up to 1,000 attempts / 128 MB on this device. No automatic deletion.</p>
     </details>
   </section>;

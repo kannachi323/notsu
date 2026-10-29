@@ -1,4 +1,4 @@
-.editor-app { --border: #2c3a4b; --surface: #111925; --muted: #a0b0c4; --accent: #6ddff2; --on-accent: #081018; min-height: 100dvh; padding: 24px 32px; background: #0a1019; color: #edf3fc; font-size: 16px; }
+.editor-app { --border: hsl(var(--ui-hue) 12% 30%); --surface: var(--ui-surface-1); --muted: var(--ui-text-3); --accent: var(--ui-accent); --on-accent: var(--ui-on-accent); min-height: 100dvh; padding: var(--ui-space-6) var(--ui-gutter); background: var(--ui-canvas); color: var(--ui-text); font-size: 16px; }
 .editor-app button, .editor-button { min-height: 44px; padding: 9px 14px; font-size: 16px; text-decoration: none; color: inherit; }
 .editor-button { display: inline-flex; border: 1px solid var(--border); border-radius: 8px; }
 .editor-header { display: flex; align-items: center; gap: 28px; border-bottom: 1px solid var(--border); padding-bottom: 22px; margin-bottom: 24px; }

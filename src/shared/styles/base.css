@@ -1,0 +1,139 @@
+/*
+ * Element defaults. Selectors are wrapped in :where() so that any class,
+ * including the shared ui-* components, overrides them without !important.
+ */
+*, *::before, *::after { box-sizing: border-box; }
+
+html {
+  font-family: var(--ui-font);
+  font-size: 16px;
+  line-height: var(--ui-leading);
+  color: var(--ui-text);
+  background: var(--ui-canvas);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -webkit-text-size-adjust: 100%;
+}
+body { margin: 0; min-width: 320px; font-size: var(--ui-text-md); }
+
+* { scrollbar-width: thin; scrollbar-color: hsl(0 0% 100% / .2) transparent; }
+::selection { background: hsl(186 72% 60% / .35); }
+
+:where(h1, h2, h3, h4, h5, h6) {
+  margin-top: 0;
+  font-weight: 650;
+  line-height: var(--ui-leading-tight);
+  letter-spacing: -.01em;
+}
+:where(p) { margin-top: 0; }
+
+:where(a) { color: var(--ui-accent); text-decoration: none; text-underline-offset: 3px; }
+:where(a:not([class]):hover) { text-decoration: underline; }
+
+:focus-visible { outline: 2px solid var(--ui-focus); outline-offset: 3px; }
+
+:where(button, input, select, textarea) { font: inherit; color: inherit; letter-spacing: inherit; }
+
+:where(button) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--ui-space-2);
+  min-height: var(--ui-control-md);
+  padding: 0 var(--ui-space-4);
+  border: 1px solid transparent;
+  border-radius: var(--ui-radius-sm);
+  background: var(--ui-surface-3);
+  color: var(--ui-text);
+  font-size: var(--ui-text-sm);
+  font-weight: 600;
+  line-height: 1.2;
+  cursor: pointer;
+  transition: background-color var(--ui-fast) var(--ui-ease), border-color var(--ui-fast) var(--ui-ease), color var(--ui-fast) var(--ui-ease);
+}
+:where(button:hover:not(:disabled)) { background: var(--ui-surface-4); }
+button:disabled, [aria-disabled="true"] { cursor: not-allowed; opacity: .45; }
+
+:where(input:not([type=checkbox], [type=radio], [type=range], [type=file], [type=color]), textarea, select) {
+  min-height: var(--ui-control-md);
+  padding: 0 var(--ui-space-3);
+  border: 1px solid var(--ui-line-strong);
+  border-radius: var(--ui-radius-sm);
+  background: var(--ui-input-bg);
+  color: var(--ui-text);
+  font-size: var(--ui-text-md);
+}
+:where(textarea) { padding: var(--ui-space-2) var(--ui-space-3); line-height: var(--ui-leading); resize: vertical; }
+:where(input:hover:not(:disabled), textarea:hover:not(:disabled), select:hover:not(:disabled)) { border-color: var(--ui-line-hover); }
+:where(input, textarea)::placeholder { color: var(--ui-text-3); opacity: 1; }
+:where(input[type=checkbox], input[type=radio]) { width: 18px; height: 18px; margin: 0; flex-shrink: 0; accent-color: var(--ui-accent); }
+:where(input[type=range]) { accent-color: var(--ui-accent); }
+:where(input[type=file]) { max-width: 100%; color: var(--ui-text-3); font-size: var(--ui-text-sm); }
+input[type=file]::file-selector-button {
+  margin-right: var(--ui-space-3);
+  min-height: var(--ui-control-sm);
+  padding: 0 var(--ui-space-3);
+  border: 0;
+  border-radius: var(--ui-radius-sm);
+  background: var(--ui-surface-3);
+  color: var(--ui-text);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+:where(fieldset) { min-width: 0; margin: 0; padding: 0; border: 0; }
+:where(summary) { cursor: pointer; }
+
+:where(kbd) {
+  display: inline-block;
+  padding: 1px 6px;
+  border: 1px solid var(--ui-line-strong);
+  border-radius: var(--ui-radius-xs);
+  background: hsl(0 0% 100% / .04);
+  color: var(--ui-text-2);
+  font-family: inherit;
+  font-size: var(--ui-text-xs);
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { scroll-behavior: auto !important; animation: none !important; transition: none !important; }
+}
+
+/*
+ * Legacy game-screen styles. The gameplay player (.app) and the editor
+ * (.editor-app) predate the shared components and read skin variables, so
+ * their controls keep the earlier look here. New screens use ui-* components.
+ */
+.app { min-height: 100dvh; padding: 32px 40px 24px; display: flex; flex-direction: column; font-size: 18px; }
+:where(.app) :where(button) { min-height: 48px; padding: 14px 22px; border-color: var(--border); border-radius: 8px; background: var(--surface); font-size: inherit; font-weight: 400; }
+:where(.app button:hover:not(:disabled)) { border-color: var(--muted); background: var(--surface); }
+:where(.app, .editor-app) select { display: block; width: 100%; margin: 12px 0 24px; padding: 14px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); color: var(--text); }
+:where(.app, .editor-app) input[type=range] { width: 100%; margin: 14px 0 26px; min-height: 24px; }
+:where(.app, .editor-app) input[type=checkbox] { width: 22px; height: 22px; }
+:where(.app) kbd { padding: 0; border: 0; background: none; color: var(--text); font-size: 18px; font-weight: 400; }
+button.primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); font-weight: 600; }
+button.quiet { background: transparent; border-color: var(--border); }
+.muted { color: var(--muted); }
+.small { font-size: 16px; line-height: 1.65; }
+.actions { display: flex; flex-wrap: wrap; gap: 12px; margin: 24px 0 12px; }
+.app-header { display: flex; align-items: center; padding-bottom: 22px; border-bottom: 1px solid var(--border); }
+.brand { font-size: 26px; font-weight: 650; letter-spacing: -.04em; }
+.brand > span { color: var(--accent); }
+.app-footer { margin-top: auto; color: var(--muted); font-size: 16px; line-height: 1.5; padding-top: 28px; }
+.rhythm-home-link { display: inline-block; margin-right: 24px; padding-block: 12px; color: var(--text); text-underline-offset: 4px; }
+@media (max-width: 760px) { .app { padding: 24px; } }

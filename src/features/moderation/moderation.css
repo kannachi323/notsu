@@ -1,1 +1,10 @@
-.moderation-main{max-width:1000px}.report-evidence{border:1px solid #35444e;background:#101920;border-radius:14px;padding:20px;margin:20px 0;overflow-wrap:anywhere}.report-evidence h2{margin-top:0}.report-evidence blockquote{margin:12px 0;border-left:3px solid #86c9d4;padding:8px 16px;white-space:pre-wrap}.report-text{white-space:pre-wrap;overflow-wrap:anywhere}.report-evidence time,.report-list time{color:#9babb5;font-size:13px}.report-check{display:flex!important;align-items:center;gap:12px}.report-check input{width:20px!important;height:20px;flex-shrink:0}.moderation-main select{background:#0a141c;border:1px solid #52636e;border-radius:10px;color:#e2edf2;padding:12px;font:inherit;width:100%}.report-list{list-style:none;padding:0}.report-list li{padding:22px;border:1px solid #35444e;border-radius:14px;background:#111a20;margin:12px 0;display:flex;justify-content:space-between;align-items:center;gap:20px;overflow-wrap:anywhere}.report-list p{margin:6px 0}.report-status{display:block;color:#a9c7d2;margin-bottom:8px}.community-access{margin-top:24px}.community-access h2{margin-top:0}.report-message-link{display:block;font-size:12px;margin-top:6px;color:#b4c6cd}.review-warning{padding:16px;border-left:3px solid #b9a0e8;background:#221e2c}.review-audit{padding-left:20px}.review-audit li{margin:16px 0}.review-audit p{white-space:pre-wrap;overflow-wrap:anywhere}@media(max-width:700px){.report-list li{align-items:flex-start;flex-direction:column}.report-evidence{padding:16px}}
+/* Report evidence and review history. */
+
+.report-evidence { gap: var(--ui-space-2); overflow-wrap: anywhere; }
+.report-evidence-kind { color: var(--ui-text-3); font-size: var(--ui-text-xs); font-weight: 650; }
+.report-evidence-author { display: flex; align-items: center; gap: var(--ui-space-2); }
+.report-evidence blockquote { margin: 0; padding: var(--ui-space-2) var(--ui-space-4); border-left: 3px solid var(--ui-violet); color: var(--ui-text-2); white-space: pre-wrap; }
+.report-evidence time, .review-audit time { color: var(--ui-text-3); font-size: var(--ui-text-xs); }
+.review-heading { margin: 0; font-size: var(--ui-text-md); }
+.review-audit { display: flex; flex-direction: column; gap: var(--ui-space-3); margin: 0; padding-left: var(--ui-space-5); }
+.review-audit p { margin: var(--ui-space-1) 0; }

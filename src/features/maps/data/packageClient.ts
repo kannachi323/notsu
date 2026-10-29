@@ -1,5 +1,5 @@
 import type { MapSet } from "../domain/mapSet";
-export type MapRequest = { action: "unpack"; bytes: Uint8Array } | { action: "pack"; set: MapSet; audio: Uint8Array };
+export type MapRequest = { action: "unpack"; bytes: Uint8Array; limits?: { maxBytes: number; maxChartBytes: number } } | { action: "pack"; set: MapSet; audio: Uint8Array };
 export function mapJob<T>(request: MapRequest): Promise<T> {
   return new Promise((resolve, reject) => {
     const worker = new Worker(new URL("./package.worker.ts", import.meta.url), { type: "module" });

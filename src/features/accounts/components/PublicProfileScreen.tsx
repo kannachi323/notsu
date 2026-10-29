@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router";
-import { HomeHeader } from "../../home/components/HomeHeader";
+import { useNavigate, useParams } from "react-router";
+import { AppScreen } from "../../home/components/AppScreen";
+import { Avatar, Badge, Button, ButtonLink, EmptyState, Field, Icon, Loading, Page, PageHeader, Panel } from "../../../shared/components";
 import { useAccountStore } from "../accountStore";
 import { AccountError } from "../data/auth";
 import { loadPublicProfile } from "../data/publicProfiles";
@@ -40,21 +41,29 @@ function PlayerPage({ username }: { username?: string }) {
     } catch (cause) { setQueryError(cause instanceof Error ? cause.message : "Enter a username."); }
   }
   const joined = profile ? new Date(profile.createdAt) : null;
-  return <div className="notsu-home account-screen"><HomeHeader /><main className="account-main player-main">
-    <header className="account-heading"><Link to="/">← Home</Link><h1>Players</h1><p>Find a player by their exact username.</p></header>
-    <form className="account-panel player-search" role="search" onSubmit={event => { event.preventDefault(); search(); }}>
-      <label>Player username<input autoComplete="off" spellCheck={false} required maxLength={21} placeholder="@username" value={query} onChange={event => setQuery(event.target.value)} /></label><button className="account-primary" type="submit">Find player</button>
-      {queryError && <p className="account-error" role="alert">{queryError}</p>}
+  return <AppScreen><Page>
+    <PageHeader back={{ to: "/", label: "Home" }} icon="search" title="Players" description="Find a player by their exact username." />
+    <form className="player-search" role="search" onSubmit={event => { event.preventDefault(); search(); }}>
+      <Field label="Player username" error={queryError || undefined}><input autoComplete="off" spellCheck={false} required maxLength={21} placeholder="@username" value={query} onChange={event => setQuery(event.target.value)} /></Field>
+      <Button variant="primary" size="lg" type="submit" icon={<Icon name="search" />}>Find player</Button>
     </form>
-    {loading ? <p className="player-status" role="status">Loading player…</p> : error ? <section className="account-panel player-card"><h2>{missing ? "Player not found" : "Profile unavailable"}</h2><p role="alert" className="account-muted">{error}</p>{!missing && <button onClick={() => setRetry(value => value + 1)}>Retry profile</button>}</section> :
-      profile ? <article className="account-panel player-card" aria-label="Public player profile">
-        <div className="player-profile-head"><div className="account-orbit" aria-hidden="true"><i /><span>{[...profile.displayName][0]?.toUpperCase()}</span></div>
-          <div><p className="player-eyebrow">notsu player</p><h2>{profile.displayName}</h2><p className="account-handle">@{profile.username}</p>
-            {joined && Number.isFinite(joined.getTime()) && <p className="account-muted">Profile created <time dateTime={profile.createdAt}>{joined.toLocaleDateString(undefined, { month: "long", year: "numeric", timeZone: "UTC" })}</time></p>}
-          </div></div>
-        {profile.bio && <div className="player-about"><h3>About</h3><p className="account-bio">{profile.bio}</p></div>}
-        {identity?.id === profile.id && <Link className="account-guest" to="/account">Edit your profile →</Link>}
-        <ProfileConnection key={`${identity?.id ?? "guest"}:${profile.id}`} target={profile.id} username={profile.username} />
-      </article> : <p className="player-status account-muted">Enter a username to open their public profile.</p>}
-  </main><footer className="notsu-footer">Unofficial community project · Not affiliated with ppy</footer></div>;
+    {loading ? <Loading>Loading player…</Loading> : error ? <EmptyState title={missing ? "Player not found" : "Profile unavailable"} description={<span role="alert">{error}</span>}
+      action={!missing && <Button icon={<Icon name="refresh" />} onClick={() => setRetry(value => value + 1)}>Retry profile</Button>} /> :
+      profile ? <article className="player-profile" aria-label="Public player profile">
+        <header className="player-cover">
+          <Avatar name={profile.displayName} size="xl" />
+          <div className="player-identity">
+            <Badge tone="violet">notsu player</Badge>
+            <h2>{profile.displayName}</h2>
+            <p className="account-handle">@{profile.username}</p>
+            {joined && Number.isFinite(joined.getTime()) && <p className="ui-text-muted ui-text-small">Profile created <time dateTime={profile.createdAt}>{joined.toLocaleDateString(undefined, { month: "long", year: "numeric", timeZone: "UTC" })}</time></p>}
+          </div>
+          {identity?.id === profile.id && <ButtonLink className="player-edit" size="sm" to="/account">Edit your profile</ButtonLink>}
+        </header>
+        <div className="player-body">
+          {profile.bio && <Panel title="About" headingLevel={3}><p className="ui-prose">{profile.bio}</p></Panel>}
+          <ProfileConnection key={`${identity?.id ?? "guest"}:${profile.id}`} target={profile.id} username={profile.username} />
+        </div>
+      </article> : <p className="ui-text-muted">Enter a username to open their public profile.</p>}
+  </Page></AppScreen>;
 }

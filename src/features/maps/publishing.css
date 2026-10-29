@@ -1,0 +1,8 @@
+/* Publish screen: selected pack summary. */
+
+.publish-pack-info { display: flex; flex-direction: column; align-items: flex-start; gap: var(--ui-space-2); padding: var(--ui-space-4); border-radius: var(--ui-radius-md); background: var(--ui-surface-2); box-shadow: inset 3px 0 var(--ui-accent); }
+.publish-pack-info > * { margin: 0; }
+.publish-pack-info h3 { font-size: var(--ui-text-xl); overflow-wrap: anywhere; }
+.publish-pack-info ul { align-self: stretch; padding: 0; list-style: none; }
+.publish-pack-info li { display: flex; justify-content: space-between; gap: var(--ui-space-3); padding: var(--ui-space-2) 0; border-top: 1px solid var(--ui-line); font-size: var(--ui-text-sm); }
+.publish-pack-info li > span { color: var(--ui-text-3); font-size: var(--ui-text-xs); }

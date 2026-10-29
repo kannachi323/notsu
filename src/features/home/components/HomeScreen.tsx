@@ -1,34 +1,54 @@
-import { useRef } from "react";
-import { Link } from "react-router";
-import { CardArtwork } from "./CardArtwork";
-import { HomeHeader } from "./HomeHeader";
-import { HomeUpdates } from "./HomeUpdates";
+import { useEffect } from "react";
+import { Link, useNavigate } from "react-router";
+import { Icon, MAIN_CONTENT_ID, NotsuMark } from "../../../shared/components";
+import { AppScreen } from "./AppScreen";
+import { starterMaps } from "../../maps/data/starters";
+import { onlineAvailable } from "../../accounts/data/availability";
+
+// Offline builds browse the local collection instead of an unavailable catalog.
+const discoverRoute = onlineAvailable ? "/browse?source=online" : "/browse";
+
+const destinations = [
+  { to: "/rhythm", tone: "play", icon: "play", title: "Play", caption: "Your library, your rhythm", key: "P" },
+  { to: discoverRoute, tone: "browse", icon: "browse", title: "Discover", caption: "Find your next song", key: "B" },
+  { to: "/editor", tone: "create", icon: "editor", title: "Create", caption: "Make something move", key: "E" },
+  { to: "/settings", tone: "settings", icon: "settings", title: "Settings", caption: "Make it feel like you", key: "O" },
+] as const;
 
 export function HomeScreen() {
-  const main = useRef<HTMLElement>(null);
-
-  return <div className="notsu-home">
-    <a className="notsu-skip-link" href="#home-content" onClick={(event) => {
-      // Keep fragment navigation from changing the desktop router's location.
-      event.preventDefault();
-      main.current?.focus();
-    }}>Skip to main content</a>
-    <HomeHeader />
-    <main className="notsu-main" id="home-content" tabIndex={-1} ref={main}>
-      <h1 className="visually-hidden">notsu home</h1>
-      <nav className="notsu-destinations" aria-label="Choose an activity">
-        <Link className="notsu-destination notsu-destination-browse" to="/browse">
-          <CardArtwork kind="browse" /><span>Browse</span>
-        </Link>
-        <Link className="notsu-destination notsu-destination-play" to="/rhythm">
-          <CardArtwork kind="play" /><span>Play</span>
-        </Link>
-        <Link className="notsu-destination notsu-destination-editor" to="/editor">
-          <CardArtwork kind="editor" /><span>Editor</span>
-        </Link>
+  const navigate = useNavigate();
+  useEffect(() => {
+    const shortcuts = (event: KeyboardEvent) => {
+      if (event.defaultPrevented || event.altKey || event.ctrlKey || event.metaKey || event.repeat ||
+        (event.target instanceof HTMLElement && event.target.closest("input, textarea, select, button, a, [contenteditable]"))) return;
+      const destination = ({ Enter: "/rhythm", p: "/rhythm", b: discoverRoute, e: "/editor", o: "/settings" } as Record<string, string>)[event.key];
+      if (destination) { event.preventDefault(); navigate(destination); }
+    };
+    window.addEventListener("keydown", shortcuts);
+    return () => window.removeEventListener("keydown", shortcuts);
+  }, [navigate]);
+  return <AppScreen className="main-menu-screen">
+    <main className="main-menu" id={MAIN_CONTENT_ID} tabIndex={-1}>
+      <h1 className="visually-hidden">notsu</h1>
+      <div className="main-menu-band" aria-hidden="true" />
+      <Link className="main-menu-logo" to="/rhythm" aria-label="Play notsu">
+        <span className="main-menu-logo-art" aria-hidden="true"><NotsuMark /></span>
+        <span className="main-menu-logo-word" aria-hidden="true">notsu</span>
+        <span className="main-menu-logo-caption">Press Enter to play</span>
+      </Link>
+      <nav className="main-menu-buttons" aria-label="Choose an activity">
+        {destinations.map(item => <Link key={item.key} className={`main-menu-button main-menu-${item.tone}`} to={item.to}>
+          <Icon name={item.icon} /><span><strong>{item.title}</strong><small>{item.caption}</small></span><kbd>{item.key}</kbd>
+        </Link>)}
       </nav>
-      <HomeUpdates />
     </main>
-    <footer className="notsu-footer"><span>Unofficial community project · Not affiliated with ppy</span><span>notsu <span className="notsu-version">0.1.0</span></span></footer>
-  </div>;
+    <aside className="main-menu-bottom" aria-label="Getting started">
+      <div className="main-menu-tip"><span aria-hidden="true">◈</span><p>One shared circle. One press.<br /><small>Any gameplay key works, even when the lines cross.</small></p><Link className="ui-link" to="/how-to-play">How to play →</Link></div>
+      <Link className="main-menu-featured" to={`/rhythm?map=${starterMaps[0].revision}`}>
+        <span className="main-menu-featured-art" aria-hidden="true" />
+        <span><small>Start with an included song</small><strong>Orbit Signal</strong><small>Original music · two difficulties</small></span>
+        <Icon name="forward" />
+      </Link>
+    </aside>
+  </AppScreen>;
 }

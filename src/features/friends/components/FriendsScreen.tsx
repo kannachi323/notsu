@@ -1,12 +1,12 @@
 import { useState } from "react";
 import { Link } from "react-router";
-import { HomeHeader } from "../../home/components/HomeHeader";
+import { AppScreen } from "../../home/components/AppScreen";
+import { Avatar, Button, ButtonLink, EmptyState, Icon, List, ListItem, Loading, Notice, Page, PageHeader, SectionHeader, Tabs } from "../../../shared/components";
 import { useAccountStore } from "../../accounts/accountStore";
 import { configuration } from "../../accounts/data/auth";
 import { connectionLists, type ConnectionList } from "../domain/connections";
 import { useConnections } from "../useConnections";
 import { ConnectionActions } from "./ConnectionActions";
-import "../../accounts/accounts.css";
 import "../friends.css";
 import { useAccountUpdates } from "../../accounts/useAccountUpdates";
 import { useFriendPresence } from "../../presence/useFriendPresence";
@@ -26,22 +26,30 @@ export function FriendsScreen() {
   const page = useConnections(list);
   const presence = useFriendPresence(list === "friends" ? page.items.map(item => item.userId) : []);
   const live = useAccountUpdates(() => { page.refresh(); presence.refresh(); });
-  return <div className="notsu-home account-screen"><HomeHeader /><main className="account-main friends-main">
-    <header className="account-heading"><Link to="/">← Home</Link><div className="friends-heading"><div><h1>Your circle</h1><p>Friendships start with a shared beat.</p></div><Link className="account-guest" to="/players">Find a player →</Link></div></header>
-    {!configuration ? <section className="account-panel"><h2>Online friends are unavailable</h2><p className="account-muted">You can still play, create maps and save local records in this build.</p></section> :
-      !identity ? <section className="account-panel friends-empty"><h2>Bring your circle together</h2><p className="account-muted">Sign in to send and accept requests, manage friends and block players.</p><Link className="account-guest" to="/account">Sign in →</Link></section> :
-        <><nav className="friends-tabs" aria-label="Connection lists">{connectionLists.map(kind => <button key={kind} aria-pressed={list === kind} onClick={() => setList(kind)}>{labels[kind]}</button>)}</nav>
-          <div className="friends-list-heading"><h2>{labels[list]}</h2><button disabled={page.busy} onClick={() => { page.refresh(); presence.refresh(); }}>Refresh</button></div>
-          <p className="account-muted" role="status">{live === "live" ? "Live updates connected" : live === "connecting" ? "Connecting live updates…" : "Live updates unavailable · use Refresh"}</p>
-          {!profile && <p className="account-notice"><Link to="/account">Create or load your profile</Link> before sending requests.</p>}
-          {list === "blocked" && <p className="account-muted">Blocking removes friendships and prevents requests in either direction. Public profiles remain visible.</p>}
-          {page.error && <p className="account-error" role="alert">{page.error}</p>}
-          {page.items.length > 0 ? <ul className="friends-list">{page.items.map(item => <li key={item.id}>
-            <Link className="friend-identity" to={`/players/${item.username}`}><span className="friend-initial" aria-hidden="true">{[...item.displayName][0]?.toUpperCase()}</span><span><strong>{item.displayName}</strong><span>@{item.username}</span>{item.state === "friends" && <PresenceBadge online={presence.get(item.userId)} />}</span></Link>
-            <div>{item.state === "friends" && <Link className="account-guest" to={`/messages/${item.username}`}>Message →</Link>}<ConnectionActions target={item.userId} connection={{ state: item.state, id: item.id }} onChanged={page.refresh} onRefresh={page.refresh} /></div>
-          </li>)}</ul> : !page.busy && !page.error && <section className="account-panel friends-empty"><div className="friends-empty-orbits" aria-hidden="true"><i /><i /><i /></div><h3>{empty[list][0]}</h3><p>{empty[list][1]}</p>{list === "friends" && <Link className="account-guest" to="/players">Find a player →</Link>}</section>}
-          {page.busy && <p role="status">Loading connections…</p>}
-          {page.next && <button disabled={page.busy} onClick={page.more}>{page.busy ? "Loading…" : "Load more"}</button>}
-        </>}
-  </main><footer className="notsu-footer">Unofficial community project · Not affiliated with ppy</footer></div>;
+  const tabs = connectionLists.map(kind => ({ value: kind, label: labels[kind] }));
+  return <AppScreen><Page>
+    <PageHeader back={{ to: "/", label: "Home" }} icon="friends" title="Your circle" description="Friendships start with a shared beat."
+      actions={<ButtonLink to="/players" icon={<Icon name="search" />}>Find a player</ButtonLink>}>
+      {configuration && identity && <Tabs label="Connection lists" items={tabs} value={list} onChange={setList} />}
+    </PageHeader>
+    {!configuration ? <EmptyState title="Online friends are unavailable" description="You can still play, create maps and save local records in this build." /> :
+      !identity ? <EmptyState title="Bring your circle together" description="Sign in to send and accept requests, manage friends and block players." action={<ButtonLink variant="primary" to="/account">Sign in</ButtonLink>} /> : <>
+        <SectionHeader title={labels[list]} description={<span role="status">{live === "live" ? "Live updates connected" : live === "connecting" ? "Connecting live updates…" : "Live updates unavailable · use Refresh"}</span>}
+          actions={<Button size="sm" variant="ghost" icon={<Icon name="refresh" />} disabled={page.busy} onClick={() => { page.refresh(); presence.refresh(); }}>Refresh</Button>} />
+        {!profile && <Notice tone="warning"><Link to="/account">Create or load your profile</Link> before sending requests.</Notice>}
+        {list === "blocked" && <p className="ui-text-muted ui-text-small">Blocking removes friendships and prevents requests in either direction. Public profiles remain visible.</p>}
+        {page.error && <Notice tone="danger" role="alert">{page.error}</Notice>}
+        {page.items.length > 0 ? <List label={labels[list]}>{page.items.map(item => <ListItem key={item.id}
+          leading={<Avatar name={item.displayName} />}
+          title={<Link className="friend-name" to={`/players/${item.username}`}>{item.displayName}</Link>}
+          subtitle={`@${item.username}`}
+          meta={item.state === "friends" && <PresenceBadge online={presence.get(item.userId)} />}
+          actions={<>{item.state === "friends" && <ButtonLink size="sm" variant="primary" to={`/messages/${item.username}`} icon={<Icon name="chat" />}>Message</ButtonLink>}
+            <ConnectionActions target={item.userId} connection={{ state: item.state, id: item.id }} onChanged={page.refresh} onRefresh={page.refresh} /></>} />)}
+        </List> : !page.busy && !page.error && <EmptyState headingLevel={3} title={empty[list][0]} description={empty[list][1]}
+          action={list === "friends" && <ButtonLink variant="primary" to="/players" icon={<Icon name="search" />}>Find a player</ButtonLink>} />}
+        {page.busy && <Loading>Loading connections…</Loading>}
+        {page.next && <div><Button disabled={page.busy} onClick={page.more}>{page.busy ? "Loading…" : "Load more"}</Button></div>}
+      </>}
+  </Page></AppScreen>;
 }

@@ -96,6 +96,17 @@ The stage and waveform use Canvas. All authoring actions also have labeled form
 controls. Narrow windows reflow and scroll; editing controls stay accessible while
 scrolling. The editor follows the approved dark cyan/violet gameplay direction.
 
+## Sightreading check
+
+Lines may move freely while empty. While a note is approaching (1.5 s before
+its hit) or held on a line, `motionIssues` in `src/features/rhythm/domain/readability.ts`
+flags turns faster than 120°/s and target travel faster than 160 px/s, measured
+on the clamped on-screen target. Package export lists the first few stretches
+so authors can lengthen a glide or move it into a rest. Rotating a line about a
+fixed target keeps the distance-to-target timing cue readable; sliding targets
+does not. Smooth easing peaks at 1.5× its average speed, so plan glides below
+the limits. The check advises; it does not block export.
+
 ## Persistence and recovery
 
 IndexedDB database `notsu-editor` version 2 stores drafts, Trash and original song

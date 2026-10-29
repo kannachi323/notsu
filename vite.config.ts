@@ -1,12 +1,14 @@
 import { defineConfig, loadEnv } from "vite";
 import react from "@vitejs/plugin-react";
-import { onlineConfig } from "./src/features/accounts/data/config.ts";
+import { assertNoPrivilegedKeys, onlineConfig } from "./src/features/accounts/data/config.ts";
 
 const host = process.env.TAURI_DEV_HOST;
 
 export default defineConfig(({ mode }) => {
   // Fail before bundling a mistakenly supplied secret into public frontend assets.
-  onlineConfig({ ...loadEnv(mode, process.cwd(), "VITE_"), ...process.env });
+  const env = { ...loadEnv(mode, process.cwd(), "VITE_"), ...process.env };
+  assertNoPrivilegedKeys(env);
+  onlineConfig(env);
   return {
   plugins: [react()],
   clearScreen: false,

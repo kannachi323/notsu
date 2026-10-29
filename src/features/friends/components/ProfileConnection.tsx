@@ -5,6 +5,7 @@ import { getConnection } from "../data/connections";
 import type { Connection } from "../domain/connections";
 import { ConnectionActions } from "./ConnectionActions";
 import "../friends.css";
+import { Button, ButtonLink, Icon, Loading, Notice } from "../../../shared/components";
 import { useAccountUpdates } from "../../accounts/useAccountUpdates";
 import { useFriendPresence } from "../../presence/useFriendPresence";
 import { PresenceBadge } from "../../presence/components/PresenceBadge";
@@ -24,14 +25,13 @@ export function ProfileConnection({ target,username }: { target: string;username
       .catch(cause => { if (!controller.signal.aborted) setError(cause instanceof Error ? cause.message : "Could not load connection."); });
     return () => controller.abort();
   }, [identity?.id, target, revision]);
-  if (!identity) return <p className="connection-sign-in"><Link to="/account">Sign in</Link> to connect with this player.</p>;
-  if (identity.id === target) return <Link className="account-guest" to="/friends">Your friends →</Link>;
-  if (!profile) return <p className="connection-sign-in"><Link to="/account">Create or load your profile</Link> to connect with this player.</p>;
+  if (!identity) return <p className="ui-text-muted"><Link to="/account">Sign in</Link> to connect with this player.</p>;
+  if (identity.id === target) return <div><ButtonLink size="sm" to="/friends" icon={<Icon name="friends" />}>Your friends</ButtonLink></div>;
+  if (!profile) return <p className="ui-text-muted"><Link to="/account">Create or load your profile</Link> to connect with this player.</p>;
   return <section className="profile-connection" aria-label="Player connection">
-    <Link className="account-guest" to={`/report/${target}`}>Report player →</Link>
-    {connection?.state==="friends" && <PresenceBadge online={presence.get(target)}/>}
-    {connection?.state==="friends" && <Link className="account-guest" to={`/messages/${username}`}>Message →</Link>}
-    {error ? <><p role="alert" className="account-error">{error}</p><button onClick={() => setRevision(value => value + 1)}>Retry connection</button></> :
-      connection ? <ConnectionActions key={`${identity.id}:${target}`} target={target} connection={connection} onChanged={setConnection} onRefresh={() => setRevision(value => value + 1)} /> : <p role="status">Loading connection…</p>}
+    {connection?.state==="friends" && <div className="ui-cluster"><PresenceBadge online={presence.get(target)}/><ButtonLink size="sm" variant="primary" to={`/messages/${username}`} icon={<Icon name="chat" />}>Message</ButtonLink></div>}
+    {error ? <Notice tone="danger" role="alert" actions={<Button size="sm" onClick={() => setRevision(value => value + 1)}>Retry connection</Button>}>{error}</Notice> :
+      connection ? <ConnectionActions key={`${identity.id}:${target}`} target={target} connection={connection} onChanged={setConnection} onRefresh={() => setRevision(value => value + 1)} /> : <Loading>Loading connection…</Loading>}
+    <Link className="profile-report" to={`/report/${target}`}><Icon name="flag" />Report player</Link>
   </section>;
 }

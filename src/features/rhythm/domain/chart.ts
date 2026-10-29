@@ -23,7 +23,23 @@ export function poseAt(frames: MotionKeyframe[], timeMs: number): Pose {
 }
 
 export function lanePoseAt(lane: Lane, timeMs: number): Pose & { length: number } {
-  const [a, b, fraction] = segment(lane.motion, timeMs);
+  return lanePoseInto(lane, timeMs, { x: 0, y: 0, angle: 0, length: 0 });
+}
+
+/** Allocation-free variant for the render loop: writes into a reused pose. */
+export function lanePoseInto<T extends Pose & { length: number }>(lane: Lane, timeMs: number, out: T): T {
+  const frames = lane.motion;
+  let a = frames[0], b = frames[0], fraction = 0;
+  if (timeMs > frames[0].timeMs) {
+    let low = 0, high = frames.length;
+    while (low < high) {
+      const mid = (low + high) >>> 1;
+      if (frames[mid].timeMs <= timeMs) low = mid + 1; else high = mid;
+    }
+    a = frames[low - 1]; b = frames[low] ?? a;
+    fraction = a === b ? 0 : (timeMs - a.timeMs) / (b.timeMs - a.timeMs);
+  }
   const t = b.easing === "linear" ? fraction : smooth(fraction);
-  return { ...poseBetween(a, b, t), length: mix(a.length, b.length, t) };
+  out.x = mix(a.x, b.x, t); out.y = mix(a.y, b.y, t); out.angle = mix(a.angle, b.angle, t); out.length = mix(a.length, b.length, t);
+  return out;
 }

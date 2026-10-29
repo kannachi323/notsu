@@ -1,0 +1,154 @@
+/*
+ * notsu design tokens.
+ *
+ * Every surface colour comes from one hue ramp, so the whole interface can be
+ * retinted by changing --ui-hue. Feature styles should use the semantic tokens
+ * (canvas, surface, text, line, accent, status) rather than the raw ramp.
+ *
+ * Tokens use the --ui- prefix because skins write their own unprefixed
+ * variables (--surface, --accent, …) onto :root at runtime.
+ */
+:root {
+  color-scheme: dark;
+  --ui-hue: 230;
+
+  /* Surface ramp, lightest (1) to darkest (6). */
+  --ui-bg-1: hsl(var(--ui-hue) 14% 38%);
+  --ui-bg-2: hsl(var(--ui-hue) 14% 29%);
+  --ui-bg-3: hsl(var(--ui-hue) 14% 23%);
+  --ui-bg-4: hsl(var(--ui-hue) 14% 18%);
+  --ui-bg-5: hsl(var(--ui-hue) 15% 14%);
+  --ui-bg-6: hsl(var(--ui-hue) 17% 10%);
+
+  /* Semantic surfaces. */
+  --ui-canvas: var(--ui-bg-6);
+  --ui-surface-1: var(--ui-bg-5);
+  --ui-surface-2: var(--ui-bg-4);
+  --ui-surface-3: var(--ui-bg-3);
+  --ui-surface-4: var(--ui-bg-2);
+  --ui-input-bg: hsl(var(--ui-hue) 18% 8%);
+  --ui-hover: hsl(0 0% 100% / .06);
+  --ui-pressed: hsl(0 0% 100% / .1);
+  --ui-scrim: hsl(var(--ui-hue) 24% 5% / .78);
+  --ui-glass: hsl(var(--ui-hue) 17% 10% / .92);
+
+  --ui-line: hsl(0 0% 100% / .08);
+  --ui-line-strong: hsl(0 0% 100% / .16);
+  --ui-line-hover: hsl(0 0% 100% / .28);
+
+  /* Text. */
+  --ui-text: hsl(var(--ui-hue) 40% 97%);
+  --ui-text-2: hsl(var(--ui-hue) 22% 82%);
+  --ui-text-3: hsl(var(--ui-hue) 14% 67%);
+  --ui-text-disabled: hsl(var(--ui-hue) 10% 46%);
+
+  /* Brand: cyan is the primary action colour, violet and pink are secondary. */
+  --ui-accent: hsl(186 72% 74%);
+  --ui-accent-hover: hsl(186 82% 83%);
+  --ui-accent-strong: hsl(192 58% 48%);
+  --ui-accent-surface: hsl(190 40% 21%);
+  --ui-on-accent: hsl(195 55% 11%);
+  --ui-violet: hsl(254 100% 84%);
+  --ui-violet-strong: hsl(258 48% 56%);
+  --ui-violet-surface: hsl(256 28% 24%);
+  --ui-pink: hsl(322 62% 74%);
+  --ui-pink-strong: hsl(318 40% 46%);
+
+  /* Status. */
+  --ui-success: hsl(150 52% 64%);
+  --ui-success-surface: hsl(152 30% 16%);
+  --ui-warning: hsl(42 92% 66%);
+  --ui-warning-surface: hsl(40 36% 16%);
+  --ui-danger: hsl(350 88% 77%);
+  --ui-danger-strong: hsl(350 58% 50%);
+  --ui-danger-surface: hsl(348 34% 18%);
+  --ui-focus: hsl(186 95% 78%);
+
+  /* Typography. Body text is 15px; nothing in the interface goes below 12px. */
+  --ui-font: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --ui-font-mono: ui-monospace, "SF Mono", "Cascadia Mono", Consolas, monospace;
+  --ui-text-xs: 12px;
+  --ui-text-sm: 13px;
+  --ui-text-md: 15px;
+  --ui-text-lg: 17px;
+  --ui-text-xl: 20px;
+  --ui-text-2xl: 24px;
+  --ui-text-3xl: 30px;
+  --ui-text-4xl: 38px;
+  --ui-text-display: 56px;
+  --ui-leading: 1.5;
+  --ui-leading-tight: 1.2;
+
+  /* Spacing: a 4px grid. Use these for every margin, padding and gap. */
+  --ui-space-1: 4px;
+  --ui-space-2: 8px;
+  --ui-space-3: 12px;
+  --ui-space-4: 16px;
+  --ui-space-5: 20px;
+  --ui-space-6: 24px;
+  --ui-space-8: 32px;
+  --ui-space-10: 40px;
+  --ui-space-12: 48px;
+  --ui-space-16: 64px;
+
+  /* Layout. --ui-gutter is the one horizontal page padding for every screen. */
+  --ui-gutter: clamp(16px, 4vw, 48px);
+  --ui-page-width: 1200px;
+  --ui-page-narrow: 760px;
+  --ui-page-wide: 1480px;
+  --ui-section-gap: var(--ui-space-6);
+  --ui-panel-padding: var(--ui-space-5);
+  --ui-toolbar-height: 48px;
+  --ui-footer-height: 64px;
+
+  /* Controls. */
+  --ui-control-sm: 32px;
+  --ui-control-md: 40px;
+  --ui-control-lg: 48px;
+  --ui-radius-xs: 3px;
+  --ui-radius-sm: 5px;
+  --ui-radius-md: 8px;
+  --ui-radius-lg: 12px;
+  --ui-radius-pill: 999px;
+  --ui-shear: -11deg;
+
+  --ui-shadow-1: 0 2px 6px hsl(0 0% 0% / .24);
+  --ui-shadow-2: 0 14px 44px hsl(0 0% 0% / .45);
+
+  /* Motion. */
+  --ui-ease: cubic-bezier(.22, 1, .36, 1);
+  --ui-fast: 120ms;
+  --ui-medium: 220ms;
+  --ui-slow: 400ms;
+
+  /* Stacking. */
+  --ui-z-toolbar: 20;
+  --ui-z-footer: 25;
+  --ui-z-popover: 30;
+  --ui-z-skip: 50;
+}
+
+@media (max-width: 720px) {
+  :root {
+    --ui-section-gap: var(--ui-space-5);
+    --ui-panel-padding: var(--ui-space-4);
+  }
+}
+
+/*
+ * Legacy names read by the gameplay and editor styles. Skins overwrite these
+ * on :root while a game screen is open; interface components never read them.
+ */
+:root {
+  --bg: var(--ui-canvas);
+  --background: var(--ui-canvas);
+  --surface: var(--ui-surface-2);
+  --border: hsl(var(--ui-hue) 12% 30%);
+  --text: var(--ui-text);
+  --muted: var(--ui-text-3);
+  --accent: var(--ui-accent);
+  --on-accent: var(--ui-on-accent);
+  --focus: var(--ui-focus);
+  --warning: var(--ui-danger);
+  --overlay: hsl(var(--ui-hue) 20% 9% / .96);
+}

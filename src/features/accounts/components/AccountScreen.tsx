@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router";
-import { HomeHeader } from "../../home/components/HomeHeader";
+import { AppScreen } from "../../home/components/AppScreen";
+import { Avatar, Button, ButtonLink, Icon, Loading, Notice, Page, PageHeader, Panel } from "../../../shared/components";
 import { useAccountStore } from "../accountStore";
-import { accountClient, configuration, signOut } from "../data/auth";
+import { accountClient, configuration, configurationIssue, signOut } from "../data/auth";
 import { loadOwnProfile } from "../data/profiles";
 import { AuthFlow } from "./AuthFlow";
 import { ProfileEditor } from "./ProfileEditor";
@@ -11,7 +12,6 @@ import "../accounts.css";
 import { PresenceSettings } from "../../presence/components/PresenceSettings";
 import { useModerationAccess } from "../../moderation/useModerationAccess";
 import { CommunityAccess } from "../../moderation/components/CommunityAccess";
-import "../../moderation/moderation.css";
 
 export function AccountScreen() {
   const { identity, profile, profileStatus, profileError, recovery, profileDirty, profileSaving } = useAccountStore();
@@ -29,25 +29,45 @@ export function AccountScreen() {
     catch (cause) { setError(cause instanceof Error ? cause.message : "Could not sign out. Try again."); }
     finally { setBusy(false); }
   }
-  return <div className="notsu-home account-screen"><HomeHeader /><main className="account-main">
-    <header className="account-heading"><Link to="/">← Home</Link><h1>Your account</h1><p>Manage your profile and sign-in.</p></header>
-    <div className="account-columns"><aside className="account-summary">
-      <div className="account-orbit" aria-hidden="true"><i /><span>{profile ? [...profile.displayName][0]?.toUpperCase() : "n"}</span></div>
-      <h2>{profile?.displayName || (identity ? "Welcome to notsu" : "Play as a guest")}</h2>
-      {profile ? <><p className="account-handle">@{profile.username}</p>{profile.bio && <p className="account-bio">{profile.bio}</p>}</> : <p className="account-muted">Local maps and the editor are yours to explore, with or without an account.</p>}
-      <div className="account-profile-links">{profile && <Link className="account-guest" to={`/players/${profile.username}`}>View public profile →</Link>}<Link className="account-guest" to="/players">Find a player →</Link></div>
-      <Link className="account-guest" to="/browse">Browse local maps <span aria-hidden="true">↗</span></Link>
-      {identity && <div className="account-identity"><p>Signed in as<br /><strong>{identity.email}</strong></p>
-        <button disabled={busy || profileSaving} onClick={() => void leave()}>{busy ? "Signing out…" : "Sign out"}</button>
-        {confirmLeave && profileDirty && <div className="account-notice"><p>Discard your unsaved profile changes and sign out?</p><div className="account-actions"><button disabled={busy || profileSaving} onClick={() => void leave(true)}>Discard and sign out</button><button onClick={() => setConfirmLeave(false)}>Keep editing</button></div></div>}
-        {error && <p role="alert" className="account-error">{error}</p>}
-        {!recovery && <Link className="account-delete-link" to="/account/delete">Delete account</Link>}</div>}
-    </aside>
-      {!configuration ? <section className="account-panel"><h2>Local play is ready</h2><p>Online accounts are unavailable in this build. You can play, create maps and save local records.</p><Link className="account-guest" to="/rhythm">Start playing →</Link></section> :
-        !identity ? <AuthFlow /> : recovery ? <PasswordRecovery /> : profileStatus === "ready" ? <ProfileEditor key={identity.id} profile={profile} restricted={!!access.value?.restriction} /> :
-        <section className="account-panel"><h2>Your profile</h2>{profileStatus === "error" ? <><p className="account-error" role="alert">{profileError}</p><button onClick={() => void loadOwnProfile()}>Retry loading profile</button></> : <p role="status">Loading your profile…</p>}</section>}
+  return <AppScreen><Page>
+    <PageHeader back={{ to: "/", label: "Home" }} icon="profile" title="Your account" description="Manage your profile and sign-in." />
+    <div className="ui-columns ui-columns--sidebar">
+      <aside className="ui-stack">
+        <Panel aria-label="Profile summary" className="account-summary">
+          <Avatar name={profile?.displayName || "notsu"} size="xl" />
+          <div className="ui-stack ui-stack--sm">
+            <h2 className="account-name">{profile?.displayName || (identity ? "Welcome to notsu" : "Play as a guest")}</h2>
+            {profile ? <><p className="account-handle">@{profile.username}</p>{profile.bio && <p className="ui-prose">{profile.bio}</p>}</> : <p className="ui-text-muted">Local maps and the editor are yours to explore, with or without an account.</p>}
+          </div>
+          <nav className="account-links" aria-label="Profile links">
+            {profile && <Link className="ui-link" to={`/players/${profile.username}`}>View public profile →</Link>}
+            <Link className="ui-link" to="/players">Find a player →</Link>
+            <Link className="ui-link" to="/browse">Browse local maps ↗</Link>
+          </nav>
+        </Panel>
+        {identity && <Panel aria-label="Sign-in" className="account-identity">
+          <p className="ui-text-muted ui-text-small">Signed in as<br /><strong className="account-email">{identity.email}</strong></p>
+          <Button variant="outline" disabled={busy || profileSaving} onClick={() => void leave()}>{busy ? "Signing out…" : "Sign out"}</Button>
+          {confirmLeave && profileDirty && <Notice tone="warning" title="Discard your unsaved profile changes and sign out?" actions={<>
+            <Button size="sm" variant="danger" disabled={busy || profileSaving} onClick={() => void leave(true)}>Discard and sign out</Button>
+            <Button size="sm" onClick={() => setConfirmLeave(false)}>Keep editing</Button></>} />}
+          {error && <Notice tone="danger" role="alert">{error}</Notice>}
+          {!recovery && <Link className="account-delete-link" to="/account/delete">Delete account</Link>}
+        </Panel>}
+      </aside>
+      <div className="ui-stack ui-stack--lg">
+        {!configuration ? <Panel title="Local play is ready">
+          <p className="ui-text-muted">{configurationIssue || "Online accounts are unavailable in this build. You can play, create maps and save local records."}</p>
+          <div><ButtonLink variant="primary" to="/rhythm">Start playing</ButtonLink></div>
+        </Panel> :
+          !identity ? <AuthFlow /> : recovery ? <PasswordRecovery /> : profileStatus === "ready" ? <ProfileEditor key={identity.id} profile={profile} restricted={!!access.value?.restriction} /> :
+          <Panel title="Your profile">{profileStatus === "error" ? <>
+            <Notice tone="danger" role="alert">{profileError}</Notice>
+            <div><Button icon={<Icon name="refresh" />} onClick={() => void loadOwnProfile()}>Retry loading profile</Button></div>
+          </> : <Loading>Loading your profile…</Loading>}</Panel>}
+        {identity && profile && !recovery && <PresenceSettings />}
+        {identity && !recovery && <CommunityAccess access={access} />}
+      </div>
     </div>
-    {identity && profile && !recovery && <PresenceSettings />}
-    {identity && !recovery && <CommunityAccess access={access}/>}
-  </main><footer className="notsu-footer">Unofficial community project · Not affiliated with ppy</footer></div>;
+  </Page></AppScreen>;
 }

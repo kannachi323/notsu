@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { onlineConfig } from "./config";
+import { assertNoPrivilegedKeys, onlineConfig } from "./config";
 
 const env = { VITE_SUPABASE_URL: "https://auth.example.test", VITE_NOTSU_API_URL: "https://api.example.test", VITE_SUPABASE_PUBLISHABLE_KEY: "sb_publishable_test" };
 describe("public online configuration", () => {
@@ -13,5 +13,16 @@ describe("public online configuration", () => {
     { VITE_NOTSU_API_URL: "http://remote.example.test" }, { VITE_NOTSU_API_URL: "https://api.example.test/?token=bad" },
     { VITE_NOTSU_API_URL: "https://user:password@api.example.test" }])("rejects unsafe/incomplete configuration without echoing keys", patch => {
     expect(() => onlineConfig({ ...env, ...patch })).toThrow();
+  });
+});
+
+describe("frontend build key guard", () => {
+  const jwt = (role: string) => `x.${btoa(JSON.stringify({ role })).replace(/=+$/, "")}.y`;
+  it("rejects privileged keys in any VITE_ variable, not only the three online ones", () => {
+    expect(() => assertNoPrivilegedKeys({ VITE_OTHER: "sb_secret_abc" })).toThrow(/VITE_OTHER/);
+    expect(() => assertNoPrivilegedKeys({ VITE_EXTRA_KEY: jwt("service_role") })).toThrow(/privileged/);
+  });
+  it("allows publishable keys and ignores non-VITE variables", () => {
+    expect(() => assertNoPrivilegedKeys({ VITE_SUPABASE_PUBLISHABLE_KEY: "sb_publishable_abc", VITE_ANON: jwt("anon"), SUPABASE_SECRET_KEY: "sb_secret_server" })).not.toThrow();
   });
 });

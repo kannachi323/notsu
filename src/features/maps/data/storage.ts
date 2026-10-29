@@ -2,10 +2,7 @@ import { readMapSet } from "../domain/mapSet";
 import type { LoadedMap } from "./package";
 import { MAX_MAP_BYTES } from "./package";
 
-export type MapSummary = {
-  revision: string; setId: string; title: string; artist: string; author: string; importedAt: number; favorite: boolean;
-  difficulties: { id: string; name: string; author: string; notes: number; lanes: number; durationMs: number }[];
-};
+export type MapSummary = import("../domain/collection").LibraryEntry;
 export type StoredMap = MapSummary & { archive: Blob };
 const MAX_LIBRARY = 1024 * 1024 * 1024, MAX_REVISIONS = 200;
 function open(): Promise<IDBDatabase> {

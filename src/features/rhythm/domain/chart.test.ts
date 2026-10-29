@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { lanePoseAt, loadChart, poseAt, validateChart } from "./chart";
+import { lanePoseAt, lanePoseInto, loadChart, poseAt, validateChart } from "./chart";
 import type { LegacyChart } from "./chart";
 import { songChart } from "../data/charts";
 import { geometryChart } from "../data/geometryChart";
@@ -66,6 +66,21 @@ describe("choreography", () => {
         expect(x).toBeGreaterThanOrEqual(41); expect(x).toBeLessThanOrEqual(WORLD_WIDTH - 41);
         expect(y).toBeGreaterThanOrEqual(41); expect(y).toBeLessThanOrEqual(WORLD_HEIGHT - 41);
       }
+    }
+  });
+});
+
+describe("allocation-free lane poses", () => {
+  it("writes the same interpolated pose as lanePoseAt into a reused object", () => {
+    const lane = { id: "l", motion: [
+      { timeMs: 0, x: .2, y: .5, angle: 0, length: 300 },
+      { timeMs: 1000, x: .6, y: .3, angle: 90, length: 420, easing: "linear" as const },
+      { timeMs: 2000, x: .4, y: .4, angle: 45, length: 360 },
+    ] };
+    const out = { x: 0, y: 0, angle: 0, length: 0 };
+    for (const time of [-50, 0, 250, 1000, 1500, 2500]) {
+      expect(lanePoseInto(lane, time, out)).toBe(out);
+      expect(out).toEqual(lanePoseAt(lane, time));
     }
   });
 });

@@ -5,6 +5,7 @@ import { markRead } from "../data/messages";
 import { MessageComposer } from "./MessageComposer";
 import { useFriendPresence } from "../../presence/useFriendPresence";
 import { PresenceBadge } from "../../presence/components/PresenceBadge";
+import { Avatar, Button, EmptyState, Icon, IconButton, Loading, Notice } from "../../../shared/components";
 
 export function ConversationPanel({username,identity,revision,onChange}:{username:string;identity:string;revision:number;onChange:()=>void}) {
   const thread=useConversation(username,revision),scroll=useRef<HTMLDivElement>(null);
@@ -39,18 +40,22 @@ export function ConversationPanel({username,identity,revision,onChange}:{usernam
     return()=>document.removeEventListener("visibilitychange",read);
   },[thread.peer?.id,latest,atBottom,thread.available,revision]);
   return <section className="conversation-panel" aria-label={`Conversation with ${thread.peer?.displayName??username}`}>
-    <header className="conversation-heading"><div><h2>{thread.peer?.displayName??username}</h2><Link to={`/players/${username}`}>@{username} · View profile</Link><div><PresenceBadge online={thread.peer?presence.get(thread.peer.id):null}/></div></div><button disabled={thread.busy} onClick={()=>{thread.refresh();presence.refresh();}}>Refresh</button></header>
-    {thread.error&&<p className="account-error" role="alert">{thread.error}</p>}
+    <header className="conversation-heading">
+      <Avatar name={thread.peer?.displayName??username} />
+      <div><h2>{thread.peer?.displayName??username}</h2><div className="ui-cluster"><Link to={`/players/${username}`}>@{username} · View profile</Link><PresenceBadge online={thread.peer?presence.get(thread.peer.id):null}/></div></div>
+      <IconButton size="sm" label="Refresh conversation" icon={<Icon name="refresh" />} disabled={thread.busy} onClick={()=>{thread.refresh();presence.refresh();}} />
+    </header>
+    {thread.error&&<Notice tone="danger" role="alert">{thread.error}</Notice>}
     <div className="message-history" ref={scroll} role="region" aria-label="Message history" tabIndex={0} onScroll={()=>{const el=scroll.current;if(el)setAtBottom(el.scrollHeight-el.scrollTop-el.clientHeight<48);}}>
-      {thread.next&&<button disabled={thread.busy} onClick={()=>{if(scroll.current)olderPosition.current={height:scroll.current.scrollHeight,top:scroll.current.scrollTop};setAtBottom(false);thread.older();}}>Load earlier messages</button>}
-      {!thread.items.length&&!thread.busy&&!thread.error&&<div className="message-welcome"><span aria-hidden="true">◌</span><h3>A new conversation</h3><p>Talk maps, compare patterns, or just say hello.</p></div>}
+      {thread.next&&<Button size="sm" variant="ghost" className="message-older" disabled={thread.busy} onClick={()=>{if(scroll.current)olderPosition.current={height:scroll.current.scrollHeight,top:scroll.current.scrollTop};setAtBottom(false);thread.older();}}>Load earlier messages</Button>}
+      {!thread.items.length&&!thread.busy&&!thread.error&&<div className="message-welcome"><EmptyState headingLevel={3} title="A new conversation" description="Talk maps, compare patterns, or just say hello." /></div>}
       <ol aria-label="Messages">{[...thread.items].reverse().map(message=><li key={message.sequence} className={message.senderId===identity?"message-own":"message-peer"}>
         <div className="message-bubble"><p>{message.body}</p><time dateTime={message.createdAt} title={new Date(message.createdAt).toLocaleString()}>{new Date(message.createdAt).toLocaleTimeString(undefined,{hour:"2-digit",minute:"2-digit"})}</time>{message.senderId!==identity && <Link className="report-message-link" to={`/report/${message.senderId}/${message.id}`}>Report message</Link>}</div>
       </li>)}</ol>
-      {thread.busy&&<p role="status">Loading messages…</p>}
+      {thread.busy&&<Loading>Loading messages…</Loading>}
     </div>
-    {!atBottom&&thread.items.length>0&&<button className="message-latest" onClick={()=>setAtBottom(true)}>Jump to latest ↓</button>}
-    {readError&&<p role="status" className="account-muted">{readError}</p>}
+    {!atBottom&&thread.items.length>0&&<Button size="sm" className="message-latest" onClick={()=>setAtBottom(true)}>Jump to latest ↓</Button>}
+    {readError&&<p role="status" className="ui-text-muted ui-text-small">{readError}</p>}
     {thread.peer&&<MessageComposer target={thread.peer.id} disabled={!thread.available} onSent={()=>{setAtBottom(true);onChange();}}/>}
   </section>;
 }

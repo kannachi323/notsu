@@ -1,57 +1,95 @@
-import { useState } from "react";
-import { Link } from "react-router";
-import { HomeHeader } from "../../home/components/HomeHeader";
+import { onlineAvailable } from "../../accounts/data/availability";
+import { useEffect, useRef, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router";
+import { AppScreen } from "../../home/components/AppScreen";
+import { Badge, Button, ButtonLink, FooterButton, Icon, Loading, MAIN_CONTENT_ID, Notice, ScreenFooter, TabLinks, Tabs, buttonClass } from "../../../shared/components";
 import { RhythmScreen } from "../../rhythm/RhythmScreen";
+import { DEFAULT_MODS } from "../../rhythm/domain/rules";
 import { useMapLibrary } from "../useMapLibrary";
-import { MapExport } from "./MapExport";
-import { RecordPanel } from "../../records/components/RecordPanel";
-import type { MapSummary } from "../data/storage";
+import { starterMaps } from "../data/starters";
+import { MapDetails } from "./MapDetails";
+import { MapPreview } from "./MapPreview";
+import { mapHue } from "./presentation";
+import { mapCollection } from "../domain/collection";
+import type { MapSort } from "../domain/collection";
+import { MapCollection } from "./MapCollection";
+import { PlayModifiers } from "./PlayModifiers";
+import { OnlineCatalog } from "./OnlineCatalog";
 
-const duration = (ms: number) => `${Math.floor(ms / 60000)}:${String(Math.floor(ms / 1000) % 60).padStart(2, "0")}`;
-export function MapBrowser() {
-  const library = useMapLibrary(), { selected, busy } = library;
-  const [query, setQuery] = useState(""), [favorites, setFavorites] = useState(false), [sort, setSort] = useState("recent");
-  const groups = new Map<string, MapSummary[]>();
-  for (const row of library.maps) {
-    const text = [row.title, row.artist, row.author, ...row.difficulties.flatMap(d => [d.name, d.author])].join(" ").toLowerCase();
-    if ((favorites && !row.favorite) || !text.includes(query.trim().toLowerCase())) continue;
-    groups.set(row.setId, [...(groups.get(row.setId) ?? []), row]);
-  }
-  const cards = [...groups.values()].sort((a, b) => sort === "title" ? a[0].title.localeCompare(b[0].title) : b[0].importedAt - a[0].importedAt);
-  const row = library.maps.find(map => map.revision === selected?.revision);
-  const revisions = library.maps.filter(map => map.setId === selected?.set.id);
-  const difficulty = selected?.set.difficulties.find(item => item.chart.id === library.difficultyId);
-  if (library.playing) return <RhythmScreen local={{ ...library.playing, close: library.closePlay }} />;
-  return <div className="notsu-home map-browser"><HomeHeader /><main className="map-main">
-    <header className="map-heading"><div><p className="map-eyebrow">Your collection</p><h1>Find your next rhythm.</h1><p>Import a map package and play its song, circles and moving lines.</p></div>
-      <label className="map-import">Import map<input aria-label="Import map package" type="file" accept=".notsumap" disabled={busy} onChange={event => {
-        const file = event.target.files?.[0]; event.target.value = ""; if (file) void library.importFile(file);
-      }} /><span>.notsumap · up to 128 MB</span></label></header>
-    <div className="map-search"><label><span className="visually-hidden">Search local maps</span><input type="search" placeholder="Search songs, artists, mappers…" value={query} onChange={event => setQuery(event.target.value)} /></label>
-      <label className="map-favorite-filter"><input type="checkbox" checked={favorites} onChange={event => setFavorites(event.target.checked)} /> Favorites</label>
-      <label className="map-sort"><span className="visually-hidden">Sort maps</span><select value={sort} onChange={event => setSort(event.target.value)}><option value="recent">Recently imported</option><option value="title">Song title</option></select></label>
-    </div>
-    {busy && <p className="map-notice" role="status">Preparing map…</p>}{library.error && <p className="map-error" role="alert">{library.error}</p>}
-    {library.notice && <p className="map-notice" role="status">{library.notice}</p>}
-    {library.removed && <div className="map-notice"><span>Removed {library.removed.title} from this device.</span><button disabled={busy} onClick={() => void library.undo()}>Undo removal</button></div>}
-    <div className="map-columns"><section className="map-list" aria-label="Local map collection"><div className="map-list-heading"><h2>On this device</h2><span>{cards.length} {cards.length === 1 ? "map" : "maps"}</span></div>
-      {cards.map(entries => { const card = entries[0]; return <button key={card.setId} className={`map-card ${selected?.set.id === card.setId ? "selected" : ""}`} disabled={busy} aria-pressed={selected?.set.id === card.setId} onClick={() => void library.open(card.revision)}>
-        <span className="map-card-art" aria-hidden="true"><i /><i /><i /></span><span className="map-card-copy"><strong>{card.title}</strong><span>{card.artist} · mapped by {card.author}</span><small>{card.difficulties.length} {card.difficulties.length === 1 ? "difficulty" : "difficulties"} · {duration(Math.max(...card.difficulties.map(d => d.durationMs)))}{entries.length > 1 ? ` · ${entries.length} revisions` : ""}</small></span>{card.favorite && <span aria-label="Favorite">★</span>}
-      </button>; })}
-      {!cards.length && <div className="map-empty"><span className="map-empty-orbit" aria-hidden="true" /><h3>{library.maps.length ? "No matching maps" : "A collection of your own"}</h3>
-        <p>{library.maps.length ? "Try another search or clear the Favorites filter." : "Import a .notsumap file, or create a map from a song in the editor."}</p><Link to="/editor">Open editor →</Link></div>}
-    </section><aside className="map-detail" aria-label="Selected map">
-      {selected && difficulty ? <><p className="map-eyebrow">{selected.saved ? "Local map" : "Session only"} · Unranked</p><h2>{selected.set.title}</h2><p>{selected.set.artist}</p><p className="map-mapper">Mapped by {selected.set.author}</p>
-        {revisions.length > 1 && <label>Revision<select aria-label="Map revision" value={selected.revision} disabled={busy} onChange={event => void library.open(event.target.value)}>{revisions.map(revision => <option key={revision.revision} value={revision.revision}>{new Date(revision.importedAt).toLocaleString()} · {revision.revision.slice(0, 8)}</option>)}</select></label>}
-        <fieldset disabled={busy} className="map-difficulties"><legend>Choose a difficulty</legend>{selected.set.difficulties.map(item => <label key={item.chart.id}><input type="radio" name="difficulty" checked={library.difficultyId === item.chart.id} onChange={() => library.setDifficultyId(item.chart.id)} /><span><strong>{item.name}</strong><small>{item.chart.notes.length} circles · {item.chart.lanes.length} lines{item.author !== selected.set.author ? ` · ${item.author}` : ""}{!item.chart.notes.length ? " · Draft" : ""}</small></span></label>)}</fieldset>
-        <dl className="map-stats"><div><dt>Length</dt><dd>{duration(difficulty.chart.durationMs)}</dd></div><div><dt>Tempo</dt><dd>{Math.min(...difficulty.chart.timing.map(p => p.bpm))}{new Set(difficulty.chart.timing.map(p => p.bpm)).size > 1 ? `–${Math.max(...difficulty.chart.timing.map(p => p.bpm))}` : ""} <small>BPM</small></dd></div></dl>
-        <button className="map-play" disabled={busy || !difficulty.chart.notes.length} onClick={() => void library.play()}>Play {difficulty.name} <span aria-hidden="true">→</span></button>
-        {!difficulty.chart.notes.length && <p className="map-hint">This draft has no circles yet.</p>}
-        <div className="map-secondary">{row && <button disabled={busy} aria-pressed={row.favorite} onClick={() => void library.favorite(row)}>{row.favorite ? "★ Favorited" : "☆ Favorite"}</button>}<MapExport bytes={selected.bytes} title={selected.set.title} /></div>
-        <details className="map-file-details"><summary>Package details</summary><p>Revision {selected.revision.slice(0, 12)} · {(selected.bytes.length / 1024 / 1024).toFixed(1)} MB</p><p>Importing changed content keeps earlier revisions. Scores from different revisions must remain separate.</p>
-          {selected.saved && <button disabled={busy} onClick={() => void library.remove()}>Remove this revision</button>}</details>
-        <RecordPanel key={`${selected.revision}:${difficulty.chart.id}`} revision={selected.revision} chartId={difficulty.chart.id} busy={busy} watch={id => void library.play(id)} />
-      </> : <div className="map-detail-empty"><span aria-hidden="true">↖</span><h2>Choose a map</h2><p>Pick a song to see its difficulties and start playing.</p></div>}
-    </aside></div>
-  </main><footer className="notsu-footer"><span>Local collection · Offline play</span><span>Unofficial community project · Not affiliated with ppy</span></footer></div>;
+export function MapBrowser({ view = "select" }: { view?: "select" | "browse" }) {
+  const [params,setParams] = useSearchParams(), navigate = useNavigate();
+  const library = useMapLibrary(params.get("map") ?? undefined), { selected,busy } = library;
+  const [query,setQuery] = useState(""), [favorites,setFavorites] = useState(false), [sort,setSort] = useState<MapSort>("recent");
+  const [mods,setMods] = useState({ ...DEFAULT_MODS }), search = useRef<HTMLInputElement>(null);
+  const previousRandom = useRef<string | undefined>(undefined);
+  const online = onlineAvailable && view === "browse" && params.get("source") === "online";
+  const cards = mapCollection(library.maps,query,favorites,sort);
+  const difficulty = selected?.set.difficulties.find(item=>item.chart.id===library.difficultyId);
+  const open = (revision:string) => { if (!busy) { const next = new URLSearchParams(params); next.set("map",revision); setParams(next,{ replace:true }); void library.open(revision); } };
+  const random = (restore = false) => {
+    if (restore && previousRandom.current) { const revision = previousRandom.current; previousRandom.current=selected?.revision; open(revision); return; }
+    const alternatives = cards.map(rows=>rows[0]).filter(row=>row.setId !== selected?.set.id);
+    if (alternatives.length) { previousRandom.current=selected?.revision; open(alternatives[Math.floor(Math.random()*alternatives.length)].revision); }
+  };
+  useEffect(() => {
+    if (library.playing) return;
+    const shortcuts = (event:KeyboardEvent) => {
+      if (event.defaultPrevented || event.repeat || event.altKey || event.ctrlKey || event.metaKey || document.querySelector("dialog[open]") ||
+        (event.target instanceof HTMLElement && event.target.closest("input, textarea, select, button, a, [contenteditable]"))) return;
+      if (event.key === "Escape") { event.preventDefault(); navigate("/"); }
+      else if (view === "select" && event.key === "Enter" && !busy && difficulty?.chart.notes.length) { event.preventDefault(); void library.play(undefined,mods); }
+      else if (view === "select" && event.key === "F2" && !busy) { event.preventDefault(); random(event.shiftKey); }
+      else if (event.key === "/" && !online) { event.preventDefault(); search.current?.focus(); }
+    };
+    window.addEventListener("keydown",shortcuts); return () => window.removeEventListener("keydown",shortcuts);
+  });
+  if (library.playing) return <RhythmScreen local={{ ...library.playing,close:library.closePlay }}/>;
+  return <AppScreen footer={false} className={`song-shell ${view === "browse" ? "browse-shell" : "select-shell"}`}>
+    <div className={`song-backdrop artwork-${mapHue(selected?.set.id ?? "orbit-signal")}`} aria-hidden="true"/>
+    <main className="song-main" id={MAIN_CONTENT_ID} tabIndex={-1}>
+      <header className="song-heading">
+        <div><p>{view === "browse" ? "Discover your next song" : "Rhythm · Solo"}</p><h1>{view === "browse" ? "Browse maps" : "Song selection"}</h1></div>
+        <div className="ui-cluster">
+          {view === "browse"
+            ? <ButtonLink variant="ghost" size="sm" to={`/rhythm${selected ? `?map=${selected.revision}` : ""}`} icon={<Icon name="play" />}>Song selection</ButtonLink>
+            : <ButtonLink variant="ghost" size="sm" to={onlineAvailable ? "/browse?source=online" : "/browse"} icon={<Icon name="browse" />}>{onlineAvailable ? "Get more maps" : "Browse"}</ButtonLink>}
+          {onlineAvailable && <ButtonLink variant="ghost" size="sm" to="/publish" icon={<Icon name="upload" />}>Publish</ButtonLink>}
+          <label className={buttonClass({ size: "sm" }, "pack-import")}><span className="ui-button__content"><Icon name="plus" />Import pack</span><input aria-label="Import map package" type="file" accept=".notsumap" disabled={busy} onChange={event=>{ const file=event.target.files?.[0]; event.target.value=""; if (file) void library.importFile(file); }}/></label>
+        </div>
+      </header>
+      <div className="song-notices" aria-live="polite">
+        {busy && <Loading>Preparing map…</Loading>}
+        {library.error && <Notice tone="danger" role="alert" actions={<Button size="sm" disabled={busy} onClick={()=>void library.open(params.get("map") ?? selected?.revision ?? starterMaps[0].revision)}>Retry</Button>}>{library.error}</Notice>}
+        {library.notice && <Notice tone="success">{library.notice}</Notice>}
+        {library.removed && <Notice actions={<Button size="sm" disabled={busy} onClick={()=>void library.undo()}>Undo removal</Button>}>Removed {library.removed.title}.</Notice>}
+      </div>
+      {view === "browse" && onlineAvailable && <TabLinks className="browse-sources" label="Map source" items={[{ to: "/browse", label: "On this device", current: !online }, { to: "/browse?source=online", label: "Online discovery", current: online }]} />}
+      <div className="song-content">
+        {view === "select" && <aside className="song-information" aria-label="Selected map"><MapDetails library={library}/></aside>}
+        {online ? <OnlineCatalog library={library}/> : <section className="song-collection" aria-label="Map collection">
+          <div className="song-filters">
+            <label className="song-search"><Icon name="search" /><input ref={search} aria-label="Search maps" type="search" placeholder="Search songs, artists, mappers…" value={query} onChange={event=>setQuery(event.target.value)}/><Badge tone="accent">{cards.length}</Badge></label>
+            <div className="song-filter-row">
+              <Tabs variant="segmented" label="Filter maps" items={[{ value: "all", label: "All maps" }, { value: "favorites", label: "Favorites" }]} value={favorites ? "favorites" : "all"} onChange={value => setFavorites(value === "favorites")} />
+              <label className="song-sort">Sort<select aria-label="Sort maps" value={sort} onChange={event=>setSort(event.target.value as MapSort)}><option value="recent">Date added</option><option value="title">Title</option><option value="artist">Artist</option><option value="length">Length</option></select></label>
+            </div>
+          </div>
+          {view === "browse" && <p className="pack-explainer">Included and imported packs, ready to play.</p>}
+          <MapCollection library={library} cards={cards} view={view} open={open} play={()=>{ if (difficulty?.chart.notes.length) void library.play(undefined,mods); }} clear={()=>{ setQuery(""); setFavorites(false); }}/>
+        </section>}
+      </div>
+    </main>
+    <ScreenFooter back={{ to: "/" }}>
+      {view === "select" ? <>
+        <PlayModifiers mods={mods} change={setMods} busy={busy}/>
+        <FooterButton tone="violet" icon={<Icon name="shuffle" />} label="Random" shortcut="F2" disabled={busy || cards.length<2} onClick={event=>random(event.shiftKey)} />
+        {selected && <MapPreview key={selected.revision} selected={selected}/>}
+        <div className="song-play-summary"><strong>{difficulty?.name ?? "Select a map"}</strong><span>{mods.noFail || mods.autoplay ? "Practice · unranked" : "Local scores · unranked"}</span></div>
+        <button className="song-play-button" disabled={busy || !difficulty?.chart.notes.length} onClick={()=>void library.play(undefined,mods)}><span className="song-play-orb" aria-hidden="true"><Icon name="start" /></span><span>{mods.autoplay ? "Watch" : "Play"}<small>Enter</small></span></button>
+      </> : <>
+        <p className="browse-footer-note">Music and difficulties in every pack.</p>
+        <ButtonLink className="browse-create-link" variant="primary" sheared to="/editor" icon={<Icon name="editor" />}>Create a map</ButtonLink>
+      </>}
+    </ScreenFooter>
+  </AppScreen>;
 }

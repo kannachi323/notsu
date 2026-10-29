@@ -1,8 +1,11 @@
+import type { MapBucket } from "./features/maps/data/media";
+
 export interface Bindings {
   SUPABASE_URL: string;
   SUPABASE_PUBLISHABLE_KEY: string;
-  // Optional server-only secret, used exclusively by account deletion.
+  // Server-only: narrow account-deletion and validated map-publication adapters.
   SUPABASE_SECRET_KEY?: string;
+  MAP_MEDIA?: MapBucket;
   ALLOWED_ORIGINS: string;
 }
 

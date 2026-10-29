@@ -8,6 +8,7 @@ import { friends } from "./features/friends/routes";
 import { messages } from "./features/messages/routes";
 import { presence } from "./features/presence/routes";
 import { moderation } from "./features/moderation/routes";
+import { maps } from "./features/maps/routes";
 
 const app = new Hono<SessionEnv>();
 
@@ -38,6 +39,7 @@ app.route("/v1", friends);
 app.route("/v1", messages);
 app.route("/v1", presence);
 app.route("/v1", moderation);
+app.route("/v1", maps);
 app.notFound((c) => c.json({ error: { code: "not_found", message: "This endpoint was not found." } }, 404));
 app.onError((error, c) => {
   if (error instanceof ApiError) return c.json({ error: { code: error.code, message: error.message } }, error.status);

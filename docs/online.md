@@ -47,7 +47,7 @@ account controls remain unfinished.
 
 ## Implemented API
 
-The entry is `server/app.ts`; feature routes/adapters live under
+The Worker entry is `server/worker.ts`; Hono composition remains in `server/app.ts`; feature routes/adapters live under
 `server/features/accounts/`. Pure profile validation is shared from
 `src/features/accounts/domain/`. No server dependency is imported by the game.
 
@@ -98,7 +98,8 @@ Hard deletion of an Auth user cascades their profile, sessions, friendships,
 blocks, request counters and both sides of its private message history/read
 positions. Existing report evidence and review history survive under the disclosed
 90/180-day retention policy in [moderation](moderation.md); deletion clears identity
-foreign keys but does not anonymize captured evidence. Published-map, score and
+foreign keys but does not anonymize captured evidence. Published map access stops immediately on account deletion; unreferenced media
+is removed by the bounded retention job described in [maps](maps.md). Score and
 production-backup deletion policies remain release work.
 
 Friends and blocking now use a separate migration and feature boundary; see
@@ -106,8 +107,10 @@ Friends and blocking now use a separate migration and feature boundary; see
 account live-session middleware. [Private messages and live updates](messages.md)
 and [friends-only presence](presence.md) are implemented locally. Private
 [reports and review](moderation.md) now cover profiles and received messages.
-Rankings, map publishing, uploads and their administrative endpoints remain
-unfinished. Add grants/RLS and
+Map publishing/discovery/verified downloads and media retention are implemented
+in source; apply the newest [map migration](maps.md) before the updated Worker.
+Their live integration and deployment remain unverified. Rankings and map-review
+UI remain unfinished. Add grants/RLS and
 adversarial tests in the same migration as each future feature.
 
 ## Permanent account deletion

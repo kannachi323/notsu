@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { accountClient, authError, AccountError } from "../data/auth";
 import { emailAddress, emailCode, newPassword } from "../domain/credentials";
+import { Button, Field, Notice, Panel } from "../../../shared/components";
 
 type View = "signin" | "signup" | "confirm" | "recover" | "recoveryCode";
 const headings: Record<View, string> = { signin: "Sign in", signup: "Create an account", confirm: "Verify your email",
@@ -70,31 +71,33 @@ export function AuthFlow() {
     finally { setBusy(false); }
   }
 
-  return <section className="account-panel" aria-labelledby="account-form-title">
-    <h2 id="account-form-title" tabIndex={-1} ref={title}>{headings[view]}</h2>
-    <p className="account-muted">{view === "signin" ? "Welcome back to notsu." : view === "signup" ? "Choose a password. We’ll send a code to verify your email." :
-      view === "recover" ? "We’ll send a code so you can choose a new password." : "Enter the six-digit code from your email. Codes expire after ten minutes."}</p>
-    <form onSubmit={event => { event.preventDefault(); void submit(); }} aria-busy={busy}>
+  return <Panel aria-labelledby="account-form-title">
+    <div>
+      <h2 id="account-form-title" className="ui-panel__title" tabIndex={-1} ref={title}>{headings[view]}</h2>
+      <p className="ui-panel__description">{view === "signin" ? "Welcome back to notsu." : view === "signup" ? "Choose a password. We’ll send a code to verify your email." :
+        view === "recover" ? "We’ll send a code so you can choose a new password." : "Enter the six-digit code from your email. Codes expire after ten minutes."}</p>
+    </div>
+    <form className="ui-form" onSubmit={event => { event.preventDefault(); void submit(); }} aria-busy={busy}>
       <fieldset disabled={busy}>
-        <label>Email<input type="email" autoComplete="email" maxLength={254} required value={email} onChange={event => setEmail(event.target.value)} /></label>
-        {(view === "signin" || view === "signup") && <label>Password<input type="password" autoComplete={view === "signup" ? "new-password" : "current-password"}
-          minLength={view === "signup" ? 12 : undefined} maxLength={128} required value={password} onChange={event => setPassword(event.target.value)} />
-          {view === "signup" && <span className="account-hint">At least 12 characters. A passphrase works well.</span>}</label>}
-        {view === "signup" && <label>Confirm password<input type="password" autoComplete="new-password" maxLength={128} required value={confirmation} onChange={event => setConfirmation(event.target.value)} /></label>}
-        {(view === "confirm" || view === "recoveryCode") && <label>Email code<input className="account-code" inputMode="numeric" autoComplete="one-time-code"
-          pattern="[0-9]{6}" maxLength={6} required value={code} onChange={event => setCode(event.target.value)} /></label>}
-        {error && <p className="account-error" role="alert">{error}</p>}
-        {notice && <p className="account-notice" role="status">{notice}</p>}
-        <button className="account-primary" type="submit">{busy ? "Please wait…" : view === "recover" ? "Send recovery code" :
-          view === "confirm" ? "Verify email" : view === "recoveryCode" ? "Continue" : headings[view]}</button>
+        <Field label="Email"><input type="email" autoComplete="email" maxLength={254} required value={email} onChange={event => setEmail(event.target.value)} /></Field>
+        {(view === "signin" || view === "signup") && <Field label="Password" hint={view === "signup" ? "At least 12 characters. A passphrase works well." : undefined}>
+          <input type="password" autoComplete={view === "signup" ? "new-password" : "current-password"} minLength={view === "signup" ? 12 : undefined} maxLength={128} required value={password} onChange={event => setPassword(event.target.value)} />
+        </Field>}
+        {view === "signup" && <Field label="Confirm password"><input type="password" autoComplete="new-password" maxLength={128} required value={confirmation} onChange={event => setConfirmation(event.target.value)} /></Field>}
+        {(view === "confirm" || view === "recoveryCode") && <Field label="Email code"><input className="account-code" inputMode="numeric" autoComplete="one-time-code"
+          pattern="[0-9]{6}" maxLength={6} required value={code} onChange={event => setCode(event.target.value)} /></Field>}
+        {error && <Notice tone="danger" role="alert">{error}</Notice>}
+        {notice && <Notice role="status">{notice}</Notice>}
+        <Button variant="primary" size="lg" block type="submit">{busy ? "Please wait…" : view === "recover" ? "Send recovery code" :
+          view === "confirm" ? "Verify email" : view === "recoveryCode" ? "Continue" : headings[view]}</Button>
       </fieldset>
     </form>
-    <div className="account-form-links">
-      {view === "signin" ? <><button disabled={busy} onClick={() => change("recover")}>Forgot password?</button><button disabled={busy} onClick={() => change("signup")}>Create an account</button>
-        <button disabled={busy} onClick={() => change("confirm")}>Have a verification code?</button></> : <>
-        {(view === "confirm" || view === "recoveryCode") && <button disabled={busy || remaining > 0} onClick={() => void resend()}>{remaining ? `Resend in ${remaining}s` : "Send a new code"}</button>}
-        <button disabled={busy} onClick={() => change("signin")}>Back to sign in</button></>}
+    <div className="ui-cluster">
+      {view === "signin" ? <><Button variant="ghost" size="sm" disabled={busy} onClick={() => change("recover")}>Forgot password?</Button><Button variant="ghost" size="sm" disabled={busy} onClick={() => change("signup")}>Create an account</Button>
+        <Button variant="ghost" size="sm" disabled={busy} onClick={() => change("confirm")}>Have a verification code?</Button></> : <>
+        {(view === "confirm" || view === "recoveryCode") && <Button variant="ghost" size="sm" disabled={busy || remaining > 0} onClick={() => void resend()}>{remaining ? `Resend in ${remaining}s` : "Send a new code"}</Button>}
+        <Button variant="ghost" size="sm" disabled={busy} onClick={() => change("signin")}>Back to sign in</Button></>}
     </div>
     <p className="account-session-note">Your session lasts until you close or reload the app. Local play is always available without an account.</p>
-  </section>;
+  </Panel>;
 }

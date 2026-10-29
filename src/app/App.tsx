@@ -1,11 +1,15 @@
 import { createHashRouter, Navigate, RouterProvider } from "react-router";
 import { HomeScreen } from "../features/home/components/HomeScreen";
-import { RhythmScreen } from "../features/rhythm/RhythmScreen";
+import { PreferencesScreen } from "../features/rhythm/components/PreferencesScreen";
 import { EditorScreen } from "../features/editor/components/EditorScreen";
 import { MapBrowser } from "../features/maps/components/MapBrowser";
 import { lazy, Suspense } from "react";
+import type { ReactNode } from "react";
 import { useAccountStore } from "../features/accounts/accountStore";
+import { Loading } from "../shared/components";
+import { onlineAvailable } from "../features/accounts/data/availability";
 
+const PublishScreen = lazy(() => import("../features/maps/components/PublishScreen").then(module => ({ default: module.PublishScreen })));
 const AccountScreen = lazy(() => import("../features/accounts/components/AccountScreen").then(module => ({ default: module.AccountScreen })));
 const PublicProfileScreen = lazy(() => import("../features/accounts/components/PublicProfileScreen").then(module => ({ default: module.PublicProfileScreen })));
 const DeleteAccountScreen = lazy(() => import("../features/accounts/components/DeleteAccountScreen").then(module => ({ default: module.DeleteAccountScreen })));
@@ -16,20 +20,30 @@ const ReportScreen = lazy(() => import("../features/moderation/components/Report
 const ReportsScreen = lazy(() => import("../features/moderation/components/ReportsScreen").then(module => ({ default: module.ReportsScreen })));
 const ReviewScreen = lazy(() => import("../features/moderation/components/ReviewScreen").then(module => ({ default: module.ReviewScreen })));
 
+const ComponentSheet = import.meta.env.DEV ? lazy(() => import("./ComponentSheet").then(module => ({ default: module.ComponentSheet }))) : null;
+
+// Offline builds send online-only routes home instead of showing dead ends.
+const online = (element: ReactNode) => onlineAvailable ? element : <Navigate to="/" replace />;
+const loading = (label: string) => <main className="ui-page"><Loading>{label}</Loading></main>;
+
 const router = createHashRouter([
   { path: "/", element: <HomeScreen /> },
-  { path: "/rhythm", element: <RhythmScreen /> },
+  { path: "/rhythm", element: <MapBrowser key="select" view="select" /> },
+  { path: "/settings", element: <PreferencesScreen /> },
+  { path: "/how-to-play", element: <PreferencesScreen help /> },
   { path: "/editor", element: <EditorScreen /> },
-  { path: "/browse", element: <MapBrowser /> },
-  { path: "/account", element: <Suspense fallback={<main className="app"><p role="status">Loading account…</p></main>}><AccountScreen /></Suspense> },
-  { path: "/account/delete", element: <Suspense fallback={<main className="app"><p role="status">Loading account…</p></main>}><DeleteAccountScreen /></Suspense> },
-  { path: "/players/:username?", element: <Suspense fallback={<main className="app"><p role="status">Loading player…</p></main>}><PublicProfileScreen /></Suspense> },
-  { path: "/friends", element: <Suspense fallback={<main className="app"><p role="status">Loading friends…</p></main>}><FriendsScreen /></Suspense> },
-  { path: "/messages/:username?", element: <Suspense fallback={<main className="app"><p role="status">Loading messages…</p></main>}><MessagesScreen /></Suspense> },
-  { path: "/report/:target/:message?", element: <Suspense fallback={<main className="app"><p role="status">Loading report…</p></main>}><ReportScreen /></Suspense> },
-  { path: "/reports", element: <Suspense fallback={<main className="app"><p role="status">Loading reports…</p></main>}><ReportsScreen /></Suspense> },
-  { path: "/moderation", element: <Suspense fallback={<main className="app"><p role="status">Loading reviews…</p></main>}><ReportsScreen review /></Suspense> },
-  { path: "/moderation/:id", element: <Suspense fallback={<main className="app"><p role="status">Loading review…</p></main>}><ReviewScreen /></Suspense> },
+  { path: "/browse", element: <MapBrowser key="browse" view="browse" /> },
+  { path: "/publish", element: online(<Suspense fallback={loading("Loading publishing…")}><PublishScreen /></Suspense>) },
+  { path: "/account", element: online(<Suspense fallback={loading("Loading account…")}><AccountScreen /></Suspense>) },
+  { path: "/account/delete", element: online(<Suspense fallback={loading("Loading account…")}><DeleteAccountScreen /></Suspense>) },
+  { path: "/players/:username?", element: online(<Suspense fallback={loading("Loading player…")}><PublicProfileScreen /></Suspense>) },
+  { path: "/friends", element: online(<Suspense fallback={loading("Loading friends…")}><FriendsScreen /></Suspense>) },
+  { path: "/messages/:username?", element: online(<Suspense fallback={loading("Loading messages…")}><MessagesScreen /></Suspense>) },
+  { path: "/report/:target/:message?", element: online(<Suspense fallback={loading("Loading report…")}><ReportScreen /></Suspense>) },
+  { path: "/reports", element: online(<Suspense fallback={loading("Loading reports…")}><ReportsScreen /></Suspense>) },
+  { path: "/moderation", element: online(<Suspense fallback={loading("Loading reviews…")}><ReportsScreen review /></Suspense>) },
+  { path: "/moderation/:id", element: online(<Suspense fallback={loading("Loading review…")}><ReviewScreen /></Suspense>) },
+  ...(ComponentSheet ? [{ path: "/ui", element: <Suspense fallback={loading("Loading interface sheet…")}><ComponentSheet /></Suspense> }] : []),
   { path: "*", element: <Navigate to="/" replace /> },
 ]);
 export function App() {

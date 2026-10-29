@@ -52,6 +52,14 @@ export class HitFeedback {
     }
   }
 
-  expire(timeMs: number) { this.effects = this.effects.filter(effect => timeMs - effect.event.atMs < effect.durationMs); }
+  /** Runs every frame, so it compacts in place instead of allocating. */
+  expire(timeMs: number) {
+    let kept = 0;
+    for (let i = 0; i < this.effects.length; i++) {
+      const effect = this.effects[i];
+      if (timeMs - effect.event.atMs < effect.durationMs) this.effects[kept++] = effect;
+    }
+    this.effects.length = kept;
+  }
   clear() { this.effects = []; this.lastEventId = 0; this.missedNotes.clear(); this.revision = 0; }
 }

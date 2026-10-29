@@ -34,7 +34,10 @@ export type Runtime = {
 };
 type View = { phase: Phase; timeMs: number; summary: Summary; feedback: Feedback | null; countdown: number };
 
-export type LocalLevel = { chart: Chart; buffer: AudioBuffer; editor?: boolean; recordSource?: RecordSource; savedReplay?: Replay };
+// The frame loop checks this every tick; a shared Set avoids per-frame arrays.
+const CLOCKED_PHASES: ReadonlySet<Phase> = new Set(["countdown", "playing", "resuming"]);
+
+export type LocalLevel = { chart: Chart; buffer: AudioBuffer; editor?: boolean; recordSource?: RecordSource; savedReplay?: Replay; autoStart?: boolean; initialMods?: Mods };
 export function useRhythmGame(level?: LocalLevel) {
   const initialChart = level?.chart ?? songChart;
   const [settings, setSettings] = useState(loadSettings);
@@ -147,7 +150,7 @@ export function useRhythmGame(level?: LocalLevel) {
     let lastPublish = 0;
     const tick = (now: number) => {
       const current = runtime.current;
-      if (current.audio && !current.resumePending && ["countdown", "playing", "resuming"].includes(current.phase)) {
+      if (current.audio && !current.resumePending && CLOCKED_PHASES.has(current.phase)) {
         if (current.audio.context.state !== "running") pause();
         else {
           const time = current.audio.timeAt() - current.settings.offsetMs;
@@ -160,7 +163,7 @@ export function useRhythmGame(level?: LocalLevel) {
             consumeFeedback();
             current.feedback.expire(current.timeMs);
           }
-          if (current.session.summary().status !== "playing") finishRun();
+          if (current.session.status !== "playing") finishRun();
         }
         if (now - lastPublish >= 50 || current.phase === "results") { publish(); lastPublish = now; }
       }

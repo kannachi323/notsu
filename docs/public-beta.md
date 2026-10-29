@@ -81,7 +81,7 @@ do not change gameplay. Pause/resume must stop time and use a count-in.
 | Shared core | Multi-lane play, holds/shared hits, score/health/mods, deterministic replays and tests | In progress |
 | Presentation | Production assets/skins/sounds, tutorial, settings and results, visual/audio review | In progress |
 | Creator workflow | Import song -> author -> save/reopen -> export -> play without code | In progress |
-| Community | Deployed accounts/maps/friends/messages/moderation, authorization checks | In progress: local accounts, profiles, friends, messages, presence, reporting and review; online maps and deployment pending |
+| Community | Deployed accounts/maps/friends/messages/moderation, authorization checks | In progress: local accounts, profiles, friends, messages, presence, reporting and review; online map discovery/publishing source implemented; integration, map review UI and deployment pending |
 | Public beta | Verified rankings, reviewed starter maps, platform releases and operational gates | Pending |
 
 Required validation: timing boundaries, FPS/input/replay equivalence, overlapping
@@ -853,3 +853,76 @@ backup/retention monitoring, direct-service abuse controls, load/security review
 and broader UI/platform coverage remain required. Online map publishing, rankings,
 staging/production deployment, signing, performance validation and external
 playtests also remain active requirements of the complete public-beta goal.
+
+### September 29 song selection, map browsing and gameplay redesign
+
+Replaced the public prototype entry with a pack-based song selector. The researched
+modern rhythm-game direction is recorded in [design notes](direction.md): original
+illustrated Home, compact navigation, song details/local results beside stacked
+song and difficulty cards, Browse artwork grid, persistent Play/modifier/preview
+bar and a dim playfield with an edge HUD. Pause, results, Settings and help use the
+same public navigation. The previous reference notes remain historical.
+
+Three [included packs](starter-maps.md) contain original synth recordings and two
+difficulties each. Selecting a map decodes its packaged recording and starts the
+actual engine; no separate MP3 is requested. `.notsumap` import/export still uses
+the existing bounded archive and content validation. The local catalog merges
+bundled and saved revisions without duplicating favorites. Included packs remain
+available if the local library cannot be read. Existing maps, records, editor
+drafts, skins and account data are preserved.
+
+- `npm test`: 491 passing tests in 67 files. New checks read all three committed
+  archives, match the catalog revision/metadata, check actual PCM duration and
+  non-silent unclipped samples, and complete all six difficulties in Autoplay.
+- `npm run build`: type checking and production frontend pass. The main game chunk
+  is about 513 kB minified / 160 kB gzip, retaining the existing size warning.
+  The original background is about 2.1 MB; included archives total about 6.1 MB.
+- Browser: selected difficulties with keyboard controls, played/stopped a packaged
+  audio preview, completed Orbit in Autoplay at 1,000,000 points / 100% accuracy,
+  observed the saved practice replay, and returned to the retained selection.
+  Search, Browse-to-selection, Home and Settings routes were exercised. Existing
+  imported skins were still available in Settings. The observed viewport was
+  881 × 842; a requested 640 × 800 browser override did not apply, so the smaller
+  breakpoint is not claimed as visually verified.
+- `npm run tauri -- build --debug --bundles app`: unsigned macOS bundle passes.
+  The actual bundle opened the featured pack as a guest, selected Orbit, loaded
+  audio from packaged resources, started Autoplay, displayed moving lines/circles,
+  paused with Escape and returned to the retained song/difficulty/modifiers.
+  The smoke-test app was then quit. This is not Windows/Linux release verification.
+- Captured evidence is in ignored `.tools/screenshots/redesign-home.png`,
+  `redesign-browse.png`, `redesign-song-selection-native.png` and
+  `redesign-gameplay-native.png`. The generated background and its prompt are
+  committed under `src/features/home/assets/`.
+
+Browse currently contains real included/imported local maps; no online search,
+ranked badges, star ratings or player counts are fabricated. Online publishing and
+competition, hosted deployment, reviewed starter content, human musical feedback,
+performance/latency measurements and the other release gates remain unfinished.
+The complete public-beta goal remains active.
+
+
+### October 4 interface and online-map continuation (unverified)
+
+Implemented a closer game layout from refreshed visual references: circular Home
+Play control with adjacent activity rows, compact navigation and real bundled-song
+playback, a denser song/difficulty carousel, practice-modifier dialog, keyboard
+shortcuts, and reorganized results. Original notsu assets and gameplay rules remain.
+
+Continued the unfinished online-map checkpoint with public discovery/pagination,
+verified bounded downloads, explicit publication rights, stable upload retries,
+owner withdrawal/restoration and a resilient offline/session-only import fallback.
+Added a media-generation migration and bounded hourly orphan retention with a
+persistent cursor; referenced withdrawn/moderated media remains available for
+restoration. Malformed online configuration no longer prevents local play.
+
+Added adversarial source coverage for these API/data/storage changes. Only source
+and diff review was performed: no dependency installs, compilation, builds, tests,
+database migrations, deployment or live UI/audio checks were performed under the
+current project instruction. Earlier test/build evidence does not validate this
+pass. The previous stale-visibility integration failure still requires a live
+retest. [Maps](maps.md) describes the new migration and Worker entry point.
+
+Verified rankings/tickets/server replay recalculation, map moderation/reporting
+screens, calibration/display/interface audio completion, hosted services,
+operational gates, real playtests and each platform release remain open. This pass
+does not complete the public beta, and no release gate has been removed.

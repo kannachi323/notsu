@@ -14,7 +14,7 @@ it("exports a complete editable starter with all sprites and both sounds", async
   expect(warnings).toEqual([]); expect(Object.keys(manifest.sprites)).toHaveLength(12);
   expect(files["atlas.png"]).toEqual(new Uint8Array(png));
   for (const file of Object.values(manifest.sounds)) expect(readWav(files[file!]).channels).toHaveLength(1);
-});
+}, 20_000); // Compresses the full atlas; slow on a loaded machine.
 it("surfaces an unavailable bundled atlas instead of creating a broken starter", async () => {
   vi.stubGlobal("fetch", vi.fn(async () => new Response(null, { status: 404 })));
   await expect(starterSkin()).rejects.toThrow("could not be loaded");

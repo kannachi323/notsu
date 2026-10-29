@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { changeConnection } from "../data/connections";
 import type { Connection, ConnectionAction } from "../domain/connections";
+import { Button, Notice, type ButtonVariant } from "../../../shared/components";
 
 const labels: Record<Connection["state"], string> = { none: "Connect with this player", outgoing: "Friend request sent", incoming: "Wants to be your friend",
   friends: "You are friends", blocked: "Player blocked", unavailable: "This connection is unavailable", self: "Your profile" };
@@ -20,22 +21,23 @@ export function ConnectionActions({ target, connection, onChanged, onRefresh }: 
     } catch (cause) { setError(cause instanceof Error ? cause.message : "Could not confirm this change. Please refresh."); }
     finally { setBusy(false); }
   }
-  const action = (label: string, value: ConnectionAction, primary = false) =>
-    <button disabled={busy} className={primary ? "account-primary" : undefined} onClick={() => void change(value)}>{label}</button>;
+  const action = (label: string, value: ConnectionAction, variant: ButtonVariant = "secondary") =>
+    <Button size="sm" variant={variant} disabled={busy} onClick={() => void change(value)}>{label}</Button>;
   return <div className="connection-actions" aria-busy={busy}>
     <p className="connection-state" role="status">{busy ? "Updating connection…" : labels[connection.state]}</p>
-    {confirm ? <div className="connection-confirm"><p>{confirm === "block"
-      ? "Blocking ends your friendship, cancels pending requests and stops messages between you. Conversation history is hidden while you are not friends. Public profiles stay visible."
-      : "Remove this friendship? You can send a new request later."}</p><div className="account-actions">
-        {action(confirm === "block" ? "Block player" : "Remove friend", confirm)}<button disabled={busy} onClick={() => setConfirm(null)}>Cancel</button>
-      </div></div> : <div className="account-actions">
-        {connection.state === "none" && action("Add friend", "send", true)}
-        {connection.state === "incoming" && <>{action("Accept request", "accept", true)}{action("Decline", "decline")}</>}
+    {confirm ? <Notice tone="warning" title={confirm === "block" ? "Block this player?" : "Remove this friendship?"} actions={<>
+      {action(confirm === "block" ? "Block player" : "Remove friend", confirm, "danger")}<Button size="sm" disabled={busy} onClick={() => setConfirm(null)}>Cancel</Button></>}>
+      {confirm === "block"
+        ? "Blocking ends your friendship, cancels pending requests and stops messages between you. Conversation history is hidden while you are not friends. Public profiles stay visible."
+        : "You can send a new request later."}
+    </Notice> : <div className="ui-cluster">
+        {connection.state === "none" && action("Add friend", "send", "primary")}
+        {connection.state === "incoming" && <>{action("Accept request", "accept", "primary")}{action("Decline", "decline")}</>}
         {connection.state === "outgoing" && action("Cancel request", "cancel")}
-        {connection.state === "friends" && <button disabled={busy} onClick={() => setConfirm("remove")}>Remove friend</button>}
+        {connection.state === "friends" && <Button size="sm" disabled={busy} onClick={() => setConfirm("remove")}>Remove friend</Button>}
         {connection.state === "blocked" && action("Unblock", "unblock")}
-        {!["self", "blocked"].includes(connection.state) && <button disabled={busy} className="connection-block" onClick={() => setConfirm("block")}>Block</button>}
+        {!["self", "blocked"].includes(connection.state) && <Button size="sm" variant="ghost" className="connection-block" disabled={busy} onClick={() => setConfirm("block")}>Block</Button>}
       </div>}
-    {error && <div className="account-error" role="alert"><p>{error}</p><button disabled={busy} onClick={() => { setError(""); setConfirm(null); onRefresh(); }}>Refresh connection</button></div>}
+    {error && <Notice tone="danger" role="alert" actions={<Button size="sm" disabled={busy} onClick={() => { setError(""); setConfirm(null); onRefresh(); }}>Refresh connection</Button>}>{error}</Notice>}
   </div>;
 }

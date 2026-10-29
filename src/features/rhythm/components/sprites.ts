@@ -3,11 +3,20 @@ import type { SpriteName } from "../data/gameplayAtlas";
 import type { Skin } from "./skins";
 import { skinAssets } from "../../skins/data/registry";
 
-function resolve(skin: Skin, name: SpriteName) {
+type Resolved = { image: HTMLImageElement; frame: (typeof atlasManifest.sprites)[SpriteName] };
+// Built-in atlas lookups are cached per decoded image; sprites draw every frame.
+let atlasImage: HTMLImageElement | undefined;
+const atlasEntries = new Map<SpriteName, Resolved>();
+
+function resolve(skin: Skin, name: SpriteName): Resolved | undefined {
   const custom = skinAssets(skin.id)?.sprites[name];
   if (custom) return custom;
   const image = skin.atlas === "gloss-v1" ? gameplayAtlas() : undefined;
-  return image ? { image, frame: atlasManifest.sprites[name] } : undefined;
+  if (!image) return undefined;
+  if (image !== atlasImage) { atlasImage = image; atlasEntries.clear(); }
+  let entry = atlasEntries.get(name);
+  if (!entry) atlasEntries.set(name, entry = { image, frame: atlasManifest.sprites[name] });
+  return entry;
 }
 
 /** Measured source pivots keep the visible body on the logical timing position. */

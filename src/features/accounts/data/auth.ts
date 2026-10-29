@@ -1,6 +1,6 @@
 import { createClient, type AuthError, type SupabaseClient } from "@supabase/supabase-js";
 import { acceptIdentity, useAccountStore } from "../accountStore";
-import { onlineConfig } from "./config";
+import { onlineConfig, onlineEnv } from "./config";
 
 export class AccountError extends Error {
   constructor(message: string, public code = "unavailable") { super(message); }
@@ -24,12 +24,18 @@ export function authError(error: AuthError): AccountError {
   return new AccountError(Object.hasOwn(messages, code) ? messages[code] : "The account service could not complete this request. Check your connection and try again.", code);
 }
 
-export const configuration = onlineConfig(import.meta.env);
+// A malformed online build must still leave local play and authoring available.
+const configured = (() => {
+  try { return { value: onlineConfig(onlineEnv()), issue: "" }; }
+  catch { return { value: null, issue: "Online services are misconfigured in this build. Local play remains available." }; }
+})();
+export const configuration = configured.value;
+export const configurationIssue = configured.issue;
 let client: SupabaseClient | undefined;
 let unsubscribe: (() => void) | undefined;
 
 export function accountClient() {
-  if (!configuration) throw new AccountError("Accounts are not available in this build.");
+  if (!configuration) throw new AccountError(configurationIssue || "Accounts are not available in this build.");
   if (!client) {
     client = createClient(configuration.authUrl, configuration.key, {
       auth: { persistSession: false, autoRefreshToken: true, detectSessionInUrl: false, storageKey: `notsu-session-${crypto.randomUUID()}` },

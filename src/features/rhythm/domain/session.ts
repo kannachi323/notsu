@@ -26,6 +26,7 @@ export interface Summary {
   counts: Record<Grade, number>;
   meanErrorMs: number | null;
 }
+const NO_EVENTS: readonly JudgementEvent[] = Object.freeze([]);
 type Deadline = { atMs: number; state: NoteState; tail: boolean };
 
 /** The same deterministic rules run in the client, editor, and replay verifier. */
@@ -46,7 +47,7 @@ export class RhythmSession {
   private deadlineIndex = 0;
   private autoIndex = 0;
   private headIndex = 0;
-  private status: RunStatus = "playing";
+  private runStatus: RunStatus = "playing";
   private failedAtMs: number | null = null;
   private health = 100;
   private counts: Record<Grade, number> = { Perfect: 0, Good: 0, Okay: 0, Miss: 0 };
@@ -80,7 +81,9 @@ export class RhythmSession {
     ]).sort((a, b) => a.atMs - b.atMs) : [];
   }
 
-  drainJudgements(): JudgementEvent[] {
+  drainJudgements(): readonly JudgementEvent[] {
+    // Most frames have no new judgements; avoid allocating for them.
+    if (!this.events.length) return NO_EVENTS;
     const events = this.events;
     this.events = [];
     return events;
@@ -93,6 +96,8 @@ export class RhythmSession {
   pressedKeys(): string[] { return [...this.pressed]; }
   heldKeys(): string[] { return [...this.holds].map(state => state.key!); }
   markResumed(): void { this.assistance.resumed = true; }
+  /** Cheap per-frame check; summary() allocates and is for display. */
+  get status(): RunStatus { return this.runStatus; }
 
   advance(timeMs: number): void {
     this.checkTime(timeMs);
@@ -110,19 +115,19 @@ export class RhythmSession {
 
   private input(event: InputEvent) {
     this.checkTime(event.atMs);
-    if (this.mods.autoplay || (this.status !== "playing" && event.atMs > this.advancedThrough)) return;
+    if (this.mods.autoplay || (this.runStatus !== "playing" && event.atMs > this.advancedThrough)) return;
     if (event.atMs > this.chart.durationMs) { this.advance(this.chart.durationMs); return; }
     if (!event.key || event.key.length > 64) throw new Error("Invalid input key.");
     if (event.atMs < (this.history.at(-1)?.atMs ?? -Infinity)) throw new Error("Inputs must be chronological.");
     if ((event.action === "press") === this.pressed.has(event.key)) return;
     this.history.push({ ...event });
-    if (event.atMs < this.advancedThrough || this.status !== "playing") this.reconcile();
+    if (event.atMs < this.advancedThrough || this.runStatus !== "playing") this.reconcile();
     else { this.applyInput(event); this.advancedThrough = event.atMs; }
   }
 
   private applyInput(event: InputEvent) {
     this.expire(event.atMs);
-    if (this.status !== "playing") return;
+    if (this.runStatus !== "playing") return;
     if (event.action === "release") {
       this.pressed.delete(event.key);
       const held = [...this.holds].find(state => state.key === event.key);
@@ -153,7 +158,7 @@ export class RhythmSession {
   private expire(timeMs: number) {
     // Strict comparison preserves the inclusive late edge. Event timestamps are
     // the authored deadlines, never whichever frame first noticed the miss.
-    while (this.status === "playing" && this.deadlineIndex < this.deadlines.length &&
+    while (this.runStatus === "playing" && this.deadlineIndex < this.deadlines.length &&
            this.deadlines[this.deadlineIndex].atMs < timeMs) {
       const { state, tail, atMs } = this.deadlines[this.deadlineIndex++];
       if (tail) {
@@ -165,7 +170,7 @@ export class RhythmSession {
       } else if (!state.head) {
         state.head = "Miss";
         this.record("Miss", atMs, state.note.kind === "hold" ? "press" : "tap", state.note.id);
-        if (state.note.kind === "hold" && this.status === "playing") {
+        if (state.note.kind === "hold" && this.runStatus === "playing") {
           state.tail = "Miss";
           this.record("Miss", atMs, "release", state.note.id);
         }
@@ -173,18 +178,21 @@ export class RhythmSession {
     }
   }
 
-  /** Only approaching heads and held ribbons participate in rendering. */
-  visibleStates(timeMs: number): NoteState[] {
+  /** Only approaching heads and held ribbons participate in rendering.
+   * Pass a reusable array from the render loop to avoid per-frame garbage. */
+  visibleStates(timeMs: number, out: NoteState[] = []): NoteState[] {
+    out.length = 0;
+    // Held ribbons already have a judged head, so they never repeat below.
+    if (this.holds.size) this.holds.forEach(state => out.push(state));
     let low = 0, high = this.states.length;
     while (low < high) {
       const mid = (low + high) >>> 1;
       if (this.states[mid].note.timeMs < timeMs - HIT_WINDOW_MS) low = mid + 1; else high = mid;
     }
-    const visible = new Set(this.holds);
     for (let i = low; i < this.states.length && this.states[i].note.timeMs <= timeMs + APPROACH_MS; i++) {
-      if (!this.states[i].head) visible.add(this.states[i]);
+      if (!this.states[i].head) out.push(this.states[i]);
     }
-    return [...visible];
+    return out;
   }
 
   summary(): Summary {
@@ -194,9 +202,9 @@ export class RhythmSession {
       accuracy: judged + this.extra ? earned / (judged + this.extra) * 100 : 100,
       score: Math.round(1_000_000 * (.7 * this.comboCredit / this.maxCredit + .3 * earned / (this.expected + this.extra))),
       health: this.health,
-      status: this.status,
+      status: this.runStatus,
       failedAtMs: this.failedAtMs,
-      rankedEligible: this.status === "completed" && !this.mods.noFail && !this.mods.autoplay &&
+      rankedEligible: this.runStatus === "completed" && !this.mods.noFail && !this.mods.autoplay &&
         !this.assistance.freezeMotion && !this.assistance.resumed,
       assists: { ...this.assistance },
       combo: this.combo, maxCombo: this.maxCombo, judged, expected: this.expected,
@@ -216,7 +224,7 @@ export class RhythmSession {
     const event = { ...this.feedback, id: ++this.eventId, ...(noteId ? { noteId } : {}) };
     this.events.push(event); this.judgements.push(event);
     if (this.health === 0 && !this.mods.noFail) {
-      this.status = "failed";
+      this.runStatus = "failed";
       this.failedAtMs = atMs;
     }
   }
@@ -226,11 +234,11 @@ export class RhythmSession {
   }
 
   private completeIfDue(timeMs: number) {
-    if (this.status !== "playing" || timeMs < this.chart.durationMs) return;
+    if (this.runStatus !== "playing" || timeMs < this.chart.durationMs) return;
     // A legal last note can have its inclusive late edge at durationMs. Close
     // that window at completion; timestamped inputs at the edge can reconcile it.
     this.expire(Infinity);
-    if (this.status === "playing") this.status = "completed";
+    if (this.runStatus === "playing") this.runStatus = "completed";
   }
 
   /** A render frame may run before delivery of an earlier timestamped input.
@@ -247,7 +255,7 @@ export class RhythmSession {
     this.pressed.clear(); this.holds.clear();
     this.counts = { Perfect: 0, Good: 0, Okay: 0, Miss: 0 };
     this.deadlineIndex = this.headIndex = this.combo = this.maxCombo = this.comboCredit = this.extra = this.errorSum = this.errorCount = 0;
-    this.health = 100; this.status = "playing"; this.failedAtMs = null;
+    this.health = 100; this.runStatus = "playing"; this.failedAtMs = null;
     this.feedback = null; this.events = []; this.judgements = [];
     for (const event of this.history) this.applyInput(event);
     this.expire(this.advancedThrough);

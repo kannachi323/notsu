@@ -16,10 +16,113 @@ determine this application's dependencies.
 
 Trivia remains a planned casual feature. Preserve its fixture-based, deterministic
 daily design and its separate boundary. Rhythm is implemented independently; do
-not create a general game framework. Home links to Play, the local Editor and the local map browser;
-community destinations remain placeholders within the approved plan.
+not create a general game framework. Home links to song selection, local authoring,
+map browsing and the implemented account/community routes.
 
-## Current home-screen direction
+## Interface system (October 4)
+
+The user asked for a closer modern-lazer look, a properly designed style
+foundation and a shared component library before more pages are built, with
+consistent padding everywhere. Layout ideas follow the current lazer client
+(overlay headers with underline tabs, form controls with inset labels, slanted
+footer buttons, a horizontal main-menu band); no source, font, logo or artwork
+was copied.
+
+- Tokens live in `src/shared/styles/tokens.css` under the `--ui-` prefix, because
+  skins write unprefixed variables (`--surface`, `--accent`, …) onto `:root` at
+  runtime. Surfaces come from a single hue ramp (`--ui-hue`), so the interface
+  can be retinted in one place. Cyan stays the primary action colour; violet and
+  pink are secondary.
+- Spacing uses a 4px scale (`--ui-space-*`). Every content screen uses `<Page>`,
+  so horizontal padding is always `--ui-gutter` and section spacing is always
+  `--ui-section-gap`. Panels share `--ui-panel-padding`; game screens use the
+  same gutter. Body text is 15px and no interface text goes below 12px.
+- `src/shared/components` provides Button/ButtonLink/IconButton, Page and
+  PageHeader, Tabs/TabLinks, Panel/SectionHeader/Stack/Cluster, Field, Checkbox
+  (including a switch), Slider, Notice, Badge, Loading, EmptyState, Avatar,
+  StatList, List/ListItem, Dialog and ScreenFooter/FooterButton. `AppScreen`
+  in the home feature supplies the skip link, toolbar and attribution footer.
+- Account, players, friends, messages, reports/review, settings, publishing,
+  song selection and Browse now use these components. The gameplay player and
+  editor keep their own styles; the editor reads the shared colour tokens.
+- Development builds show the token swatches, scales and all components at
+  `/#/ui`. Production builds omit the route.
+
+These changes have not been compiled, tested or visually verified in this pass,
+in accordance with the current project instruction.
+
+## Current direction: October 4 game interface
+
+The user requested a substantially closer adaptation of modern osu!lazer's layout.
+Reviewed the July 2026 [lazer interface guide](https://osu.ppy.sh/community/forums/topics/2221264)
+and its main-menu and expanded song-carousel screenshots again on October 4.
+This community guide supplies visual references, not a developer specification.
+The [current game repository](https://github.com/ppy/osu) remains the primary
+implementation reference; no third-party source, logo, music or artwork was copied.
+
+This source pass uses a compact top toolbar, an original cyan circular notsu Play
+control, adjacent Play/Discover/Create/Settings rows, and a quiet lower song banner.
+Home supports Enter/P/B/E/O shortcuts outside controls. The music dropdown plays
+the original bundled songs and stops on leaving the screen.
+
+Song selection uses a prominent metadata/records area on the left and denser
+image-backed song rows on the right. The expanded difficulty rows and selected
+song shift toward the center. Difficulty indicators show actual counts; no star
+ratings are invented. The fixed bottom toolbar owns Back, Mods, Random, Preview
+and a circular Play action. Enter plays, F2 selects a random song, Shift+F2 restores
+the prior selection, and / focuses search when focus is outside controls.
+Native dialog focus/escape behavior is used for the practice modifiers.
+
+Browse has On this device and Online discovery views. Publishing has a separate
+creator screen with media-rights confirmation and explicit publication visibility.
+Results organize real scores, accuracy, combo, judgement counts, timing and replay
+controls in a wider game layout. All interactions preserve semantic HTML, visible
+focus, compact-window reflow and reduced motion. The existing moving-line gameplay,
+original backdrop and cyan/violet skins remain in use.
+
+These changes have not been compiled, tested or visually verified in this pass,
+in accordance with the current project instruction. Deployment and cross-platform
+release claims require fresh verification. See [map publishing](maps.md).
+
+## September 29 song selection and gameplay redesign (superseded layout)
+
+The user requested a closer emulation of osu!'s playing, song selection and map
+browsing screens. This supersedes the earlier outlined-card home and separate
+prototype menu below. The default reference is modern osu!lazer, with original
+notsu identity, artwork, music and moving-line mechanics.
+
+Research reviewed the [game repository](https://github.com/ppy/osu),
+[framework repository](https://github.com/ppy/osu-framework),
+[interface documentation](https://osu.ppy.sh/wiki/en/Client/Interface), and
+[map archive format](https://osu.ppy.sh/wiki/en/Client/File_formats/osz_(file_format)).
+The wiki interface page describes the classic client. For current visual context,
+the July 2026 [community lazer interface guide](https://osu.ppy.sh/community/forums/topics/2221264)
+was reviewed, including its song-selection screenshot. It is a community guide,
+not an official developer design specification. No source or official art was copied.
+
+The implemented direction uses:
+
+- A static illustrated backdrop, compact navigation, a prominent Play action and
+  quieter Browse/Create choices on Home.
+- Song information, real local results and pack tools on the left; searchable,
+  stacked song cards and expanded keyboard-accessible difficulties on the right.
+  A persistent bottom bar owns practice modifiers, Random, Preview and Play.
+- An artwork grid for Browse, with actual library entries and clear Included/Local
+  labels. Do not invent online counts, star ratings or ranked status.
+- A dimmed playfield background and HUD at its edges: score/accuracy top-right,
+  health top-left, combo bottom-left and progress at the bottom. Authored lines and
+  cyan/violet circles remain the focus. Pause and results retain real engine state.
+- Complete `.notsumap` packs as the public playback entry. Three original starter
+  packs include recordings and difficulties. Selecting a map never asks the player
+  to find a separate MP3. Local recording import belongs to the editor.
+
+Artwork is `src/features/home/assets/orbital-night.png`, created with the built-in
+image generator; its prompt is saved alongside it. It is shared interface art,
+not a map-cover extension to the package format. Keep the background static,
+visible focus, keyboard controls, reduced motion, and clear unofficial attribution.
+At small widths song cards flow above details and the play bar stays available.
+
+## Historical home-screen direction (superseded)
 
 The approved September 26, 2026 reference is the user-supplied notsu mockup with
 a nearly black background, subtle outlined surfaces, cyan orb-and-line artwork,
@@ -44,7 +147,7 @@ states. Account deletion has a separate confirmation screen. Keep keyboard acces
 support, and an unobtrusive unofficial-community-project attribution. Do not show
 fabricated live performance or playback metrics.
 
-## Current Rhythm direction
+## Retained gameplay art and mechanics
 
 The user approved a minimal dark blue-gray stage, shaded cyan tap orbs, violet hold
 ribbons, and a hollow target ring. Short local hit effects are allowed; avoid
@@ -55,13 +158,14 @@ timestamp take one press. Lines do not transfer notes at intersections. Every
 movement has a scheduled start, destination, and arrival.
 The same musical phrase can reuse the same movement vocabulary.
 
-The retained prototype menu is a simple rhythm-game screen, inspired by the clarity
+The earlier prototype menu was a simple rhythm-game screen, inspired by the clarity
 of osu! and other rhythm-game menus without copying their branding or artwork.
 Use the game's own orb-and-line motif, a large wordmark, and only Play, Settings,
-and How to play in the Rhythm menu. Put chart selection and local audio loading behind Play,
+and How to play in the Rhythm menu. It put chart selection and local audio loading behind Play,
 and preferences on their own screen. No slogans, promotional copy, prototype
-badges, or decorative uppercase labels. Menu body text is 18px; ancillary labels
-and gameplay text are at least 16px. Preserve both skin palettes, visible keyboard
+badges, or decorative uppercase labels. Its menu body text was 18px; ancillary labels
+and gameplay text were at least 16px. These prototype-menu rules are historical;
+the current public flow and layout are specified above. Preserve both skin palettes, visible keyboard
 focus, native radio-keyboard selection, and Escape/back navigation. Keep the home
 art static, including with reduced motion. Do not add speculative menu destinations.
 

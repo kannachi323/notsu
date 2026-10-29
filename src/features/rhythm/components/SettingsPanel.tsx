@@ -1,30 +1,25 @@
 import type { Settings } from "../data/settings";
 import { SkinManager } from "../../skins/components/SkinManager";
+import { Checkbox, Panel, Slider } from "../../../shared/components";
 
 export function SettingsPanel({ settings, updateSettings }: { settings: Settings; updateSettings: (settings: Settings) => void }) {
-  return <div className="settings-panel">
-    <section className="settings-section" aria-labelledby="appearance-title">
-      <h2 id="appearance-title">Appearance</h2>
+  return <div className="ui-stack ui-stack--lg">
+    <Panel title="Appearance" description="Skins change artwork, sounds and colours. Hit timing always stays the same.">
       <SkinManager skinId={settings.skinId} volume={settings.hitVolume} select={skinId => updateSettings({ ...settings, skinId })} />
-      <label className="motion-choice"><input type="checkbox" checked={settings.reducedMotion} aria-describedby="motion-help"
-        onChange={event => updateSettings({ ...settings, reducedMotion: event.target.checked })} /><span>Reduced motion</span></label>
-      <p id="motion-help">Use static hit effects and hide movement hints. The authored line movement stays part of gameplay.</p>
-      <label className="motion-choice"><input type="checkbox" checked={settings.freezeMotion} aria-describedby="freeze-help"
-        onChange={event => updateSettings({ ...settings, freezeMotion: event.target.checked })} /><span>Freeze line movement</span></label>
-      <p id="freeze-help">Keep each line in its opening position. This practice assist does not qualify for rankings.</p>
-    </section>
-    <section className="settings-section" aria-labelledby="audio-title">
-      <h2 id="audio-title">Audio and timing</h2>
-      <label className="range-label" htmlFor="volume">Music volume <output htmlFor="volume">{Math.round(settings.volume * 100)}%</output></label>
-      <input id="volume" type="range" min="0" max="1" step=".05" value={settings.volume}
+      <hr className="ui-divider" />
+      <Checkbox toggle label="Reduced motion" checked={settings.reducedMotion} onChange={event => updateSettings({ ...settings, reducedMotion: event.target.checked })}
+        description="Use static hit effects and hide movement hints. The authored line movement stays part of gameplay." />
+      <Checkbox toggle label="Freeze line movement" checked={settings.freezeMotion} onChange={event => updateSettings({ ...settings, freezeMotion: event.target.checked })}
+        description="Keep each line in its opening position. This practice assist does not qualify for rankings." />
+    </Panel>
+    <Panel title="Audio and timing">
+      <Slider id="volume" label="Music volume" valueText={`${Math.round(settings.volume * 100)}%`} min="0" max="1" step=".05" value={settings.volume}
         onChange={event => updateSettings({ ...settings, volume: Number(event.target.value) })} />
-      <label className="range-label" htmlFor="hit-volume">Hit sound volume <output htmlFor="hit-volume">{Math.round(settings.hitVolume * 100)}%</output></label>
-      <input id="hit-volume" type="range" min="0" max="1" step=".05" value={settings.hitVolume}
+      <Slider id="hit-volume" label="Hit sound volume" valueText={`${Math.round(settings.hitVolume * 100)}%`} min="0" max="1" step=".05" value={settings.hitVolume}
         onChange={event => updateSettings({ ...settings, hitVolume: Number(event.target.value) })} />
-      <label className="range-label" htmlFor="offset">Timing offset <output htmlFor="offset">{settings.offsetMs > 0 ? "+" : ""}{settings.offsetMs} ms</output></label>
-      <input id="offset" type="range" min="-250" max="250" step="5" value={settings.offsetMs} aria-describedby="offset-help"
-        onChange={event => updateSettings({ ...settings, offsetMs: Number(event.target.value) })} />
-      <p id="offset-help">Increase this if your hits consistently register late. Positive values move note timing later relative to the music.</p>
-    </section>
+      <Slider id="offset" label="Timing offset" valueText={`${settings.offsetMs > 0 ? "+" : ""}${settings.offsetMs} ms`} min="-250" max="250" step="5" value={settings.offsetMs}
+        onChange={event => updateSettings({ ...settings, offsetMs: Number(event.target.value) })}
+        description="Increase this if your hits consistently register late. Positive values move note timing later relative to the music." />
+    </Panel>
   </div>;
 }
