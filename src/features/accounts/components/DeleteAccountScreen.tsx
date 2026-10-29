@@ -40,8 +40,8 @@ export function DeleteAccountScreen() {
       <p className="account-email">Deleting <strong>{identity.email}</strong></p>
       <form className="ui-form" onSubmit={event => { event.preventDefault(); void remove(); }} aria-busy={busy}><fieldset disabled={busy}>
         <Field label="Current password"><input type="password" autoComplete="current-password" required maxLength={128} value={password} onChange={event => setPassword(event.target.value)} /></Field>
-        <Field label="Type DELETE to confirm"><input autoComplete="off" spellCheck={false} required pattern="DELETE" value={confirmation} onChange={event => setConfirmation(event.target.value)} /></Field>
-        <div className="ui-cluster"><Button variant="danger" disabled={confirmation !== "DELETE" || !password} type="submit">{busy ? "Deleting account…" : "Delete my account permanently"}</Button>
+        <Field label="Type delete to confirm"><input autoComplete="off" autoCapitalize="off" spellCheck={false} required value={confirmation} onChange={event => setConfirmation(event.target.value)} /></Field>
+        <div className="ui-cluster"><Button variant="danger" disabled={confirmation.trim().toLowerCase() !== "delete" || !password} type="submit">{busy ? "Deleting account…" : "Delete my account permanently"}</Button>
           {!busy && <ButtonLink variant="ghost" to="/account">Keep my account</ButtonLink>}</div>
       </fieldset></form>
       {busy && <Notice role="status">Confirming your password and deleting your account. Keep this page open.</Notice>}

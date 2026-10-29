@@ -1,0 +1,28 @@
+/* Settings: skin on the left, audio/timing/gameplay stacked on the right. */
+
+.settings-grid { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: var(--ui-section-gap); align-items: start; }
+.settings-appearance { position: sticky; top: var(--ui-space-4); }
+@media (max-width: 900px) {
+  .settings-grid { grid-template-columns: minmax(0, 1fr); }
+  .settings-appearance { position: static; }
+}
+
+/* A file input presented as a button; the native control covers it invisibly. */
+.file-button { position: relative; overflow: hidden; }
+.file-button input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
+.file-button:focus-within { outline: 2px solid var(--ui-focus); outline-offset: 3px; }
+
+.calibration { display: flex; align-items: center; gap: var(--ui-space-5); }
+.calibration-pad {
+  position: relative; display: grid; place-items: center; flex-shrink: 0; width: 104px; height: 104px; padding: 0;
+  border: 0; border-radius: 50%; background: radial-gradient(circle at 35% 30%, hsl(186 60% 30%), var(--ui-surface-1) 70%);
+  box-shadow: inset 0 0 0 1px var(--ui-line-strong); color: var(--ui-text);
+}
+.calibration-pad:disabled { opacity: 1; cursor: default; }
+.calibration-ring { position: absolute; inset: 14px; border: 3px solid hsl(0 0% 100% / .85); border-radius: 50%; }
+.calibration-pad.running { box-shadow: inset 0 0 0 2px var(--ui-accent), 0 0 32px hsl(186 72% 74% / .3); cursor: pointer; }
+.calibration-pad.running:active .calibration-ring { border-color: var(--ui-accent); }
+.calibration-count { position: relative; font-size: var(--ui-text-md); font-weight: 700; font-variant-numeric: tabular-nums; }
+.calibration-count svg { width: 26px; height: 26px; color: var(--ui-accent); }
+.calibration-copy { display: flex; flex-direction: column; gap: var(--ui-space-3); }
+.calibration-copy p { margin: 0; color: var(--ui-text-2); font-size: var(--ui-text-sm); }

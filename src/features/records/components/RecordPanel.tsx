@@ -39,12 +39,12 @@ export function RecordPanel({ revision, chartId, busy, watch }: Props) {
   }
   const best = bestRecord(rows), disabled = busy || working;
   return <section className="record-panel" aria-label="Local records">
-    <SectionHeader level={3} title="Personal best" description="Standard clears · this revision · local, unranked"
+    <SectionHeader level={3} title="Personal best" description="On this device"
       actions={<IconButton size="sm" label="Refresh records" icon={<Icon name="refresh" />} disabled={disabled || loading} onClick={() => void refresh()} />} />
     {best ? <div className="record-best">
       <div><strong>{best.summary.score.toLocaleString()}</strong><p>{best.summary.accuracy.toFixed(2)}% accuracy · {best.summary.maxCombo}× combo</p></div>
       <Button size="sm" icon={<Icon name="play" />} disabled={disabled} onClick={() => watch(best.id)}>Watch replay</Button>
-    </div> : !loading && <p className="record-empty">Complete this difficulty without assists to set your first personal best.</p>}
+    </div> : !loading && <p className="record-empty">No clear yet. Play without mods to set one.</p>}
     {loading && <Loading>Loading records…</Loading>}{error && <Notice tone="danger" role="alert">{error}</Notice>}
     {!!unreadable && <Notice tone="warning">{unreadable} damaged records could not be displayed.</Notice>}
     {removed && <Notice role="status" actions={<Button size="sm" disabled={disabled} onClick={() => void undo()}>Undo record removal</Button>}>Removed the attempt from {new Date(removed.record.finishedAt).toLocaleString()}. Undo is available until you leave this view or remove another attempt.</Notice>}

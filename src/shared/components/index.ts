@@ -12,6 +12,7 @@ export { Icon, NotsuMark } from "./Icon";
 export type { IconName } from "./Icon";
 export { BackLink, MAIN_CONTENT_ID, Page, PageHeader } from "./Page";
 export { Cluster, Panel, SectionHeader, Stack } from "./Panel";
+export { CoverArt } from "./CoverArt";
 export { FooterButton, ScreenFooter } from "./ScreenFooter";
 export { TabLinks, Tabs } from "./Tabs";
 export type { TabItem } from "./Tabs";

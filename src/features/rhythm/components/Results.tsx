@@ -1,24 +1,97 @@
 import { useEffect, useRef } from "react";
 import type { ReactNode } from "react";
 import type { Summary } from "../domain/session";
+import type { Grade } from "../domain/rules";
+import { HIT_WINDOW_MS } from "../domain/rules";
+import { Button, CoverArt, Icon } from "../../../shared/components";
+import { isPerfect, letterGrade, timingHistogram } from "./grade";
 
-export function Results({ summary,title,retry,exit,runLabel,watchReplay,recordStatus,retryLabel="Play again",exitLabel="Home" }: {
-  summary:Summary; title:string; retry:()=>void; exit:()=>void; runLabel:string; watchReplay?:()=>void; exitLabel?:string; recordStatus?:ReactNode; retryLabel?:string;
+const GRADES: readonly Grade[] = ["Perfect", "Good", "Okay", "Miss"];
+const BINS = 14;
+
+function AccuracyRing({ accuracy, grade, perfect }: { accuracy: number; grade: string; perfect: boolean }) {
+  const radius = 54, circumference = 2 * Math.PI * radius;
+  return <div className={`result-grade grade-${grade.toLowerCase()} ${perfect ? "is-perfect" : ""}`}>
+    <svg viewBox="0 0 128 128" aria-hidden="true">
+      <circle className="result-grade-track" cx="64" cy="64" r={radius} />
+      <circle className="result-grade-fill" cx="64" cy="64" r={radius} strokeDasharray={circumference}
+        strokeDashoffset={circumference * (1 - Math.min(100, accuracy) / 100)} />
+    </svg>
+    <strong aria-label={`Grade ${grade}${perfect ? ", perfect" : ""}`}>{grade}</strong>
+    {perfect && <span className="result-grade-star" aria-hidden="true"><Icon name="star" /></span>}
+  </div>;
+}
+
+function TimingHistogram({ errors }: { errors: readonly number[] }) {
+  const bins = timingHistogram(errors, HIT_WINDOW_MS, BINS), peak = Math.max(1, ...bins);
+  const width = HIT_WINDOW_MS * 2 / BINS;
+  return <figure className="result-histogram">
+    <div className="result-histogram-bars" role="img" aria-label={`Timing spread of ${errors.length} hits, early on the left and late on the right`}>
+      {bins.map((count, index) => {
+        const centre = Math.abs(-HIT_WINDOW_MS + (index + .5) * width);
+        const zone = centre <= 45 ? "perfect" : centre <= 90 ? "good" : "okay";
+        return <span key={index} className={`zone-${zone}`} style={{ height: `${Math.max(count ? 8 : 2, count / peak * 100)}%` }} />;
+      })}
+    </div>
+    <figcaption><span>Early</span><span>Late</span></figcaption>
+  </figure>;
+}
+
+export function Results({ summary,title,artist,artSeed,hitErrors,retry,exit,runLabel,watchReplay,recordStatus,retryLabel="Play again",exitLabel="Home" }: {
+  summary:Summary; title:string; artist?:string; artSeed?:string; hitErrors:readonly number[]; retry:()=>void; exit:()=>void; runLabel:string;
+  watchReplay?:()=>void; exitLabel?:string; recordStatus?:ReactNode; retryLabel?:string;
 }) {
   const retryButton = useRef<HTMLButtonElement>(null);
   useEffect(()=>{ retryButton.current?.focus(); },[]);
   useEffect(()=>{ const back=(event:KeyboardEvent)=>{ if (event.key==="Escape" && !event.defaultPrevented) { event.preventDefault(); exit(); } };
     window.addEventListener("keydown",back); return ()=>window.removeEventListener("keydown",back);
   },[exit]);
-  return <section className={`results-panel ${summary.status==="failed" ? "result-failed" : ""}`} aria-labelledby="results-title">
-    <header className="result-heading"><div><p className="result-run-label">{runLabel}</p><h1 id="results-title">{summary.status==="failed" ? "Keep the rhythm going" : "Map complete"}</h1><p className="result-track">{title}</p></div><span className="result-finish-symbol" aria-hidden="true">{summary.status==="failed" ? "↺" : "◈"}</span></header>
-    {summary.status==="failed" && <p className="result-failure-note">Health reached zero. Try No Fail to learn the rest of the map.</p>}
-    <div className="result-performance"><div className="result-total"><span>Total score</span><p className="result-score">{summary.score.toLocaleString()}<small> / 1,000,000</small></p><div className="result-completion"><progress aria-label="Judgements completed" value={summary.judged} max={Math.max(1,summary.expected)}/><span>{summary.judged} / {summary.expected} judgements</span></div></div>
-      <div className="results-main"><div className="result-accuracy">{summary.accuracy.toFixed(2)}<span>%</span><small>Accuracy</small></div><div><strong>{summary.maxCombo}<small>×</small></strong><span>Best combo</span></div></div>
+  const grade = letterGrade(summary), failed = summary.status === "failed";
+  const total = Math.max(1, summary.judged + summary.extra);
+  const timing = summary.meanErrorMs === null ? "—" : Math.abs(summary.meanErrorMs) < .5 ? "On time"
+    : `${Math.abs(summary.meanErrorMs).toFixed(0)} ms ${summary.meanErrorMs < 0 ? "early" : "late"}`;
+  return <section className={`results-panel ${failed ? "result-failed" : ""}`} aria-labelledby="results-title">
+    <header className="result-banner">
+      <CoverArt seed={artSeed ?? title} className="result-banner-art" />
+      <div className="result-banner-copy">
+        <p className="result-run-label">{runLabel}</p>
+        <h1 id="results-title">{title}</h1>
+        {artist && <p className="result-track">{artist}</p>}
+      </div>
+      <p className="result-outcome">{failed ? "Failed" : "Cleared"}</p>
+    </header>
+
+    <div className="result-performance">
+      <AccuracyRing accuracy={summary.accuracy} grade={grade} perfect={isPerfect(summary)} />
+      <div className="result-total">
+        <p className="result-score">{summary.score.toLocaleString()}</p>
+        <dl className="result-stats">
+          <div><dt>Accuracy</dt><dd>{summary.accuracy.toFixed(2)}<small>%</small></dd></div>
+          <div><dt>Max combo</dt><dd>{summary.maxCombo}<small>×</small></dd></div>
+          <div><dt>Timing</dt><dd>{timing}</dd></div>
+        </dl>
+      </div>
     </div>
-    <dl className="judgements">{Object.entries(summary.counts).map(([grade,count])=><div key={grade} className={`result-judgement result-${grade.toLowerCase()}`}><dt>{grade}</dt><dd>{count}</dd><progress aria-label={`${grade} judgements`} value={count} max={Math.max(1,summary.judged)}/></div>)}<div className="result-judgement result-extra"><dt>Extra presses</dt><dd>{summary.extra}</dd></div></dl>
-    <div className="result-timing">{summary.meanErrorMs!==null && <p className="timing-result">Average timing <strong>{Math.abs(summary.meanErrorMs).toFixed(0)} ms {summary.meanErrorMs<0 ? "early" : "late"}</strong></p>}<p className="result-rules-note">Holds count as press and release. Extra presses lower accuracy.</p></div>
+
+    <div className="result-breakdown">
+      <div>
+        <div className="result-distribution" role="img" aria-label={GRADES.map(g => `${summary.counts[g]} ${g}`).join(", ") + `, ${summary.extra} extra`}>
+          {GRADES.map(g => summary.counts[g] ? <span key={g} className={`result-${g.toLowerCase()}`} style={{ flexGrow: summary.counts[g] / total }} /> : null)}
+          {summary.extra ? <span className="result-extra" style={{ flexGrow: summary.extra / total }} /> : null}
+        </div>
+        <dl className="judgements">
+          {GRADES.map(g => <div key={g} className={`result-judgement result-${g.toLowerCase()}`}><dt>{g}</dt><dd>{summary.counts[g]}</dd></div>)}
+          <div className="result-judgement result-extra"><dt>Extra</dt><dd>{summary.extra}</dd></div>
+        </dl>
+      </div>
+      <TimingHistogram errors={hitErrors} />
+    </div>
+
     <div className="result-save-state">{recordStatus}</div>
-    <div className="actions result-actions"><button className="quiet result-exit" onClick={exit}>← {exitLabel}</button>{watchReplay && <button className="quiet" onClick={watchReplay}>▷ Watch replay</button>}<button ref={retryButton} className="primary" onClick={retry}>↺ {retryLabel}</button></div>
+    <div className="result-actions">
+      <Button variant="ghost" className="result-exit" icon={<Icon name="back" />} onClick={exit}>{exitLabel}</Button>
+      {watchReplay && <Button icon={<Icon name="play" />} onClick={watchReplay}>Watch replay</Button>}
+      <Button ref={retryButton} variant="primary" sheared icon={<Icon name="refresh" />} onClick={retry}>{retryLabel}</Button>
+    </div>
   </section>;
 }

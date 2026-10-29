@@ -8,6 +8,7 @@ import type { ReactNode } from "react";
 import { useAccountStore } from "../features/accounts/accountStore";
 import { Loading } from "../shared/components";
 import { onlineAvailable } from "../features/accounts/data/availability";
+import { useGamepad } from "./useGamepad";
 
 const PublishScreen = lazy(() => import("../features/maps/components/PublishScreen").then(module => ({ default: module.PublishScreen })));
 const AccountScreen = lazy(() => import("../features/accounts/components/AccountScreen").then(module => ({ default: module.AccountScreen })));
@@ -48,5 +49,6 @@ const router = createHashRouter([
 ]);
 export function App() {
   const id = useAccountStore(state => state.identity?.id);
+  useGamepad();
   return <><RouterProvider router={router} />{id && <Suspense fallback={null}><PresenceSession key={id} userId={id} /></Suspense>}</>;
 }

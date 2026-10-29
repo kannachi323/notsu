@@ -24,7 +24,8 @@
 .record-attempt-heading { display: flex; align-items: center; justify-content: space-between; gap: var(--ui-space-2); }
 .record-attempt-heading strong { font-size: var(--ui-text-lg); font-variant-numeric: tabular-nums; }
 
-.record-save { display: flex; flex-direction: column; gap: var(--ui-space-2); padding: var(--ui-space-3) var(--ui-space-4); border-radius: var(--ui-radius-md); background: var(--ui-accent-surface); box-shadow: inset 3px 0 var(--ui-accent); }
+.record-save { display: flex; flex-wrap: wrap; align-items: center; gap: var(--ui-space-3); color: var(--ui-text-3); }
+.record-save:not(.record-save-error) p::before { content: "✓"; margin-right: var(--ui-space-2); color: var(--ui-success); }
 .record-save p { margin: 0; font-size: var(--ui-text-sm); line-height: 1.6; }
-.record-save-error { background: var(--ui-danger-surface); box-shadow: inset 3px 0 var(--ui-danger); }
+.record-save-error { padding: var(--ui-space-3) var(--ui-space-4); border-radius: var(--ui-radius-md); background: var(--ui-danger-surface); }
 .record-save-error p:first-child { color: var(--ui-danger); }

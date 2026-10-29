@@ -7,7 +7,7 @@ import { SkinExport } from "./SkinExport";
 import { importSkin, initializeSkins, prepareSkin, removeSkin, restoreSkin, useSkinCatalog } from "../useSkinCatalog";
 import { HitSounds } from "../../rhythm/data/hitSounds";
 import { SkinPreview } from "./SkinPreview";
-import { Button, Icon, Notice } from "../../../shared/components";
+import { Button, Icon, Notice, buttonClass } from "../../../shared/components";
 import "../skins.css";
 
 export function SkinManager({ skinId, volume, select }: { skinId: string; volume: number; select: (id: string) => void }) {
@@ -69,7 +69,7 @@ export function SkinManager({ skinId, volume, select }: { skinId: string; volume
       <Button size="sm" icon={<Icon name="volume" />} disabled={busy || !ready} onClick={() => void testSound("release")}>Hear release</Button>
     </div>
     <div className="skin-import">
-      <label htmlFor="skin-file">Import a skin pack</label>
+      <label htmlFor="skin-file" className={buttonClass({ size: "sm" }, "file-button")}><span className="ui-button__content"><Icon name="plus" />Import skin</span>
       <input id="skin-file" type="file" accept=".notsuskin,.zip,application/zip" disabled={busy || !ready} aria-describedby="skin-import-help"
         onChange={event => {
           const file = event.target.files?.[0]; event.target.value = "";
@@ -77,10 +77,10 @@ export function SkinManager({ skinId, volume, select }: { skinId: string; volume
             const record = await importSkin(file);
             if (mounted.current) { selectRef.current(record.id); setStatus(`Imported ${record.manifest.name}.`); }
           });
-        }} />
-      <p id="skin-import-help">Choose a .notsuskin pack up to 16 MB. Artwork, sounds, and colors can change; hit timing stays the same.</p>
+        }} /></label>
+      <SkinExport record={installed} busy={busy} action={action} notify={setStatus} />
+      <p id="skin-import-help">.notsuskin · up to 16 MB</p>
     </div>
-    <SkinExport record={installed} busy={busy} action={action} notify={setStatus} />
     {(installed || removed) && <div className="ui-cluster">
       {installed && <Button size="sm" variant="danger" icon={<Icon name="trash" />} disabled={busy} onClick={() => void action(async () => {
         const record = await removeSkin(installed.id);

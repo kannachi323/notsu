@@ -19,7 +19,7 @@ export function LaneTools({ chart, selected, select, timeMs, change, seek }: {
   const currentEasings = [...new Set(existingFrames.filter(frame => frame !== undefined).map(frame => frame.easing ?? "smooth"))];
   const applyPreset = () => change({ type: "motion", frames: lanes.map((lane, i) => ({ laneId: lane.id, frame: { ...frames[i], easing: easingFor(lane.id) } })) });
   return <section className="editor-panel" aria-label="Line choreography">
-    <h2>Lines <span>{chart.lanes.length}/16</span></h2><p className="editor-hint">Select lines for shared circles and group movement.</p>
+    <h2>Lines <span>{chart.lanes.length}/16</span></h2>
     <div className="editor-line-list">{chart.lanes.map((lane, i) => <label key={lane.id}><input type="checkbox" checked={selected.includes(lane.id)}
       onChange={event => select(event.target.checked ? [...selected, lane.id] : selected.filter(id => id !== lane.id))} />Line {i + 1}<span>{chart.notes.filter(note => note.laneIds.includes(lane.id)).length} circles</span></label>)}</div>
     <div className="editor-small-actions"><button onClick={() => select(chart.lanes.map(lane => lane.id))}>Select all</button>
@@ -32,11 +32,10 @@ export function LaneTools({ chart, selected, select, timeMs, change, seek }: {
     <div className="editor-small-actions"><button disabled={chart.lanes.length + presetCounts[preset] > 16} onClick={() => {
       const additions = presetFrames(preset, 0).map(frame => ({ id: crypto.randomUUID(), frame })); change({ type: "add-lanes", lanes: additions }); select(additions.map(lane => lane.id));
     }}>Add pattern</button><button disabled={lanes.length !== presetCounts[preset]} onClick={applyPreset}>Arrange selected</button></div>
-    <p className="editor-hint">Arrange {presetCounts[preset]} selected lines at the playhead. Earlier keyframes create the transition.</p>
     {!!lanes.length && <>
       <h3>Movement at {(timeMs / 1000).toFixed(3)} s</h3>
       <label>Arrival easing<select value={easing} onChange={event => setEasing(event.target.value as typeof easing)}><option value="keep">Keep existing · smooth if new</option><option value="smooth">Smooth</option><option value="linear">Linear</option></select></label>
-      <p className="editor-hint">Controls the approach into this keyframe. Smooth slows at each end; linear keeps a constant rate. Current: {currentEasings.length > 1 ? "mixed" : currentEasings[0] ?? "no keyframe here"}.</p>
+      <p className="editor-hint">Current: {currentEasings.length > 1 ? "mixed" : currentEasings[0] ?? "no keyframe here"}</p>
       <button disabled={easing === "keep" || existingFrames.some(frame => !frame)} onClick={() => { if (easing !== "keep") change({ type: "easing", laneIds: selected, timeMs, easing }); }}>Apply easing here</button>
       {pose ? <form key={`${lanes[0].id}:${timeMs}:${JSON.stringify(pose)}`} onSubmit={event => {
         event.preventDefault(); const data = new FormData(event.currentTarget);

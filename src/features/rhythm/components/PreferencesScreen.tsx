@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useState } from "react";
 import { AppScreen } from "../../home/components/AppScreen";
-import { ButtonLink, Page, PageHeader, Panel } from "../../../shared/components";
+import { ButtonLink, Page, PageHeader } from "../../../shared/components";
 import { loadSettings, saveSettings } from "../data/settings";
 import { SettingsPanel } from "./SettingsPanel";
 import { HowToPlay } from "./HowToPlay";
@@ -16,11 +16,11 @@ export function PreferencesScreen({ help = false }: { help?: boolean }) {
       document.documentElement.style.setProperty(name, value);
     }
   }, [settings.skinId, skinRevision]);
-  return <AppScreen><Page width="narrow">
+  return <AppScreen><Page width={help ? "default" : "wide"}>
     <PageHeader back={{ to: "/rhythm", label: "Song selection" }} icon={help ? "info" : "settings"} title={help ? "How to play" : "Settings"}
-      description={help ? "Circles ride moving lines. Press any key as they reach the target." : "Saved on this device and applied the next time you play."} />
+      description={help ? "Circles ride moving lines. Hit them at the ring." : "Saved on this device."} />
     {help ? <>
-      <Panel aria-label="How to play"><HowToPlay /></Panel>
+      <HowToPlay />
       <div><ButtonLink variant="primary" size="lg" to="/rhythm">Choose your first map</ButtonLink></div>
     </> : <SettingsPanel settings={settings} updateSettings={next => { setSettings(next); saveSettings(next); }} />}
   </Page></AppScreen>;

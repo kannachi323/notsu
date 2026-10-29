@@ -926,3 +926,25 @@ Verified rankings/tickets/server replay recalculation, map moderation/reporting
 screens, calibration/display/interface audio completion, hosted services,
 operational gates, real playtests and each platform release remain open. This pass
 does not complete the public beta, and no release gate has been removed.
+
+### October 28 production-readiness pass
+
+Compiled and verified the October 4 interface and online-map changes, then fixed
+what the checks found. Details, commands and owner steps are in the
+[release checklist](RELEASE_CHECKLIST.md).
+
+- Type checks, unit tests, production web/Worker builds, `cargo check` and an
+  unsigned macOS release bundle pass. All six starter difficulties were played in
+  the browser with real key events timed on the audio clock; calibration, holds,
+  shared hits, health, failure, mods, pause/resume, results and replays behaved
+  as specified. The render/scoring loop now allocates about 1 KB per frame.
+- Offline builds hide every online entry point. With the local Supabase stack,
+  347 pgTAP checks and 53 live integration checks pass, including the previously
+  unverified stale-visibility (withdraw/restore) flow. Fixed an upload-retry
+  connection reset and added abuse limits from a security review.
+- Added generated cover art, a new HUD and results screen, rebuilt Settings with
+  tap-along calibration, controller support, and the editor in the app frame.
+
+Still open: hosted deployment, signing, Windows/Linux bundle runs, human
+playtests and the competitive backend (tickets, server replay verification,
+rankings). The public beta is not complete.

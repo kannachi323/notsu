@@ -96,6 +96,15 @@ export class RhythmSession {
   pressedKeys(): string[] { return [...this.pressed]; }
   heldKeys(): string[] { return [...this.holds].map(state => state.key!); }
   markResumed(): void { this.assistance.resumed = true; }
+  /** Signed timing errors of successful hits, oldest first; `limit` keeps the most recent. */
+  hitErrors(limit = Infinity): number[] {
+    const errors: number[] = [];
+    for (let i = this.judgements.length - 1; i >= 0 && errors.length < limit; i--) {
+      const error = this.judgements[i].errorMs;
+      if (error !== undefined) errors.push(error);
+    }
+    return errors.reverse();
+  }
   /** Cheap per-frame check; summary() allocates and is for display. */
   get status(): RunStatus { return this.runStatus; }
 

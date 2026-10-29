@@ -64,7 +64,7 @@
 .toolbar-brand { gap: var(--ui-space-2); padding: 0 var(--ui-space-3); }
 .toolbar .toolbar-brand { color: var(--ui-text); }
 .toolbar-brand svg { width: 26px; height: 26px; }
-.toolbar-brand span { font-size: 19px; font-weight: 800; font-style: italic; letter-spacing: -.03em; }
+.toolbar-brand span { font-size: var(--ui-text-lg); font-weight: 800; font-style: italic; letter-spacing: -.03em; }
 .toolbar-navigation { display: flex; margin-left: var(--ui-space-1); padding-left: var(--ui-space-1); border-left: 1px solid var(--ui-line); }
 .toolbar-tab { gap: var(--ui-space-2); padding: 0 var(--ui-space-4); font-size: var(--ui-text-sm); font-weight: 650; }
 .toolbar-tab svg { width: 18px; height: 18px; }
@@ -182,7 +182,7 @@
 .main-menu-logo-word { font-size: clamp(64px, 6.8vw, 88px); font-weight: 850; font-style: italic; letter-spacing: -.065em; line-height: 1.1; }
 .main-menu-logo-caption { margin-top: var(--ui-space-2); color: hsl(190 100% 94%); font-size: var(--ui-text-xs); font-weight: 600; }
 
-.main-menu-buttons { position: relative; z-index: 1; display: flex; height: 112px; margin-left: -36px; padding-left: 56px; }
+.main-menu-buttons { position: relative; z-index: 1; display: flex; height: 112px; margin-left: -var(--ui-space-8); padding-left: var(--ui-space-12); }
 .main-menu-button {
   position: relative;
   display: flex;
@@ -192,7 +192,7 @@
   gap: var(--ui-space-1);
   width: clamp(104px, 10vw, 140px);
   height: 100%;
-  margin-right: 2px;
+  margin-right: var(--ui-space-0);
   background: var(--_tone, var(--ui-surface-3));
   color: hsl(0 0% 100%);
   text-decoration: none;
@@ -215,7 +215,7 @@
 
 .main-menu-bottom { display: flex; align-items: center; justify-content: space-between; gap: var(--ui-space-6); padding: 0 var(--ui-gutter) var(--ui-space-6); }
 .main-menu-tip { display: flex; align-items: center; gap: var(--ui-space-4); font-size: var(--ui-text-sm); }
-.main-menu-tip > span { color: var(--ui-accent); font-size: 28px; }
+.main-menu-tip > span { color: var(--ui-accent); font-size: var(--ui-text-3xl); }
 .main-menu-tip p { margin: 0; }
 .main-menu-tip small { color: var(--ui-text-3); font-size: var(--ui-text-xs); }
 .main-menu-tip .ui-link { font-size: var(--ui-text-xs); white-space: nowrap; }
@@ -234,14 +234,14 @@
   transition: background-color var(--ui-fast);
 }
 .main-menu-featured:hover { background: hsl(var(--ui-hue) 22% 20% / .9); }
-.main-menu-featured-art { flex-shrink: 0; width: 64px; height: 56px; border-radius: var(--ui-radius-sm); background: url("./assets/orbital-night.png") 65% center / cover; }
-.main-menu-featured > span:nth-child(2) { display: grid; flex: 1; gap: 2px; }
+.main-menu-featured-art { flex-shrink: 0; width: 56px; height: 56px; overflow: hidden; border-radius: var(--ui-radius-sm); }
+.main-menu-featured > span:nth-child(2) { display: grid; flex: 1; gap: var(--ui-space-0); }
 .main-menu-featured small { color: var(--ui-text-3); font-size: var(--ui-text-xs); }
 .main-menu-featured strong { font-size: var(--ui-text-lg); }
 .main-menu-featured > svg { width: 20px; height: 20px; color: var(--ui-accent); }
 
 @media (max-width: 1000px) {
-  .main-menu-buttons { margin-left: -28px; padding-left: 40px; }
+  .main-menu-buttons { margin-left: -var(--ui-space-6); padding-left: var(--ui-space-10); }
   .main-menu-bottom { flex-wrap: wrap; }
 }
 @media (max-width: 760px) {

@@ -5,6 +5,7 @@ import { starterFile } from "../data/starters";
 import { MapExport } from "./MapExport";
 import { RecordPanel } from "../../records/components/RecordPanel";
 import { mapDuration } from "./presentation";
+import { CoverArt } from "../../../shared/components";
 
 export function MapDetails({ library }: { library: ReturnType<typeof useMapLibrary> }) {
   const { selected, busy, difficultyId } = library;
@@ -14,6 +15,7 @@ export function MapDetails({ library }: { library: ReturnType<typeof useMapLibra
   const tempos = difficulty.chart.timing.map(point => point.bpm), minBpm = Math.min(...tempos), maxBpm = Math.max(...tempos);
   return <>
     <div className="selected-song-hero">
+      <CoverArt seed={selected.set.id} className="selected-song-art" />
       <Badge tone={starterFile(selected.revision) ? "accent" : "violet"}>{starterFile(selected.revision) ? "Included with notsu" : "Local map"}</Badge>
       <h2>{selected.set.title}</h2><p className="selected-artist">{selected.set.artist}</p><p className="selected-mapper">mapped by <strong>{selected.set.author}</strong></p>
       <StatList className="selected-song-stats" items={[

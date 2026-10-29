@@ -7,6 +7,7 @@ import { Results } from "./components/Results";
 import { Setup } from "./components/Setup";
 import { getSkin, skinVariables } from "./components/skins";
 import { PausePanel, keyLabel } from "./components/PausePanel";
+import { HitErrorMeter } from "./components/HitErrorMeter";
 import { useRecordSave } from "../records/useRecordSave";
 import { RecordSaveStatus } from "../records/components/RecordSaveStatus";
 import "../records/records.css";
@@ -45,12 +46,12 @@ export function RhythmScreen({ preview, local }: { preview?: LocalLevel & { clos
     {view.phase === "results" && <header className="app-header"><div className="brand">notsu <span> / results</span></div></header>}
     {view.phase === "setup" && (preview ? <section className="editor-playtest-start">
       <p className="muted">Editor playtest · unranked</p><h1>{chart.title}</h1>
-      <p>Try your map with any gameplay key. No Fail is on so you can check the entire arrangement.</p>
+      <p>Any key plays. No Fail is on.</p>
       <div className="actions"><button className="primary" onClick={() => void game.start("song", { noFail: true, autoplay: false })}>Start playtest</button>
         <button onClick={() => void game.start("song", { noFail: true, autoplay: true })}>Watch Autoplay</button><button onClick={preview.close}>Back to editor</button></div>
       {game.error && <p role="alert">{game.error}</p>}
-    </section> : local ? <section className="editor-playtest-start"><p className="muted">{local.savedReplay ? "Saved replay · local, unranked" : "Music included · ready to play"}</p><h1>{chart.title}</h1><p>{chart.artist}</p>
-      <p>Press any gameplay key when a circle reaches its moving target. Hold notes need a press and release.</p>
+    </section> : local ? <section className="editor-playtest-start"><p className="muted">{local.savedReplay ? "Saved replay" : "Ready to play"}</p><h1>{chart.title}</h1><p>{chart.artist}</p>
+      
       <label className="local-no-fail"><input type="checkbox" checked={noFail} onChange={event => setNoFail(event.target.checked)} /> No Fail · practice the whole map</label>
       <div className="actions">{local.savedReplay && <button onClick={() => void game.start("song", local.savedReplay!.mods, local.savedReplay)}>Watch saved replay</button>}<button className="primary" onClick={() => void game.start("song", { noFail, autoplay: false })}>Start playing</button><button onClick={() => void game.start("song", { noFail: true, autoplay: true })}>Watch Autoplay</button><button onClick={local.close}>Back to library</button></div>
       {game.error && <p role="alert">{game.error}</p>}
@@ -58,25 +59,27 @@ export function RhythmScreen({ preview, local }: { preview?: LocalLevel & { clos
     {view.phase === "starting" && <div className="starting" role="status">Preparing audio…</div>}
     {playing && <section className="game-stage" aria-label="Rhythm gameplay">
       <div className="game-hud"><div className="playing-track"><h1>{chart.title}</h1><p>{chart.artist} <span> / {runLabel}</span></p></div><div className="hud-right"><div className="hud-score"><strong>{String(view.summary.score).padStart(7, "0")}</strong><span>score</span></div><div><strong>{view.summary.accuracy.toFixed(2)}<small>%</small></strong><span>accuracy</span></div><button className="pause-button" onClick={game.pause} aria-label="Pause gameplay">Ⅱ</button></div></div>
-      <div className="health-bar"><label htmlFor="health">Health</label><meter id="health" min={0} max={100} low={25} optimum={100} value={view.summary.health}>{view.summary.health}%</meter></div>
+      <div className={`health-bar ${view.summary.health <= 30 ? "is-low" : ""}`}><label htmlFor="health">Health</label><meter id="health" min={0} max={100} low={30} optimum={100} value={view.summary.health}>{view.summary.health}%</meter></div>
       <div className="canvas-wrap"><Playfield runtime={game.runtime} />
         {["countdown", "resuming"].includes(view.phase) && <div className="countdown" role="status" aria-label="Countdown">
           <strong>{view.countdown}</strong>
           {view.phase === "resuming" && <span>{checkpoint?.requiredKeys.length ? `Keep ${checkpoint.requiredKeys.map(keyLabel).join(" + ")} held` : "Ready to continue"}</span>}
         </div>}
-        {view.phase === "playing" && <div className={`hit-feedback ${feedback?.grade === "Miss" || feedback?.grade === "Extra" ? "bad" : ""}`} aria-hidden="true"><strong>{feedback?.grade ?? ""}</strong><span>{feedback?.errorMs !== undefined ? `${Math.abs(feedback.errorMs).toFixed(0)} ms ${feedback.errorMs < 0 ? "early" : "late"}` : ""}</span></div>}
+        {view.phase === "playing" && <div className={`hit-feedback grade-${(feedback?.grade ?? "none").toLowerCase()}`} aria-hidden="true"><strong key={feedback?.atMs}>{feedback?.grade ?? ""}</strong></div>}
         {["paused", "rearming"].includes(view.phase) && <PausePanel rearming={view.phase === "rearming"} requiredKeys={checkpoint?.requiredKeys ?? []}
           canResume={!!checkpoint && view.summary.status === "playing"} error={game.error} resume={() => void game.resume()} cancel={game.pause} retry={retry} exit={leave} exitLabel={local ? "Song selection" : preview ? "Back to editor" : "Home"} />}
       </div>
       <div className="game-combo" aria-label={`${view.summary.combo} combo`}><strong>{view.summary.combo}<small>×</small></strong><span>combo</span></div>
-      <div className="progress-area"><progress aria-label="Map progress" value={Math.max(0, view.timeMs)} max={chart.durationMs} /><div><span>{seconds(view.timeMs)} / {seconds(chart.durationMs)}</span><p>Tap any key · hold & release long notes</p><span>Esc to pause</span></div></div>
+      <HitErrorMeter errors={view.recentErrors} />
+      <div className="progress-area"><progress aria-label="Map progress" value={Math.max(0, view.timeMs)} max={chart.durationMs} /><div><span>{seconds(view.timeMs)} / {seconds(chart.durationMs)}</span><span><kbd>Esc</kbd> pause</span></div></div>
     </section>}
-    {view.phase === "results" && <Results summary={view.summary} title={chart.title} retry={retry} exit={leave} runLabel={local ? `${runLabel} · local, unranked` : runLabel} exitLabel={local ? "Song selection" : preview ? "Back to editor" : "Home"}
+    {view.phase === "results" && <Results summary={view.summary} title={chart.title} artist={chart.artist} artSeed={local?.recordSource?.setId}
+      hitErrors={game.runtime.current.session.hitErrors()} retry={retry} exit={leave} runLabel={local ? `${runLabel} · local, unranked` : runLabel} exitLabel={local ? "Song selection" : preview ? "Back to editor" : "Home"}
       retryLabel={game.runtime.current.playback ? "Watch again" : "Play again"}
       recordStatus={<>{game.error && <p role="alert">{game.error}</p>}{game.runtime.current.playback ? <p className="record-help">Replay playback · no new attempt saved</p> : <RecordSaveStatus state={recordSave.state} retry={recordSave.retry} />}</>}
       watchReplay={game.hasReplay && !game.runtime.current.playback ? () => void game.watchReplay() : undefined} />}
     <footer className="app-footer">
-      {preview ? <button className="quiet" onClick={preview.close}>← Back to editor</button> : local ? <button className="quiet" onClick={local.close}>← Back to library</button> : <Link className="rhythm-home-link" to="/">← notsu home</Link>}
+      {!preview && !local && <Link className="rhythm-home-link" to="/">← notsu home</Link>}
       <span>Unofficial community project · Not affiliated with ppy</span>
     </footer>
   </main>;

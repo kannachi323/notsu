@@ -32,9 +32,10 @@ export type Runtime = {
   resumeRemainingMs?: number;
   resumePending?: boolean;
 };
-type View = { phase: Phase; timeMs: number; summary: Summary; feedback: Feedback | null; countdown: number };
+type View = { phase: Phase; timeMs: number; summary: Summary; feedback: Feedback | null; countdown: number; recentErrors: number[] };
 
 // The frame loop checks this every tick; a shared Set avoids per-frame arrays.
+const HIT_ERROR_TICKS = 24;
 const CLOCKED_PHASES: ReadonlySet<Phase> = new Set(["countdown", "playing", "resuming"]);
 
 export type LocalLevel = { chart: Chart; buffer: AudioBuffer; editor?: boolean; recordSource?: RecordSource; savedReplay?: Replay; autoStart?: boolean; initialMods?: Mods };
@@ -46,7 +47,7 @@ export function useRhythmGame(level?: LocalLevel) {
   } }));
   const [chart, setChart] = useState<Chart>(initialChart);
   const [mode, setMode] = useState<ChartMode>("song");
-  const [view, setView] = useState<View>({ phase: "setup", timeMs: 0, summary: runtime.current.session.summary(), feedback: null, countdown: 0 });
+  const [view, setView] = useState<View>({ phase: "setup", timeMs: 0, summary: runtime.current.session.summary(), feedback: null, countdown: 0, recentErrors: [] });
   const [fileName, setFileName] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -63,6 +64,7 @@ export function useRhythmGame(level?: LocalLevel) {
   const publish = () => {
     const current = runtime.current;
     setView({ phase: current.phase, timeMs: current.timeMs, summary: current.session.summary(), feedback: current.session.feedback,
+      recentErrors: current.session.hitErrors(HIT_ERROR_TICKS),
       countdown: Math.max(1, Math.ceil((current.resumeRemainingMs ?? -current.timeMs) / 1000)) });
   };
 

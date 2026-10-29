@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { Link, useNavigate } from "react-router";
-import { Icon, MAIN_CONTENT_ID, NotsuMark } from "../../../shared/components";
+import { CoverArt, Icon, MAIN_CONTENT_ID, NotsuMark } from "../../../shared/components";
 import { AppScreen } from "./AppScreen";
 import { starterMaps } from "../../maps/data/starters";
 import { onlineAvailable } from "../../accounts/data/availability";
@@ -45,8 +45,8 @@ export function HomeScreen() {
     <aside className="main-menu-bottom" aria-label="Getting started">
       <div className="main-menu-tip"><span aria-hidden="true">◈</span><p>One shared circle. One press.<br /><small>Any gameplay key works, even when the lines cross.</small></p><Link className="ui-link" to="/how-to-play">How to play →</Link></div>
       <Link className="main-menu-featured" to={`/rhythm?map=${starterMaps[0].revision}`}>
-        <span className="main-menu-featured-art" aria-hidden="true" />
-        <span><small>Start with an included song</small><strong>Orbit Signal</strong><small>Original music · two difficulties</small></span>
+        <span className="main-menu-featured-art" aria-hidden="true"><CoverArt seed={starterMaps[0].setId} /></span>
+        <span><small>Start with an included song</small><strong>{starterMaps[0].title}</strong><small>Original music · two difficulties</small></span>
         <Icon name="forward" />
       </Link>
     </aside>

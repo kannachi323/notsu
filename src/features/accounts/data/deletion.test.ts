@@ -20,11 +20,11 @@ describe("deletion client", () => {
   });
   afterEach(() => { acceptIdentity(null); vi.unstubAllGlobals(); vi.clearAllMocks(); });
   it("requires explicit confirmation before password authentication", async () => {
-    await expect(deleteOwnAccount("current password", "delete")).rejects.toThrow("DELETE");
+    await expect(deleteOwnAccount("current password", "remove")).rejects.toThrow("Type delete");
     expect(mock.create).not.toHaveBeenCalled();
   });
   it("authenticates separately without saving credentials and sends only confirmation to the Worker", async () => {
-    await deleteOwnAccount("current password", "DELETE");
+    await deleteOwnAccount("current password", "delete");
     expect(mock.create.mock.calls[0][2].auth).toMatchObject({ persistSession: false, autoRefreshToken: false, detectSessionInUrl: false, storageKey: expect.stringMatching(/^notsu-delete-/) });
     expect(mock.signIn).toHaveBeenCalledWith({ email: "one@example.test", password: "current password" });
     expect(fetcher.mock.calls[0]).toMatchObject(["https://api.test/v1/me/account", {

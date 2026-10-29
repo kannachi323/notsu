@@ -10,7 +10,16 @@
     "frontendDist": "../dist"
   },
   "app": {
-    "windows": [{ "title": "notsu", "width": 1200, "height": 800, "minWidth": 720, "minHeight": 600, "backgroundColor": "#080c0d" }],
+    "windows": [
+      {
+        "title": "notsu",
+        "width": 1200,
+        "height": 800,
+        "minWidth": 720,
+        "minHeight": 600,
+        "backgroundColor": "#080c0d"
+      }
+    ],
     "security": {
       "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; media-src 'self' blob:; connect-src 'self' ipc: http://ipc.localhost",
       "devCsp": "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; media-src 'self' blob:; connect-src 'self' ipc: http://ipc.localhost ws://localhost:1420 ws://127.0.0.1:1420"
@@ -18,7 +27,25 @@
   },
   "bundle": {
     "active": true,
-    "targets": ["nsis"],
-    "icon": ["icons/icon.ico"]
+    "targets": "all",
+    "category": "Game",
+    "shortDescription": "An independent moving-line rhythm game",
+    "longDescription": "notsu is an unofficial community rhythm game built around moving lines and timed circles, with an original map editor. Not affiliated with ppy.",
+    "copyright": "notsu contributors. Unofficial community project; not affiliated with ppy.",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "macOS": {
+      "minimumSystemVersion": "11.0"
+    },
+    "linux": {
+      "deb": {
+        "section": "games"
+      }
+    }
   }
 }

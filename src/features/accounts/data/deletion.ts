@@ -5,7 +5,7 @@ import { AccountError, authError, configuration, forgetDeletedAccount } from "./
 export async function deleteOwnAccount(password: string, confirmation: string) {
   const identity = useAccountStore.getState().identity;
   if (!configuration || !identity) throw new AccountError("Sign in before deleting your account.");
-  if (confirmation !== "DELETE") throw new AccountError("Type DELETE to confirm permanent account deletion.");
+  if (confirmation.trim().toLowerCase() !== "delete") throw new AccountError("Type delete to confirm permanent account deletion.");
   if (!password || password.length > 128) throw new AccountError("Enter your current password.");
   // A separate, temporary session proves the current password without replacing the
   // app's session or accidentally signing the UI into a different identity.
@@ -25,7 +25,8 @@ export async function deleteOwnAccount(password: string, confirmation: string) {
       result = await fetch(`${configuration.apiUrl}/v1/me/account`, {
         method: "DELETE", credentials: "omit", cache: "no-store", signal: AbortSignal.timeout(20000),
         headers: { Authorization: `Bearer ${data.session.access_token}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ confirmation }),
+        // The API keeps its fixed confirmation token; players type the word in lowercase.
+        body: JSON.stringify({ confirmation: "DELETE" }),
       });
     } catch { throw new AccountError("Deletion could not be confirmed. Check your connection, then sign in again to check your account.", "deletion_unconfirmed"); }
     if (result.status !== 204) {
